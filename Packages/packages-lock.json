@@ -10,6 +10,12 @@
       },
       "hash": "eec288e2a5cfd43743b70e9a8c397d5e5300e80a"
     },
+    "com.kyrylokuzyk.primetween": {
+      "version": "file:com.kyrylokuzyk.primetween",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.9",
       "depth": 0,

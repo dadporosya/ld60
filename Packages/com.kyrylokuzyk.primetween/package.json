@@ -1,0 +1,43 @@
+{
+  "name": "com.kyrylokuzyk.primetween",
+  "displayName": "PrimeTween",
+  "version": "1.5.0",
+  "unity": "2018.4",
+  "author": {
+    "name": "Kyrylo Kuzyk"
+  },
+  "samples": [
+    {
+      "displayName": "Examples",
+      "path": "Samples~/Examples"
+    }
+  ],
+  "hideInEditor": false,
+  "description": "PrimeTween is a high-performance, allocation-free animation library for Unity.\n\nAnimate anything with just one line of code, tweak all animation properties directly from the Inspector, and create complex animation sequences. No runtime memory allocations, ever.\n\nEnjoying PrimeTween? Consider leaving an honest review on Asset Store.",
+  "keywords": [
+    "Tween",
+    "Easing",
+    "Delay",
+    "Sequence",
+    "Shake",
+    "Screen Shake",
+    "Camera Shake",
+    "Game Feel",
+    "Feel",
+    "Interpolation",
+    "Performance",
+    "Zero-allocation",
+    "Ease",
+    "Tweening",
+    "Animate"
+  ],
+  "documentationUrl": "https://github.com/KyryloKuzyk/PrimeTween",
+  "changelogUrl": "https://github.com/KyryloKuzyk/PrimeTween/blob/main/changelog.md",
+  "_upm": {
+    "changelog": "## [1.5.0] - 2026-10-10\n### Added\n- Added `Tween.Delay<T, TPayload>()`, `Sequence.ChainCallback<T, TPayload>()`, and `Sequence.InsertCallback<T, TPayload>()` overloads that pass a struct payload to the callback without producing garbage. The payload can be any struct without reference type fields, up to 120 bytes.\n- Added `Sequence.ChainWaitWhile/Until()` and `Sequence.InsertWaitWhile/Until()` methods that suspend the sequence while (or until) a user-provided predicate returns true. \n- Added `Sequence.isWaiting` property that returns 'true' if the sequence is currently suspended by a wait.\n- Added `cancellationMode` parameter to `SetCancellationToken()` and the global `PrimeTweenConfig.defaultCancellationMode` setting to control whether an animation is stopped or completed when its `CancellationToken` is canceled.\n- All `PrimeTweenConfig.warn*` settings now have public getters, so it's possible to temporarily disable a warning and then restore its previous value.\n### Fixed\n- Fixed a number of rare edge cases found by extensive fuzz testing of the public API. They mostly involved calling PrimeTween API recursively from user-defined callbacks (OnComplete, OnUpdate, Tween.Custom) or using extreme durations. \n- Fixed: `Tween.CompleteAll()` froze the app when an `OnComplete()` callback restarted its own animation. `Tween.CompleteAll()` now completes only animations that are running when it's called.\n- Fixed: endDelay in the PrimeTweenManager's inspector didn't show the correct value. Also, \"cyclesDone\" had an incorrect spelling in the PrimeTweenManager's inspector."
+  },
+  "repository": {
+    "url": "https://github.com/KyryloKuzyk/PrimeTween.git",
+    "type": "git"
+  }
+}

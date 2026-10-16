@@ -32,8 +32,8 @@ namespace PrimeTween {
         internal const string pluginName = "PrimeTween";
         internal const string pluginPackageId = "com.kyrylokuzyk.primetween";
         internal const string packagesPath = "Packages/com.kyrylokuzyk.primetween.tgz";
-        const string assetsPath = "Assets/Plugins/PrimeTween/internal/com.kyrylokuzyk.primetween.tgz";
-        internal const string newAssetsPath = "Assets/Plugins/PrimeTween/internal/com.kyrylokuzyk.primetween-" + version + ".tgz";
+        const string assetsPath = "Assets/_ARCHITECTURE/Plugins/PrimeTween/internal/com.kyrylokuzyk.primetween.tgz";
+        internal const string newAssetsPath = "Assets/_ARCHITECTURE/Plugins/PrimeTween/internal/com.kyrylokuzyk.primetween-" + version + ".tgz";
         const string documentationUrl = "https://github.com/KyryloKuzyk/PrimeTween";
         bool isInstalled;
         bool hasNewTgz;
@@ -222,7 +222,7 @@ DefaultImporter:
                     if (CheckPluginInstalled()) {
                         ReviewRequest.OnPackageUpdate();
                     } else {
-                        var installer = AssetDatabase.LoadAssetAtPath<PrimeTweenInstaller>("Assets/Plugins/PrimeTween/PrimeTweenInstaller.asset");
+                        var installer = AssetDatabase.LoadAssetAtPath<PrimeTweenInstaller>("Assets/_ARCHITECTURE/Plugins/PrimeTween/PrimeTweenInstaller.asset");
                         EditorUtility.FocusProjectWindow(); // this is important to show the installer object in the Project window
                         Selection.activeObject = installer;
                         EditorGUIUtility.PingObject(installer);
