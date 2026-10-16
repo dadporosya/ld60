@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 93409a5890767394aa33c11ec4b99d45
+timeCreated: 1692822771
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Runtime/Passes/Add/Dissolve/DissolvePass.cs
+  uploadId: 968886

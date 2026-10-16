@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 65a2ac71d7484adab84770eaa00dfc19
+timeCreated: 1782723466
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Runtime/Passes/Add/Jitter/Jitter.shader
+  uploadId: 968886

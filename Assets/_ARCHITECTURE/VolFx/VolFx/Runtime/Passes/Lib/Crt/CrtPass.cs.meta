@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 1ff674c6dbfd19340877c6042af5cdd2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Runtime/Passes/Lib/Crt/CrtPass.cs
+  uploadId: 968886

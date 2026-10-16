@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 7fd935adb8e94b9b9e77c032e55e58e3
+timeCreated: 1770978941
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/ScreenFx/Runtime/NoiseHandle.cs
+  uploadId: 968886

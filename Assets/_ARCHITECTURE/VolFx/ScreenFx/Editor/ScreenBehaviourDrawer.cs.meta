@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 5263ae4438284f7e82dc8445f6773c9d
+timeCreated: 1751019556
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/ScreenFx/Editor/ScreenBehaviourDrawer.cs
+  uploadId: 968886

@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 7dbc4063d44e442abbd7dc92f2013808
+timeCreated: 1753484253
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Editor/DitherGradientValueDrawer.cs
+  uploadId: 968886

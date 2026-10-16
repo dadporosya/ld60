@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: f257f07e5955b344fb3d7791b4021ecc
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Runtime/Passes/Lib/Crt/Crt.shader
+  uploadId: 968886

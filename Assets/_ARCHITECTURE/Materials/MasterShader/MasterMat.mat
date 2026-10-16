@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5038997336920993316
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MasterMat
+  m_Shader: {fileID: -6465566751694194690, guid: 25e52c49768ae0c439534fc4b84a1525, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 2062990456f47c141b30057d20bcf29f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Brightness: 0
+    - _Brightness_Amount: 104.94
+    - _Contrast: 0
+    - _Contrast_Amount: 13.22
+    - _Disslove: 0
+    - _DissloveOutlinesthickness: 0.07
+    - _DissloveScale: 88
+    - _DissloveTwirl: 1
+    - _DissloveTwirlStrength: 11.3
+    - _DissolvePixelation: 1000
+    - _Dissolve_amount: 0
+    - _Distortion: 0
+    - _DistortionScale: 10
+    - _DistortionStrength: 0.0101
+    - _Emission: 0
+    - _Emission_Mult: 11.73
+    - _Hit_Blend: 0
+    - _Hit_Effect: 0
+    - _Hit_Glow: 10
+    - _Hue: 0
+    - _HueShiftAmount: 2.48
+    - _HueShiftAnimation: 1
+    - _HueShiftAnimationSpeed: 2.48
+    - _Negative: 0
+    - _Negative_Amount: 1096.36
+    - _OffsetTilling: 0
+    - _Outline: 0
+    - _Outline_Thickness: 5
+    - _Pixel_Resolution: 100.9
+    - _Pixelation: 0
+    - _PixelationShape: 1
+    - _PolarCoordinates: 0
+    - _PolarLengthScale: 32.08
+    - _PolarRadialScale: -29.48
+    - _QueueControl: -1
+    - _QueueOffset: 0
+    - _Saturation: 0
+    - _Saturation_Amount: 48.85
+    - _Twirl: 0
+    - _TwirlStrength: 5.58
+    - _XDir: 0
+    - _YDir: 0
+    m_Colors:
+    - White: {r: 1, g: 1, b: 1, a: 1}
+    - _Distortion_Direction: {r: 0, g: 1, b: 0, a: 0}
+    - _EdgeColor: {r: 1.981132, g: 0.75394136, b: 0, a: 1}
+    - _Hit_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _OUtlineColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

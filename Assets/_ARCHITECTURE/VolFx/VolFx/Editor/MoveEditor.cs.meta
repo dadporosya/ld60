@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 140fbfba7fb846a58c8a5ef261ecde9e
+timeCreated: 1760525648
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Editor/MoveEditor.cs
+  uploadId: 968886

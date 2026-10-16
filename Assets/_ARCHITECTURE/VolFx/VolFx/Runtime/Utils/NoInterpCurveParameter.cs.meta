@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 100fcda69bf44eeda25e478321b828a8
+timeCreated: 1749544728
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Runtime/Utils/NoInterpCurveParameter.cs
+  uploadId: 968886

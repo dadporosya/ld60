@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 9c53165b379c3d94ca34b12cb8eb10f1
+timeCreated: 1676442801
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Runtime/VolFx.cs
+  uploadId: 968886

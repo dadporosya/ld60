@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 0362702657b851e4c8bb6c4df77a5709
+timeCreated: 1676459180
+AssetOrigin:
+  serializedVersion: 1
+  productId: 300643
+  packageName: VolFx - VFX Toolkit (Post Processing, Shaders, Timeline Tools)
+  packageVersion: 2.14.1
+  assetPath: Assets/VolFx/VolFx/Runtime/Passes/Add/Shine/ShineVol.cs
+  uploadId: 968886
