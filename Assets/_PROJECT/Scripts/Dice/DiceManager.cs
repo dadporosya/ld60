@@ -270,19 +270,19 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private bool addDiceSum = true;
     [Tooltip("A round whose dice make no hand (Nothing) scores 0 - no dice sum, no card bonuses.")]
     [SerializeField] private bool noPointsWithoutCombination = false;
-    [Tooltip("Each hand's bonus. Defaults from Balance/dice_balance.py: pair = 10, two pair = pair + pair, " +
-             "full house = three + pair, the rest by how many throws the hand takes to make.")]
+    [Tooltip("Each hand's bonus. Defaults from Balance/dice_balance.py (POINTS), which also works out " +
+             "LevelManager's targets from it.")]
     [SerializeField] private List<CombinationScore> combinations = new List<CombinationScore>
     {
         new CombinationScore(PokerDiceCombination.Nothing, "Nothing", 0),
         new CombinationScore(PokerDiceCombination.OnePair, "Pair", 10),
         new CombinationScore(PokerDiceCombination.TwoPair, "Two Pair", 20),
-        new CombinationScore(PokerDiceCombination.ThreeOfAKind, "Three of a Kind", 25),
-        new CombinationScore(PokerDiceCombination.SmallStraight, "Small Straight", 30),
-        new CombinationScore(PokerDiceCombination.LargeStraight, "Large Straight", 45),
-        new CombinationScore(PokerDiceCombination.FullHouse, "Full House", 35),
-        new CombinationScore(PokerDiceCombination.FourOfAKind, "Four of a Kind", 40),
-        new CombinationScore(PokerDiceCombination.FiveOfAKind, "Five of a Kind", 65),
+        new CombinationScore(PokerDiceCombination.ThreeOfAKind, "Three of a Kind", 30),
+        new CombinationScore(PokerDiceCombination.SmallStraight, "Small Straight", 50),
+        new CombinationScore(PokerDiceCombination.LargeStraight, "Large Straight", 100),
+        new CombinationScore(PokerDiceCombination.FullHouse, "Full House", 67),
+        new CombinationScore(PokerDiceCombination.FourOfAKind, "Four of a Kind", 100),
+        new CombinationScore(PokerDiceCombination.FiveOfAKind, "Five of a Kind", 200),
     };
 
     [Header("UI")]

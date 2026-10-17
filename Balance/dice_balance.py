@@ -5,7 +5,9 @@ DiceManager.Evaluate: a throw scores the best hand it contains, and every die ad
 (DiceManager's Add Dice Sum).
 
 Play is solved exactly: before each reroll the player keeps (locks) the dice that maximise the
-expected result, and can stop (Finish) at any time.
+expected result, and can stop (Finish) at any time. Level targets are solved the way the game plays a
+level: several rounds whose points add up, the player playing for exactly the target, and Finish locked
+until the level's total reaches it (until then every reroll is spent).
 
 Run: python Balance/dice_balance.py   (rewrites the CSVs next to this file)
 """
@@ -17,28 +19,30 @@ from itertools import combinations_with_replacement
 FACES = 6
 DICE_COUNTS = (5, 6, 7)
 MAX_REROLLS = 5
-# The game's table (New Scene: 5 dice, 4 rerolls, 1 round) and LevelManager.pointsByRound before.
-GAME_DICE, GAME_REROLLS = 5, 4
-OLD_TARGETS = [10, 20, 30, 67]
+# The game's table (New Scene's DiceManager: 5 dice, 3 rerolls, 3 rounds a level, dice sum added).
+GAME_DICE, GAME_REROLLS, GAME_ROUNDS = 5, 3, 3
+# What LevelManager.pointsByRound was tuned for before (5 dice, 4 rerolls, 1 round, PREV_POINTS), and those
+# targets. The new targets keep each one's pass chance.
+PREV_DICE, PREV_REROLLS, PREV_ROUNDS = 5, 4, 1
+PREV_TARGETS = [30, 47, 60, 105]
 HANDS = ["Nothing", "OnePair", "TwoPair", "ThreeOfAKind", "SmallStraight", "LargeStraight",
          "FullHouse", "FourOfAKind", "FiveOfAKind"]
 
-# Hand bonus on top of the dice sum, from how hard each hand is to make (expected_throws, scaled so
-# pair = 10 and two pair = pair + pair = 20), rounded to 5s. Full house = three + pair.
+# Hand bonus on top of the dice sum (the design sheet's bonus column; large straight as four of a kind).
 POINTS = {
     "Nothing": 0,
     "OnePair": 10,
     "TwoPair": 20,
-    "ThreeOfAKind": 25,
-    "SmallStraight": 30,
-    "FullHouse": 35,
-    "FourOfAKind": 40,
-    "LargeStraight": 45,
-    "FiveOfAKind": 65,
+    "ThreeOfAKind": 30,
+    "SmallStraight": 50,
+    "FullHouse": 67,
+    "FourOfAKind": 100,
+    "LargeStraight": 100,
+    "FiveOfAKind": 200,
 }
-# The table before: hand points only, no dice sum.
-OLD_POINTS = {"Nothing": 0, "OnePair": 5, "TwoPair": 10, "ThreeOfAKind": 15, "SmallStraight": 20,
-              "LargeStraight": 30, "FullHouse": 25, "FourOfAKind": 40, "FiveOfAKind": 60}
+# The bonus table before (also on top of the dice sum).
+PREV_POINTS = {"Nothing": 0, "OnePair": 10, "TwoPair": 20, "ThreeOfAKind": 25, "SmallStraight": 30,
+               "LargeStraight": 45, "FullHouse": 35, "FourOfAKind": 40, "FiveOfAKind": 65}
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -145,6 +149,37 @@ class Table:
         """Chance to score at least target when playing for exactly that."""
         return self.solve(lambda d: 1.0 if terminal(d) >= target else 0.0, rerolls)[rerolls][self.kept.index(())]
 
+    def goal_chance(self, value, reached, rerolls):
+        """
+        Chance of a good end, value(state) being a final throw's worth (0..1). Stopping early is only
+        allowed once reached(state) (the game's Finish unlocks at the target): before that every reroll
+        is spent, rethrowing at least one die.
+        """
+        term = [value(s) for s in self.states]
+        done = [reached(s) for s in self.states]
+        V = term[:]
+        for _ in range(rerolls):
+            W = [sum(p * V[i] for i, p in t) for t in self.throw]
+            V = [term[i] if done[i] else max(W[k] for k in self.subsets[i] if k != self.full[i])
+                 for i in range(len(self.states))]
+        return sum(p * V[i] for i, p in self.throw[self.kept.index(())])
+
+    def level_pass_chances(self, points, rerolls, rounds):
+        """P[t]: chance a level of `rounds` rounds adds up to at least t points, playing for exactly t."""
+        scores = {s: score(points, True)(s) for s in self.states}
+        top = max(scores.values()) * rounds
+        P = [1.0] + [0.0] * top  # no rounds left: passed only if nothing is still needed
+
+        def chance(P, need):
+            return 1.0 if need <= 0 else (P[need] if need < len(P) else 0.0)
+
+        for _ in range(rounds):
+            prev = P
+            P = [1.0] + [self.goal_chance(lambda s, n=n: chance(prev, n - scores[s]),
+                                          lambda s, n=n: scores[s] >= n, rerolls)
+                         for n in range(1, top + 1)]
+        return P
+
     def expected_throws(self, hand):
         """Throws needed on average to make hand, aiming only for it, with unlimited rerolls."""
         done = [hand in contained(s) for s in self.states]
@@ -176,18 +211,18 @@ def main():
             best[best_hand(POINTS, s)] += p
 
         go_for = {h: table.solve(lambda d, h=h: 1.0 if h in contained(d) else 0.0, MAX_REROLLS) for h in HANDS}
-        old_W = table.solve(score(OLD_POINTS, False), MAX_REROLLS)
+        prev_W = table.solve(score(PREV_POINTS, True), MAX_REROLLS)
 
         finals = []
         for r in range(MAX_REROLLS + 1):
             ev, dist = table.final_hands(score(POINTS, True), r, POINTS)
             finals.append(dist)
-            ev_old = old_W[r][start]
-            ev_rows.append({"dice": n, "rerolls": r, "expected_points_old": round(ev_old, 2),
-                            "expected_points_new": round(ev, 2), "new_over_old": round(ev / ev_old, 3)})
+            ev_prev = prev_W[r][start]
+            ev_rows.append({"dice": n, "rerolls": r, "expected_points_prev": round(ev_prev, 2),
+                            "expected_points_new": round(ev, 2), "new_over_prev": round(ev / ev_prev, 3)})
 
         for h in HANDS:
-            row = {"dice": n, "hand": h, "points_old": OLD_POINTS[h], "bonus_new": POINTS[h],
+            row = {"dice": n, "hand": h, "bonus_prev": PREV_POINTS[h], "bonus_new": POINTS[h],
                    "contains_1_throw_%": round(100 * has[h], 3),
                    "best_hand_1_throw_%": round(100 * best[h], 3)}
             for r in range(MAX_REROLLS + 1):
@@ -215,25 +250,29 @@ def main():
         print(f"  {h:14} {throws[h]:6.3f} throws -> {10 * (throws[h] / throws['OnePair']) ** k:5.1f}  (table: {POINTS[h]})")
 
     # --- Level targets: keep each one's pass chance (playing for the target) ---
-    new_score = score(POINTS, True)
-    old_score = score(OLD_POINTS, False)
-    print(f"\nTargets ({GAME_DICE} dice, {GAME_REROLLS} rerolls):")
+    print(f"\nTargets ({PREV_DICE}d {PREV_REROLLS}r x{PREV_ROUNDS} -> {GAME_DICE}d {GAME_REROLLS}r x{GAME_ROUNDS}):")
+    p_prev = Table(PREV_DICE).level_pass_chances(PREV_POINTS, PREV_REROLLS, PREV_ROUNDS)
+    p_new = table.level_pass_chances(POINTS, GAME_REROLLS, GAME_ROUNDS)
     target_rows = []
-    for t in OLD_TARGETS:
-        p_old = table.pass_chance(old_score, GAME_REROLLS, t)
-        lo, hi = 0, 400
-        while lo < hi:  # the highest new target that is at least as easy as the old one
-            mid = (lo + hi + 1) // 2
-            if table.pass_chance(new_score, GAME_REROLLS, mid) >= p_old - 1e-9: lo = mid
-            else: hi = mid - 1
-        p_new = table.pass_chance(new_score, GAME_REROLLS, lo)
-        print(f"  old {t:3} ({100 * p_old:6.2f}%) -> new {lo:3} ({100 * p_new:6.2f}%)")
-        target_rows.append({"old_target": t, "old_pass_%": round(100 * p_old, 2),
-                            "new_target": lo, "new_pass_%": round(100 * p_new, 2)})
+    for n, t in enumerate(PREV_TARGETS):
+        before = p_prev[t] if t < len(p_prev) else 0.0
+        if before > 0 or n == 0:
+            # the highest new target that is at least as easy as the old one
+            new = max(i for i, p in enumerate(p_new) if p >= before - 1e-9)
+        else:
+            # Out of reach without cards before: keep its ratio to the target before it.
+            new = round(target_rows[-1]["new_target"] * t / PREV_TARGETS[n - 1])
+        print(f"  prev {t:3} ({100 * before:6.2f}%) -> new {new:3} ({100 * p_new[new]:6.2f}%)")
+        target_rows.append({"prev_target": t, "prev_pass_%": round(100 * before, 2),
+                            "new_target": new, "new_pass_%": round(100 * p_new[new], 2)})
     with open(os.path.join(OUT_DIR, "dice_targets.csv"), "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(target_rows[0].keys()))
         w.writeheader()
         w.writerows(target_rows)
+    with open(os.path.join(OUT_DIR, "dice_level_pass.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["target", "pass_%"])
+        w.writerows([t, round(100 * p, 2)] for t, p in enumerate(p_new) if p >= 0.0005)
 
     for row in ev_rows:
         print(row)
