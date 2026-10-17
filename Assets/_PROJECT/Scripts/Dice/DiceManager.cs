@@ -1019,8 +1019,8 @@ public class DiceManager : MonoBehaviour
 
     /// <summary>
     /// The best score <paramref name="values"/> can make: every hand they contain is scored with the
-    /// cards' bonuses and the highest total wins. Order: hand points (+ dice sum) x hand multipliers,
-    /// + flat / hand / face bonuses, x score multipliers.
+    /// cards' bonuses and the highest total wins. Order: hand bonus x hand / pattern multipliers (+ dice
+    /// sum), + flat / hand / face / pattern / parity bonuses, x score / parity multipliers.
     /// </summary>
     public DiceScore Evaluate(IReadOnlyList<int> values, IReadOnlyList<CardInstance> ownedCards)
     {
@@ -1033,7 +1033,8 @@ public class DiceManager : MonoBehaviour
             CombinationScore entry = ScoreFor(hand);
             if (entry == null) continue;
 
-            float handPoints = entry.points + (addDiceSum ? diceSum : 0);
+            // Hand multipliers scale the combination's bonus only: the dice sum is added after them.
+            float handBonus = entry.points;
             float bonus = 0f;
             float scoreMultiplier = 1f;
 
@@ -1053,7 +1054,7 @@ public class DiceManager : MonoBehaviour
                             if (effect.Matches(hand)) bonus += card.Amount;
                             break;
                         case CardEffectType.CombinationMultiplier:
-                            if (effect.Matches(hand)) handPoints *= card.Multiplier;
+                            if (effect.Matches(hand)) handBonus *= card.Multiplier;
                             break;
                         case CardEffectType.FaceValueBonus:
                             foreach (int v in values)
@@ -1062,9 +1063,23 @@ public class DiceManager : MonoBehaviour
                         case CardEffectType.ScoreMultiplier:
                             scoreMultiplier *= card.Multiplier;
                             break;
+                        case CardEffectType.PatternBonus:
+                            if (effect.PatternIn(values)) bonus += card.Amount;
+                            break;
+                        case CardEffectType.PatternMultiplier:
+                            if (effect.PatternIn(values)) handBonus *= card.Multiplier;
+                            break;
+                        case CardEffectType.ParityBonus:
+                            foreach (int v in values)
+                                if (effect.IsOfParity(v)) bonus += card.Amount;
+                            break;
+                        case CardEffectType.ParityMultiplier:
+                            if (values.Count > 0 && AllOfParity(values, effect)) scoreMultiplier *= card.Multiplier;
+                            break;
                     }
                 }
 
+            float handPoints = handBonus + (addDiceSum ? diceSum : 0);
             int basePoints = Mathf.RoundToInt(handPoints);
             int total = Mathf.RoundToInt((handPoints + bonus) * scoreMultiplier);
 
@@ -1083,15 +1098,37 @@ public class DiceManager : MonoBehaviour
         return best ?? new DiceScore { combination = PokerDiceCombination.Nothing, combinationName = "Nothing" };
     }
 
-    private static int ExtraRerolls(IReadOnlyList<CardInstance> ownedCards)
+    private static bool AllOfParity(IReadOnlyList<int> values, CardEffect effect)
     {
-        int extra = 0;
+        foreach (int v in values)
+            if (!effect.IsOfParity(v)) return false;
+        return true;
+    }
+
+    /// <summary>A round's rerolls: <see cref="rerollsPerRound"/> + Extra Rerolls cards - Extra Dice cards' cost.</summary>
+    private int RerollsFor(IReadOnlyList<CardInstance> ownedCards)
+    {
+        int rerolls = rerollsPerRound;
         foreach (CardInstance card in ownedCards)
         {
             CardEffect effect = card?.Effect;
-            if (effect != null && effect.type == CardEffectType.ExtraRerolls) extra += card.Amount;
+            if (effect == null) continue;
+            if (effect.type == CardEffectType.ExtraRerolls) rerolls += Mathf.Max(0, card.Amount);
+            else if (effect.type == CardEffectType.ExtraDice) rerolls -= Mathf.Max(0, effect.rerollCost);
         }
-        return Mathf.Max(0, extra);
+        return Mathf.Max(0, rerolls);
+    }
+
+    /// <summary>Dice on the table this turn: <see cref="startDiceCount"/> + Extra Dice cards.</summary>
+    private int DiceCountFor(IReadOnlyList<CardInstance> ownedCards)
+    {
+        int count = startDiceCount;
+        foreach (CardInstance card in ownedCards)
+        {
+            CardEffect effect = card?.Effect;
+            if (effect != null && effect.type == CardEffectType.ExtraDice) count += Mathf.Max(0, card.Amount);
+        }
+        return Mathf.Max(1, count);
     }
 
     // ---------------------------------------------------------------------

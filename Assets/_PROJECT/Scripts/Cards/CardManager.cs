@@ -34,7 +34,8 @@ public class CardManager : MonoBehaviour
     [SerializeField] private CardView cardPrefab;
     [Tooltip("Cards offered per choice when no count is given.")]
     [SerializeField, Min(1)] private int defaultChoiceCount = 2;
-    [Tooltip("Offer permanent cards the player already has.")]
+    [Tooltip("Offer permanent cards the player already has, however many copies of them the deck holds (CardData.count). " +
+             "Off: a card is offered until the player owns all its copies.")]
     [SerializeField] private bool allowOwnedPermanentCards = false;
     [Tooltip("Permanent cards the player starts with (optional).")]
     [SerializeField] private List<CardData> startingCards = new List<CardData>();
@@ -510,24 +511,48 @@ public class CardManager : MonoBehaviour
     // Helpers
     // ---------------------------------------------------------------------
 
+    /// <summary>How many of <paramref name="data"/> the player keeps.</summary>
+    public int OwnedCount(CardData data)
+    {
+        int owned = 0;
+        foreach (CardInstance card in PermanentCards)
+            if (card.data == data) owned++;
+        return owned;
+    }
+
+    /// <summary>
+    /// <paramref name="count"/> different cards, each drawn with a chance by its copies left in the deck
+    /// (<see cref="CardData.count"/>, less the ones the player keeps unless owned cards may come again).
+    /// </summary>
     private List<CardData> PickOffer(int count)
     {
         List<CardData> pool = new List<CardData>();
+        List<int> copies = new List<int>();
         foreach (CardData data in availableCards)
         {
             if (!data || pool.Contains(data)) continue;
-            if (data.IsPermanent && !allowOwnedPermanentCards && OwnsPermanent(data)) continue;
+            int left = Mathf.Max(1, data.count);
+            if (data.IsPermanent && !allowOwnedPermanentCards) left -= OwnedCount(data);
+            if (left <= 0) continue;
             pool.Add(data);
+            copies.Add(left);
         }
 
-        for (int i = pool.Count - 1; i > 0; i--)
+        List<CardData> offer = new List<CardData>();
+        while (offer.Count < count && pool.Count > 0)
         {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (pool[i], pool[j]) = (pool[j], pool[i]);
-        }
+            int total = 0;
+            foreach (int c in copies) total += c;
 
-        if (pool.Count > count) pool.RemoveRange(count, pool.Count - count);
-        return pool;
+            int roll = UnityEngine.Random.Range(0, total);
+            int i = 0;
+            while (roll >= copies[i]) roll -= copies[i++];
+
+            offer.Add(pool[i]);
+            pool.RemoveAt(i);
+            copies.RemoveAt(i);
+        }
+        return offer;
     }
 
     private CardView Spawn(CardData data, Transform parent)

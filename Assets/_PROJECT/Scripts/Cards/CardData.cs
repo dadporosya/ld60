@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -18,14 +19,14 @@ public enum CardKind
     Immediate,
 }
 
-/// <summary>A permanent card's bonus to the dice score.</summary>
+/// <summary>A permanent card's bonus to the dice score. Values are serialized: append new ones at the end.</summary>
 public enum CardEffectType
 {
     [Tooltip("+Amount points to every round's score.")]
     FlatPoints,
-    [Tooltip("+Amount points when the dice make Combination.")]
+    [Tooltip("+Amount points when the dice make Combination (or one of Other Combinations).")]
     CombinationBonus,
-    [Tooltip("The Combination's points are multiplied by Multiplier.")]
+    [Tooltip("The Combination's (or one of Other Combinations') bonus points are multiplied by Multiplier. The dice sum isn't.")]
     CombinationMultiplier,
     [Tooltip("+Amount points for each die showing Face Value.")]
     FaceValueBonus,
@@ -33,6 +34,29 @@ public enum CardEffectType
     ExtraRerolls,
     [Tooltip("The whole score is multiplied by Multiplier.")]
     ScoreMultiplier,
+    [Tooltip("+Amount points when the dice show Pattern (\"1 1\": two 1s, \"1 6\": a 1 and a 6).")]
+    PatternBonus,
+    [Tooltip("When the dice show Pattern, the combination's bonus points are multiplied by Multiplier. The dice sum isn't.")]
+    PatternMultiplier,
+    [Tooltip("+Amount points for each die that is Parity (odd / even).")]
+    ParityBonus,
+    [Tooltip("The whole score is multiplied by Multiplier when every die is Parity (odd / even).")]
+    ParityMultiplier,
+    [Tooltip("+Amount dice on the table every round, and Reroll Cost rerolls fewer.")]
+    ExtraDice,
+    [Tooltip("Right click a die showing Face Value: it is rerolled alone, for free, as often as the player likes.")]
+    RerollFace,
+    [Tooltip("Right click a die showing Face Value: it is removed for the rest of the round and gives +Amount rerolls.")]
+    DestroyFace,
+    [Tooltip("Right click a die showing Face Value to turn it into Flip Face, and back - as often as the player likes.")]
+    FlipFace,
+}
+
+/// <summary>Odd or even faces, for the parity cards.</summary>
+public enum DiceParity
+{
+    Odd,
+    Even,
 }
 
 /// <summary>An immediate card's one-off effect.</summary>
@@ -52,15 +76,60 @@ public class CardEffect
     public int amount = 3;
     [Min(0f)] public float multiplier = 1.5f;
     public PokerDiceCombination combination = PokerDiceCombination.OnePair;
+    [Tooltip("Combination cards: more hands the card counts for - e.g. Large Straight next to Small Straight.")]
+    public List<PokerDiceCombination> otherCombinations = new List<PokerDiceCombination>();
     [Range(1, 6)] public int faceValue = 6;
+    [Tooltip("Pattern cards: the faces the dice must show, e.g. \"1 1\" (two 1s), \"6 6 6\", \"1 6\" (a 1 and a 6).")]
+    public string pattern = "1 1";
+    [Tooltip("Parity cards: which dice count.")]
+    public DiceParity parity = DiceParity.Odd;
+    [Tooltip("Extra Dice: rerolls lost every round.")]
+    [Min(0)] public int rerollCost = 1;
+    [Tooltip("Flip Face: what Face Value turns into (and back).")]
+    [Range(1, 6)] public int flipFace = 5;
 
-    public bool Matches(PokerDiceCombination hand) => hand == combination;
+    public bool Matches(PokerDiceCombination hand) => hand == combination || otherCombinations.Contains(hand);
 
     /// <summary>Multiplier cards: their number is the multiplier, not an amount of points.</summary>
-    public bool UsesMultiplier => type == CardEffectType.CombinationMultiplier || type == CardEffectType.ScoreMultiplier;
+    public bool UsesMultiplier => type is CardEffectType.CombinationMultiplier or CardEffectType.ScoreMultiplier
+        or CardEffectType.PatternMultiplier or CardEffectType.ParityMultiplier;
 
-    /// <summary>Whether an upgrade changes this bonus - everything that adds points (not rerolls).</summary>
-    public bool CanUpgrade => type != CardEffectType.ExtraRerolls;
+    /// <summary>Cards used by right clicking a die (<see cref="ActsOn"/> says which).</summary>
+    public bool IsDieAction => type is CardEffectType.RerollFace or CardEffectType.DestroyFace or CardEffectType.FlipFace;
+
+    /// <summary>Whether an upgrade changes this bonus - everything that adds points (not rerolls, dice or die actions).</summary>
+    public bool CanUpgrade => !IsDieAction && type is not (CardEffectType.ExtraRerolls or CardEffectType.ExtraDice);
+
+    /// <summary>Die actions: whether this card can be used on a die showing <paramref name="face"/>.</summary>
+    public bool ActsOn(int face) =>
+        IsDieAction && (face == faceValue || (type == CardEffectType.FlipFace && face == flipFace));
+
+    /// <summary>Flip Face: the face <paramref name="face"/> turns into.</summary>
+    public int FlipOf(int face) => face == faceValue ? flipFace : faceValue;
+
+    public bool IsOfParity(int face) => parity == DiceParity.Odd ? face % 2 == 1 : face % 2 == 0;
+
+    /// <summary>Pattern cards: whether <paramref name="values"/> show every face of <see cref="pattern"/> (as many times as it has it).</summary>
+    public bool PatternIn(IReadOnlyList<int> values)
+    {
+        int[] need = new int[PokerDiceEvaluator.Faces + 1];
+        bool any = false;
+        foreach (char c in pattern ?? "")
+        {
+            int face = c - '0';
+            if (face < 1 || face > PokerDiceEvaluator.Faces) continue;
+            need[face]++;
+            any = true;
+        }
+        if (!any) return false;
+
+        int[] have = new int[PokerDiceEvaluator.Faces + 1];
+        foreach (int v in values)
+            if (v >= 1 && v <= PokerDiceEvaluator.Faces) have[v]++;
+        for (int f = 1; f <= PokerDiceEvaluator.Faces; f++)
+            if (have[f] < need[f]) return false;
+        return true;
+    }
 
     /// <summary>Points with <paramref name="scale"/> applied (1.5 = 50% more), rounded half up.</summary>
     public int AmountFor(float scale) => Mathf.FloorToInt(amount * scale + 0.5f);
@@ -80,14 +149,37 @@ public class CardEffect
         switch (type)
         {
             case CardEffectType.FlatPoints: return $"+{value} points";
-            case CardEffectType.CombinationBonus: return $"+{value} points for {Nicify(combination)}";
-            case CardEffectType.CombinationMultiplier: return $"{Nicify(combination)} scores x{value}";
+            case CardEffectType.CombinationBonus: return $"+{value} points for {Combinations}";
+            case CardEffectType.CombinationMultiplier: return $"{Combinations} scores x{value}";
             case CardEffectType.FaceValueBonus: return $"+{value} points for each {faceValue}";
             case CardEffectType.ExtraRerolls: return amount == 1 ? $"+{value} reroll" : $"+{value} rerolls";
             case CardEffectType.ScoreMultiplier: return $"Score x{value}";
+            case CardEffectType.PatternBonus: return $"{pattern} grants +{value} points";
+            case CardEffectType.PatternMultiplier: return $"{pattern} multiplies the combination's points by {value}";
+            case CardEffectType.ParityBonus: return $"+{value} points for each {Parity} die";
+            case CardEffectType.ParityMultiplier: return $"Score x{value} if every die is {Parity}";
+            case CardEffectType.ExtraDice:
+                return $"+{value} {(amount == 1 ? "die" : "dice")}, -{rerollCost} {(rerollCost == 1 ? "reroll" : "rerolls")}";
+            case CardEffectType.RerollFace: return $"Right click a {faceValue} to reroll it, any number of times";
+            case CardEffectType.DestroyFace:
+                return $"Right click a {faceValue} to destroy it: +{value} {(amount == 1 ? "reroll" : "rerolls")}";
+            case CardEffectType.FlipFace: return $"Right click a {faceValue} to flip it to {flipFace} and back, any number of times";
             default: return "";
         }
     }
+
+    private string Combinations
+    {
+        get
+        {
+            string text = Nicify(combination);
+            foreach (PokerDiceCombination other in otherCombinations)
+                if (other != combination) text += " / " + Nicify(other);
+            return text;
+        }
+    }
+
+    private string Parity => parity == DiceParity.Odd ? "odd" : "even";
 
     public static string Nicify(PokerDiceCombination combination) =>
         Regex.Replace(combination.ToString(), "(\\B[A-Z])", " $1");
@@ -133,6 +225,11 @@ public class CardData : ScriptableObject
     public Sprite art;
     [Tooltip("Optional: this card's own prefab instead of the CardManager's Card Prefab.")]
     public CardView viewPrefab;
+
+    [Header("Deck")]
+    [Tooltip("Copies of this card in the deck: the more, the likelier it is offered. A permanent card can be owned " +
+             "this many times at most - unless the CardManager allows owned permanent cards to be offered again.")]
+    [Min(1)] public int count = 1;
 
     [Header("Bonus")]
     public CardKind kind = CardKind.Permanent;
