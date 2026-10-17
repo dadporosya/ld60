@@ -722,6 +722,7 @@ MonoBehaviour:
   riskyGoalMultiplier: 2
   tutorialDialogue: {fileID: 11400000, guid: 993b1b18e1955df48adff7cb82110f37, type: 2}
   tutorialSpeaker: {fileID: 0}
+  tutorialObjects: {fileID: 0}
   showSkipDuringTutorial: 1
   alwaysPlayTutorial: 0
   addDiceSum: 0
@@ -1615,7 +1616,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 18.606934, y: 66}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -737.214, y: 231}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &346760858
@@ -2814,7 +2815,6 @@ GameObject:
   - component: {fileID: 548950540}
   - component: {fileID: 548950539}
   - component: {fileID: 548950538}
-  - component: {fileID: 548950541}
   m_Layer: 0
   m_Name: 'Combination]'
   m_TagString: Untagged
@@ -2854,7 +2854,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TextAnimation
   animationTarget: 3
-  animations: 
+  animations: 01000000
   cleaned: 0
   shakeStrength: 3
   shakeSpeed: 25
@@ -2969,34 +2969,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 548950536}
   m_CullTransparentMesh: 1
---- !u!114 &548950541
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 548950536}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba17233c34e02024e9e4c50f01335076, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TextAnimation
-  animationTarget: 3
-  animations: 
-  cleaned: 0
-  shakeStrength: 3
-  shakeSpeed: 25
-  waveAmplitude: 6
-  waveFrequency: 2
-  waveSpread: 0.3
-  bounceHeight: 8
-  bounceFrequency: 2
-  bounceSpread: 0.2
-  fadeMinAlpha: 0
-  fadeMaxAlpha: 1
-  fadeSpeed: 1.5
-  _tmp: {fileID: 0}
-  _isDirty: 1
 --- !u!1 &620020854
 GameObject:
   m_ObjectHideFlags: 0
@@ -3725,9 +3697,9 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 2052019987}
   - {fileID: 1743218968}
   - {fileID: 244570388}
+  - {fileID: 2052019987}
   - {fileID: 1901275428}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
@@ -5192,7 +5164,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ScreenHolesFader
   faderImage: {fileID: 0}
   holeShader: {fileID: 0}
-  holes: []
+  holes:
+  - {fileID: 1743218968}
+  - {fileID: 244570388}
+  - {fileID: 2052019987}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1

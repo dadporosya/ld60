@@ -313,12 +313,23 @@ public class DiceManager : MonoBehaviour
     public DicePopups popups = new DicePopups();
 
     [Header("Events")]
+    public UnityEvent onTurnStarted = new UnityEvent();
+    /// <summary>Each round of a turn, the first included.</summary>
     public UnityEvent onRoundStarted = new UnityEvent();
     public UnityEvent onRolled = new UnityEvent();
-    /// <summary>The round's total score.</summary>
+    /// <summary>The round's score (that round alone).</summary>
     public UnityEvent<int> onRoundFinished = new UnityEvent<int>();
+    /// <summary>The turn's total score (every round added up).</summary>
+    public UnityEvent<int> onTurnFinished = new UnityEvent<int>();
 
-    public bool RoundActive { get; private set; }
+    public bool TurnActive { get; private set; }
+    /// <summary>The round being played, 1-based (0 before the turn's first round).</summary>
+    public int CurrentRound { get; private set; }
+    /// <summary>Rounds in the running turn (<see cref="roundsPerTurn"/> as it was when the turn started).</summary>
+    public int RoundsInTurn { get; private set; } = 1;
+    public bool IsLastRound => CurrentRound >= RoundsInTurn;
+    /// <summary>Points banked by the turn's finished rounds.</summary>
+    public int BankedScore { get; private set; }
     public bool HasRolled { get; private set; }
     public int RerollsLeft { get; private set; }
     public int Target { get; private set; }
@@ -333,8 +344,8 @@ public class DiceManager : MonoBehaviour
     // The round has opened but the first throw isn't allowed yet (tutorial, first roll delay).
     private bool introRunning;
     private Tween firstRollTween;
-    // Bumped per round and on cancel: a tutorial ending late only carries on the round it belongs to.
-    private int roundId;
+    // Bumped per turn and on cancel: a tutorial ending late only carries on the turn it belongs to.
+    private int turnId;
     private DialogueContainer runningTutorial;
     private DialogueManager tutorialManager;
     private UnityAction tutorialEnded;
@@ -343,8 +354,10 @@ public class DiceManager : MonoBehaviour
     // Set once the tutorial has been seen to the end in this run; cleared by ResetTutorial (StartGame).
     private bool tutorialPlayedThisRun;
     private IReadOnlyList<CardInstance> cards = Array.Empty<CardInstance>();
-    private Action<DiceRoundResult> roundCallback;
-    private DiceRoundResult pendingResult;
+    private Action<DiceTurnResult> turnCallback;
+    // The turn's rounds so far; the last one is added (not yet banked) as it finishes.
+    private readonly List<DiceRoundResult> roundResults = new List<DiceRoundResult>();
+    private DiceTurnResult pendingResult;
     private Tween finishTween;
     private readonly List<Tween> popupTweens = new List<Tween>();
     private float nextPopupTime;
@@ -394,7 +407,7 @@ public class DiceManager : MonoBehaviour
         }
     }
 
-    private bool CanLock => RoundActive && HasRolled && !IsRolling && !finishing && RerollsLeft > 0;
+    private bool CanLock => TurnActive && HasRolled && !IsRolling && !finishing && RerollsLeft > 0;
 
     /// <summary>True when clicking a die would lock or unlock it right now.</summary>
     public bool CanLockNow => CanLock;
@@ -404,7 +417,7 @@ public class DiceManager : MonoBehaviour
     private void Awake() => Initialize();
 
     /// <summary>
-    /// Sets up the dice and buttons. Runs from Awake, or from <see cref="StartRound"/> when this sits on
+    /// Sets up the dice and buttons. Runs from Awake, or from <see cref="StartTurn"/> when this sits on
     /// a table panel that starts hidden (an inactive object gets no Awake until it is shown).
     /// </summary>
     private void Initialize()
@@ -587,45 +600,59 @@ public class DiceManager : MonoBehaviour
     }
 
     // ---------------------------------------------------------------------
-    // Round
+    // Turn / round
     // ---------------------------------------------------------------------
 
     /// <summary>
-    /// Opens the table for a round against <paramref name="target"/> with <paramref name="ownedCards"/>'
-    /// bonuses. <paramref name="onFinished"/> gets the result once it has been shown.
+    /// Opens the table for a turn of <see cref="roundsPerTurn"/> rounds against <paramref name="target"/>
+    /// with <paramref name="ownedCards"/>' bonuses. <paramref name="onFinished"/> gets the result once the
+    /// last round's has been shown.
     /// </summary>
-    public void StartRound(int target, IReadOnlyList<CardInstance> ownedCards, Action<DiceRoundResult> onFinished)
+    public void StartTurn(int target, IReadOnlyList<CardInstance> ownedCards, Action<DiceTurnResult> onFinished)
     {
         Initialize();
 
-        if (RoundActive)
+        if (TurnActive)
         {
-            h.Out("DiceManager: a round is already running.");
+            h.Out("DiceManager: a turn is already running.");
             return;
         }
 
-        RoundActive = true;
+        TurnActive = true;
+        Target = target;
+        cards = ownedCards ?? Array.Empty<CardInstance>();
+        turnCallback = onFinished;
+        RoundsInTurn = Mathf.Max(1, roundsPerTurn);
+        CurrentRound = 0;
+        BankedScore = 0;
+        roundResults.Clear();
+
+        StopPopups();
+        turnId++;
+        if (tableRoot) tableRoot.SetActive(true);
+        if (resultText) resultText.gameObject.SetActive(false);
+        onTurnStarted?.Invoke();
+
+        PrepareRound();
+        if (ShouldPlayTutorial) PlayTutorial(QueueFirstRoll);
+        else QueueFirstRoll();
+    }
+
+    /// <summary>Resets the dice and rerolls for the turn's next round. The first throw waits for <see cref="QueueFirstRoll"/>.</summary>
+    private void PrepareRound()
+    {
+        CurrentRound++;
         HasRolled = false;
         finishing = false;
         landingPending = 0;
-        Target = target;
-        cards = ownedCards ?? Array.Empty<CardInstance>();
-        roundCallback = onFinished;
         RerollsLeft = rerollsPerRound + ExtraRerolls(cards);
 
         foreach (Dice die in dice)
             if (die) die.ResetDice();
 
-        StopPopups();
-        roundId++;
         introRunning = true;
-        if (tableRoot) tableRoot.SetActive(true);
-        if (resultText) resultText.gameObject.SetActive(false);
         UpdateUI();
         onRoundStarted?.Invoke();
-
-        if (ShouldPlayTutorial) PlayTutorial(QueueFirstRoll);
-        else QueueFirstRoll();
     }
 
     /// <summary>The first throw becomes possible (and, with Auto First Roll, happens) after <see cref="firstRollDelay"/>.</summary>
@@ -638,7 +665,7 @@ public class DiceManager : MonoBehaviour
 
     private void EndIntro()
     {
-        if (!RoundActive) return;
+        if (!TurnActive) return;
         introRunning = false;
         if (autoFirstRoll && !HasRolled) Roll();
         else UpdateUI();
@@ -654,7 +681,7 @@ public class DiceManager : MonoBehaviour
     /// <summary>A new run: the next round plays the tutorial again.</summary>
     public void ResetTutorial() => tutorialPlayedThisRun = false;
 
-    /// <summary>Plays the tutorial over the table, then <paramref name="then"/> (if this round is still on).</summary>
+    /// <summary>Plays the tutorial over the table, then <paramref name="then"/> (if this turn is still on).</summary>
     private void PlayTutorial(Action then)
     {
         DialogueManager manager = DialogueManager.Instance;
@@ -676,7 +703,7 @@ public class DiceManager : MonoBehaviour
             foreach (DialogueNode node in instance.nodes) node?.Init();
         }
 
-        int id = roundId;
+        int id = turnId;
         runningTutorial = instance;
         tutorialManager = manager;
 
@@ -685,7 +712,7 @@ public class DiceManager : MonoBehaviour
             StopTutorial();
             tutorialPlayedThisRun = true;
             PlayHistory.MarkDialoguePlayed(tutorialDialogue.name);
-            if (id == roundId && RoundActive) then();
+            if (id == turnId && TurnActive) then();
         };
         if (manager.onDialogueEnd == null) manager.onDialogueEnd = new UnityEvent();
         manager.onDialogueEnd.AddListener(tutorialEnded);
@@ -742,7 +769,7 @@ public class DiceManager : MonoBehaviour
     /// <summary>First call: throws every die. Later calls: rethrows the unlocked ones, using a reroll.</summary>
     public void Roll()
     {
-        if (!RoundActive || finishing || IsRolling || introRunning) return;
+        if (!TurnActive || finishing || IsRolling || introRunning) return;
 
         List<Dice> toRoll = new List<Dice>();
         foreach (Dice die in dice)
@@ -787,22 +814,37 @@ public class DiceManager : MonoBehaviour
         UpdateUI();
     }
 
-    /// <summary>Scores the dice and ends the round (after <see cref="finishDelay"/>).</summary>
+    /// <summary>
+    /// Scores the dice and ends the round. A round before the last banks its points and the next round
+    /// starts after <see cref="nextRoundDelay"/>; the last one checks the turn's total against the target
+    /// and ends the turn after <see cref="finishDelay"/>.
+    /// </summary>
     public void Finish()
     {
-        if (!RoundActive || !HasRolled || IsRolling || finishing) return;
+        if (!TurnActive || !HasRolled || IsRolling || finishing) return;
         finishing = true;
 
         int[] values = Values();
-        DiceScore score = Evaluate(values, cards);
-        pendingResult = new DiceRoundResult
+        DiceRoundResult round = new DiceRoundResult { score = Evaluate(values, cards), values = values };
+        roundResults.Add(round);
+
+        if (!IsLastRound)
         {
-            score = score,
+            UpdateUI();
+            if (nextRoundDelay > 0f) finishTween = Tween.Delay(this, nextRoundDelay, manager => manager.NextRound());
+            else NextRound();
+            return;
+        }
+
+        int total = BankedScore + round.score.total;
+        pendingResult = new DiceTurnResult
+        {
+            rounds = new List<DiceRoundResult>(roundResults),
+            total = total,
             target = Target,
-            passed = score.total >= Target,
+            passed = total >= Target,
             riskyTarget = RiskyTarget,
-            riskyPassed = RiskyTarget > 0 && score.total >= RiskyTarget,
-            values = values,
+            riskyPassed = RiskyTarget > 0 && total >= RiskyTarget,
         };
 
         if (resultText)
@@ -815,28 +857,42 @@ public class DiceManager : MonoBehaviour
         UpdateUI();
         if (pendingResult.riskyPassed) Popup(popups.cardUpgradedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
 
-        if (finishDelay > 0f) finishTween = Tween.Delay(this, finishDelay, manager => manager.CompleteRound());
-        else CompleteRound();
+        if (finishDelay > 0f) finishTween = Tween.Delay(this, finishDelay, manager => manager.CompleteTurn());
+        else CompleteTurn();
     }
 
-    /// <summary>Drops the round without a result (the song ended mid-round).</summary>
-    public void CancelRound()
+    /// <summary>Banks the finished round's points and opens the turn's next round.</summary>
+    private void NextRound()
     {
-        if (!RoundActive) return;
+        if (!TurnActive) return;
+
+        int roundScore = roundResults[roundResults.Count - 1].score.total;
+        BankedScore += roundScore;
+        onRoundFinished?.Invoke(roundScore);
+
+        PrepareRound();
+        QueueFirstRoll();
+    }
+
+    /// <summary>Drops the turn without a result (the song ended mid-turn).</summary>
+    public void CancelTurn()
+    {
+        if (!TurnActive) return;
 
         finishTween.Stop();
         firstRollTween.Stop();
-        roundId++;
+        turnId++;
         introRunning = false;
         StopTutorial();
         foreach (Dice die in dice)
             if (die) die.StopRoll();
 
-        RoundActive = false;
+        TurnActive = false;
         finishing = false;
         landingPending = 0;
-        roundCallback = null;
+        turnCallback = null;
         pendingResult = null;
+        roundResults.Clear();
         StopPopups();
         if (tableRoot) tableRoot.SetActive(false);
     }
@@ -855,18 +911,19 @@ public class DiceManager : MonoBehaviour
         if (autoFinishWhenOutOfRerolls && RerollsLeft <= 0) Finish();
     }
 
-    private void CompleteRound()
+    private void CompleteTurn()
     {
-        DiceRoundResult result = pendingResult;
-        Action<DiceRoundResult> callback = roundCallback;
+        DiceTurnResult result = pendingResult;
+        Action<DiceTurnResult> callback = turnCallback;
 
         pendingResult = null;
-        roundCallback = null;
-        RoundActive = false;
+        turnCallback = null;
+        TurnActive = false;
         finishing = false;
         if (hideTableOnFinish && tableRoot) tableRoot.SetActive(false);
 
-        onRoundFinished?.Invoke(result.score.total);
+        onRoundFinished?.Invoke(result.rounds[result.rounds.Count - 1].score.total);
+        onTurnFinished?.Invoke(result.total);
         callback?.Invoke(result);
     }
 
@@ -991,18 +1048,24 @@ public class DiceManager : MonoBehaviour
         foreach (Dice die in dice)
             if (die && !die.IsLocked) anyUnlocked = true;
 
-        bool idle = RoundActive && !finishing && !IsRolling && !introRunning;
+        bool idle = TurnActive && !finishing && !IsRolling && !introRunning;
 
         if (rollButton) rollButton.interactable = idle && (!HasRolled || (RerollsLeft > 0 && anyUnlocked));
         if (rollButtonLabel) rollButtonLabel.text = HasRolled ? string.Format(rerollLabel, RerollsLeft) : firstRollLabel;
         if (finishButton) finishButton.interactable = idle && HasRolled;
         if (rerollsText) rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
         if (riskyTargetText) riskyTargetText.text = string.Format(riskyTargetFormat, RiskyTarget, Target);
+        if (roundText)
+        {
+            roundText.gameObject.SetActive(RoundsInTurn > 1);
+            roundText.text = string.Format(roundFormat, Mathf.Max(1, CurrentRound), RoundsInTurn);
+        }
 
-        // The score is what the dice on the table make right now - never added up over rolls. While dice
-        // are in the air the last one stays up; once they land it counts from that to the new score
-        // (10 -> 20, or down). A new round starts empty and counts up from 0.
-        if (!RoundActive || !HasRolled) shownScore = null;
+        // The round's score is what the dice on the table make right now - never added up over rolls. While
+        // dice are in the air the last one stays up; once they land it counts from that to the new score
+        // (10 -> 20, or down). On screen it sits on top of the rounds already banked this turn; the turn's
+        // first round starts empty and counts up from 0.
+        if (!TurnActive || !HasRolled) shownScore = null;
         else if (!IsRolling) shownScore = Evaluate(Values(), cards);
 
         UpdateTargetText();
@@ -1010,8 +1073,8 @@ public class DiceManager : MonoBehaviour
         CountingText counter = ScoreCounter;
         if (counter)
         {
-            if (shownScore == null) counter.Clear();
-            else counter.SetValue(shownScore.total);
+            if (shownScore == null && CurrentRound <= 1) counter.Clear();
+            else counter.SetValue(TurnTotal(shownScore));
         }
 
         if (combinationText) combinationText.text = shownScore != null ? shownScore.combinationName : "";
@@ -1023,13 +1086,16 @@ public class DiceManager : MonoBehaviour
             if (die) die.RefreshOutline();
     }
 
+    /// <summary>The turn's total with <paramref name="roundScore"/> as the running round's: banked rounds + it.</summary>
+    private int TurnTotal(DiceScore roundScore) => BankedScore + (roundScore?.total ?? 0);
+
     /// <summary>
-    /// The target text shows the target until the score on the table reaches it, then the risky goal - with a
-    /// punch as it switches. Back to the target if a reroll drops the score under it.
+    /// The target text shows the target until the turn's total reaches it, then the risky goal - with a
+    /// punch as it switches. Back to the target if a reroll drops the total under it.
     /// </summary>
     private void UpdateTargetText()
     {
-        bool reached = shownScore != null && Target > 0 && shownScore.total >= Target;
+        bool reached = (shownScore != null || CurrentRound > 1) && Target > 0 && TurnTotal(shownScore) >= Target;
         bool switched = reached && !targetShowsRisky;
         targetShowsRisky = reached;
 
@@ -1056,14 +1122,15 @@ public class DiceManager : MonoBehaviour
 
     /// <summary>
     /// After a landing: how much the score changed (+10 / -5), the hand the dice make, and a goal reached
-    /// (the score climbing past the target or the risky goal).
+    /// (the turn's total climbing past the target or the risky goal).
     /// </summary>
     private void ShowRollPopups(DiceScore before, DiceScore after)
     {
         if (!popups.enabled || after == null) return;
 
-        int oldTotal = before?.total ?? 0;
-        int change = after.total - oldTotal;
+        int oldTotal = TurnTotal(before);
+        int newTotal = TurnTotal(after);
+        int change = newTotal - oldTotal;
         if (change != 0)
             Popup(string.Format(change > 0 ? popups.gainFormat : popups.lossFormat, Mathf.Abs(change)), ScoreAnchor,
                 popups.scoreOffset, change > 0 ? popups.gainColor : popups.lossColor);
@@ -1071,9 +1138,9 @@ public class DiceManager : MonoBehaviour
         if (after.combination != PokerDiceCombination.Nothing)
             Popup(after.combinationName, CombinationAnchor, popups.combinationOffset, popups.combinationColor);
 
-        if (Target > 0 && oldTotal < Target && after.total >= Target)
+        if (Target > 0 && oldTotal < Target && newTotal >= Target)
             Popup(popups.goalReachedText, GoalAnchor, popups.goalOffset, popups.goalColor);
-        if (RiskyTarget > 0 && oldTotal < RiskyTarget && after.total >= RiskyTarget)
+        if (RiskyTarget > 0 && oldTotal < RiskyTarget && newTotal >= RiskyTarget)
             Popup(popups.riskyGoalReachedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor,
                 popups.riskyGoalScale, popups.riskyGoalExtraHold);
     }

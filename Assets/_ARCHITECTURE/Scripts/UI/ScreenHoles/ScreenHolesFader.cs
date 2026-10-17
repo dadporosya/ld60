@@ -249,8 +249,18 @@ public class ScreenHolesFader : MonoBehaviour, ICanvasRaycastFilter
 
         // UI vertices reach the shader in the space of the Canvas that batches them, so the holes
         // are expressed in exactly the same space. This stays correct for every canvas render mode.
-        Transform space = canvas.transform;
+        _activeCount = CollectHoles(canvas.transform, _holeData, _holeParams);
+        UploadHoles(_material, _holeData, _holeParams, _activeCount);
+    }
 
+    /// <summary>
+    /// Writes the open holes into <paramref name="holeData"/> / <paramref name="holeParams"/> (both
+    /// <see cref="MaxHoles"/> long) in the local space of <paramref name="space"/> - pass the Canvas
+    /// transform of whatever is drawn with a hole shader. Each hole's strength is scaled by
+    /// <paramref name="strengthMultiplier"/>. Unused entries are zeroed. Returns the hole count.
+    /// </summary>
+    public int CollectHoles(Transform space, Vector4[] holeData, Vector4[] holeParams, float strengthMultiplier = 1f)
+    {
         int count = 0;
 
         for (int i = 0; i < holes.Count; i++)
@@ -261,7 +271,7 @@ public class ScreenHolesFader : MonoBehaviour, ICanvasRaycastFilter
             if (!hole || !hole.gameObject.activeInHierarchy) continue;
 
             ScreenHole settings = hole.GetComponent<ScreenHole>();
-            float strength = settings ? settings.Strength : 1f;
+            float strength = (settings ? settings.Strength : 1f) * strengthMultiplier;
             if (strength <= 0f) continue;
 
             hole.GetWorldCorners(_worldCorners);
@@ -278,23 +288,29 @@ public class ScreenHolesFader : MonoBehaviour, ICanvasRaycastFilter
             float radius = settings && settings.CornerRadius >= 0f ? settings.CornerRadius : defaultCornerRadius;
             float feather = settings && settings.Feather >= 0f ? settings.Feather : defaultFeather;
 
-            _holeData[count] = new Vector4(center.x, center.y, half.x, half.y);
-            _holeParams[count] = new Vector4(Mathf.Max(radius, 0f), Mathf.Max(feather, 0.0001f), Mathf.Clamp01(strength), 0f);
+            holeData[count] = new Vector4(center.x, center.y, half.x, half.y);
+            holeParams[count] = new Vector4(Mathf.Max(radius, 0f), Mathf.Max(feather, 0.0001f), Mathf.Clamp01(strength), 0f);
             count++;
         }
 
         for (int i = count; i < MaxHoles; i++)
         {
-            _holeData[i] = Vector4.zero;
-            _holeParams[i] = Vector4.zero;
+            holeData[i] = Vector4.zero;
+            holeParams[i] = Vector4.zero;
         }
 
-        _activeCount = count;
+        return count;
+    }
+
+    /// <summary>Uploads hole arrays to a material using a hole shader (see <see cref="CollectHoles"/>).</summary>
+    public static void UploadHoles(Material material, Vector4[] holeData, Vector4[] holeParams, int count)
+    {
+        if (!material) return;
 
         // Always upload full-length arrays: Unity locks a shader array's size on the first upload.
-        _material.SetVectorArray(HolesId, _holeData);
-        _material.SetVectorArray(HoleParamsId, _holeParams);
-        _material.SetInt(HoleCountId, count);
+        material.SetVectorArray(HolesId, holeData);
+        material.SetVectorArray(HoleParamsId, holeParams);
+        material.SetInt(HoleCountId, count);
     }
 
     // ------------------------------------------------------------------ raycasting

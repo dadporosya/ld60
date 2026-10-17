@@ -316,11 +316,11 @@ public class FuneralGameManager : MonoBehaviour
 
         int pointsToPass = Levels ? Levels.PointsToPass : 0;
         // Showcases stay clickable during the round; its outcome dialogue waits for one still open.
-        Dice.StartRound(pointsToPass, Cards ? Cards.PermanentCards : null, result =>
+        Dice.StartTurn(pointsToPass, Cards ? Cards.PermanentCards : null, result =>
         {
             // The risky goal reached: the card pick after this call offers upgraded cards.
             if (result.riskyPassed && Cards) Cards.UpgradeNextChoice = true;
-            AfterShowcase(() => EndCall(contact, Levels ? Levels.Passes(result.score.total) : result.passed));
+            AfterShowcase(() => EndCall(contact, Levels ? Levels.Passes(result.total) : result.passed));
         });
     }
 
@@ -497,7 +497,7 @@ public class FuneralGameManager : MonoBehaviour
         if (CurrentPhase == Phase.Ending) return;
         SetPhase(Phase.Ending);
 
-        if (Dice) Dice.CancelRound();
+        if (Dice) Dice.CancelTurn();
         if (Cards) Cards.Cancel();
         CancelRoundEnd();
         if (ShowcaseDialogueManager.Instance) ShowcaseDialogueManager.Instance.Cancel();
