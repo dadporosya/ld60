@@ -13,7 +13,7 @@ using UnityEngine.UI;
 /// lifting, spinning and the lock offset run on <see cref="visual"/> (the Image's transform by default).
 /// Offsets are in the canvas's UI units.</para>
 /// </summary>
-public class Dice : MonoBehaviour, IPointerClickHandler
+public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image image;
     [Tooltip("What lifts, spins and scales. Defaults to the Image's transform.")]
@@ -63,6 +63,10 @@ public class Dice : MonoBehaviour, IPointerClickHandler
     private Tween lockTween;
     private Tween punchTween;
     private Tween tintTween;
+    private Tween outlineTween;
+    private Outline outline;
+    private bool hovered;
+    private bool outlineShown;
 
     // The roll in progress.
     private DiceRollAnimation anim;
@@ -89,6 +93,7 @@ public class Dice : MonoBehaviour, IPointerClickHandler
         if (!image) image = GetComponentInChildren<Image>(true);
         if (!visual) visual = image ? image.transform : transform;
         CheckSetup();
+        SetUpOutline();
 
         restScale = visual.localScale;
         visualRestPosition = VisualIsRoot ? Vector3.zero : visual.localPosition;
@@ -97,7 +102,73 @@ public class Dice : MonoBehaviour, IPointerClickHandler
         if (lockedIndicator) lockedIndicator.SetActive(false);
     }
 
-    private void OnDisable() => StopTweens();
+    private void OnDisable()
+    {
+        StopTweens();
+        hovered = false;
+        ShowOutline(false, instant: true);
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        hovered = true;
+        RefreshOutline();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        hovered = false;
+        RefreshOutline();
+    }
+
+    /// <summary>
+    /// Outlined while hovered - and, with <see cref="DiceOutlineStyle.onlyWhenLockable"/>, only while clicking it
+    /// would lock / unlock it. The manager calls this whenever that may have changed (a roll starts or ends).
+    /// </summary>
+    public void RefreshOutline()
+    {
+        DiceOutlineStyle style = manager ? manager.hoverOutline : null;
+        bool show = hovered && style != null && style.enabled && (!style.onlyWhenLockable || manager.CanLockNow);
+        ShowOutline(show);
+    }
+
+    private void SetUpOutline()
+    {
+        DiceOutlineStyle style = manager ? manager.hoverOutline : null;
+        if (style == null || !style.enabled || !image) return;
+
+        outline = image.GetComponent<Outline>();
+        if (!outline) outline = image.gameObject.AddComponent<Outline>();
+        outline.effectDistance = style.width;
+        outline.useGraphicAlpha = true;
+        ShowOutline(false, instant: true);
+    }
+
+    private void ShowOutline(bool show, bool instant = false)
+    {
+        if (!outline) return;
+        DiceOutlineStyle style = manager ? manager.hoverOutline : null;
+        Color color = style != null ? style.color : Color.white;
+        Color target = show ? color : new Color(color.r, color.g, color.b, 0f);
+
+        // Already there (or on its way): nothing to restart.
+        if (!instant && outlineShown == show) return;
+        outlineShown = show;
+
+        outlineTween.Stop();
+        float duration = style != null ? style.fadeDuration : 0f;
+        if (instant || duration <= 0f || !isActiveAndEnabled)
+        {
+            outline.effectColor = target;
+            outline.enabled = show;
+            return;
+        }
+
+        // Hidden outlines are switched off, so idle dice don't pay for the extra geometry.
+        outline.enabled = true;
+        outlineTween = Tween.Custom(outline, outline.effectColor, target, duration, (o, c) => o.effectColor = c);
+        if (!show) outlineTween.OnComplete(outline, o => o.enabled = false);
+    }
 
     public void OnPointerClick(PointerEventData eventData)
     {

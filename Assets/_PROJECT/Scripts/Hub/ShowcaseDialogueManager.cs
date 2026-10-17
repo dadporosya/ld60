@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
@@ -72,6 +73,13 @@ public class ShowcaseDialogueManager : MonoBehaviour
     private UnityAction onDialogueEnded;
     private Tween stepTween;
 
+    // The showcase picture's frame animation.
+    private List<Sprite> animFrames = new List<Sprite>();
+    private float animFps;
+    private bool animLoop;
+    private float animTime;
+    private int animFrame;
+
     private void Awake() => Initialize();
 
     private void Initialize()
@@ -92,6 +100,20 @@ public class ShowcaseDialogueManager : MonoBehaviour
         if (root && !IsShowing) root.SetActive(false);
     }
 
+    private void Update()
+    {
+        if (!IsShowing || !showcaseImage || animFrames.Count < 2 || animFps <= 0f) return;
+
+        // Unscaled, like the rest of the showcase.
+        animTime += Time.unscaledDeltaTime;
+        int frame = Mathf.FloorToInt(animTime * animFps);
+        frame = animLoop ? frame % animFrames.Count : Mathf.Min(frame, animFrames.Count - 1);
+        if (frame == animFrame) return;
+
+        animFrame = frame;
+        showcaseImage.sprite = animFrames[frame];
+    }
+
     private void OnDisable()
     {
         if (dialogueManager && onDialogueEnded != null) dialogueManager.onDialogueEnd.RemoveListener(onDialogueEnded);
@@ -102,9 +124,45 @@ public class ShowcaseDialogueManager : MonoBehaviour
     /// <paramref name="onFinished"/> runs once it's all gone again. Without a dialogue the picture closes again
     /// right after appearing. Returns false (no callback) when a showcase is already up.
     /// </summary>
-    public bool Show(Sprite sprite, DialogueContainer dialogue, Talkable speaker = null, Action onFinished = null)
+    public bool Show(Sprite sprite, DialogueContainer dialogue, Talkable speaker = null, Action onFinished = null) =>
+        Show(sprite ? new[] { sprite } : null, 0f, true, dialogue, speaker, onFinished);
+
+    /// <summary>
+    /// Like <see cref="Show(Sprite, DialogueContainer, Talkable, Action)"/>, with the picture animated: it plays
+    /// <paramref name="frames"/> at <paramref name="framesPerSecond"/> for as long as the showcase is up -
+    /// looping, or stopping on the last frame. A single frame is a still picture.
+    /// </summary>
+    public bool Show(IReadOnlyList<Sprite> frames, float framesPerSecond, bool loop, DialogueContainer dialogue,
+        Talkable speaker = null, Action onFinished = null)
+    {
+        float duration = framesPerSecond > 0f ? 1f / framesPerSecond : 0f;
+        List<float> durations = new List<float>();
+        if (frames != null)
+            for (int i = 0; i < frames.Count; i++) durations.Add(duration);
+        return Show(frames, durations, loop, dialogue, speaker, onFinished);
+    }
+
+    /// <summary>
+    /// Like <see cref="Show(IReadOnlyList{Sprite}, float, bool, DialogueContainer, Talkable, Action)"/>, with each
+    /// frame shown for its own number of seconds (<paramref name="frameDurations"/>[i]; 0 or missing frames
+    /// don't advance).
+    /// </summary>
+    public bool Show(IReadOnlyList<Sprite> frames, IReadOnlyList<float> frameDurations, bool loop,
+        DialogueContainer dialogue, Talkable speaker = null, Action onFinished = null)
     {
         Initialize();
+
+        // Empty frames are dropped together with their durations, so the timing stays with its frame.
+        List<Sprite> valid = new List<Sprite>();
+        List<float> validDurations = new List<float>();
+        if (frames != null)
+            for (int i = 0; i < frames.Count; i++)
+            {
+                if (!frames[i]) continue;
+                valid.Add(frames[i]);
+                validDurations.Add(frameDurations != null && i < frameDurations.Count ? frameDurations[i] : 0f);
+            }
+        Sprite sprite = valid.Count > 0 ? valid[0] : null;
 
         if (IsShowing)
         {
@@ -135,7 +193,14 @@ public class ShowcaseDialogueManager : MonoBehaviour
         {
             showcaseImage.gameObject.SetActive(sprite);
             showcaseImage.sprite = sprite;
+            // Sized by the first frame; the others are drawn in the same rect.
             FitSprite(sprite);
+
+            animFrames = valid;
+            animFps = framesPerSecond;
+            animLoop = loop;
+            animTime = 0f;
+            animFrame = 0;
 
             Tween.StopAll(showcaseImage);
             Tween.StopAll(showcaseImage.transform);

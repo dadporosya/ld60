@@ -10,14 +10,30 @@ using UnityEngine.UI;
 public class ShowcaseInteractable : HubInteractable
 {
     [Header("Showcase")]
-    [Tooltip("The picture shown in the middle of the screen. Empty: this object's own Image sprite.")]
+    [Tooltip("The picture shown in the middle of the screen. Empty: this object's own Image sprite. " +
+             "Ignored when Showcase Frames are set.")]
     [SerializeField] private Sprite showcaseSprite;
+    [Tooltip("Animated picture: these frames play in order while the showcase is up. Empty: the still Showcase Sprite.")]
+    [SerializeField] private List<Sprite> showcaseFrames = new List<Sprite>();
+    [SerializeField, Min(0.1f)] private float framesPerSecond = 8f;
+    [Tooltip("Start over after the last frame. Off: stop on the last frame.")]
+    [SerializeField] private bool loopFrames = true;
     [Tooltip("Played in order; after the last one, the last one repeats.")]
     [SerializeField] private List<DialogueContainer> dialogues = new List<DialogueContainer>();
     [Tooltip("Optional speaker for nodes that don't name one. Empty: the manager's Default Speaker.")]
     [SerializeField] private Talkable speaker;
 
     private int next;
+
+    private bool HasFrames
+    {
+        get
+        {
+            foreach (Sprite frame in showcaseFrames)
+                if (frame) return true;
+            return false;
+        }
+    }
 
     private Sprite Sprite
     {
@@ -44,6 +60,7 @@ public class ShowcaseInteractable : HubInteractable
 
         DialogueContainer dialogue = dialogues[Mathf.Min(next, dialogues.Count - 1)];
         next++;
-        showcase.Show(Sprite, dialogue, speaker);
+        if (HasFrames) showcase.Show(showcaseFrames, framesPerSecond, loopFrames, dialogue, speaker);
+        else showcase.Show(Sprite, dialogue, speaker);
     }
 }

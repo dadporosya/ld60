@@ -54,6 +54,19 @@ public class DiceLockStyle
     [Min(0f)] public float duration = 0.12f;
 }
 
+/// <summary>The outline a die gets while hovered.</summary>
+[Serializable]
+public class DiceOutlineStyle
+{
+    public bool enabled = true;
+    public Color color = new Color(1f, 0.95f, 0.75f, 1f);
+    [Tooltip("Outline thickness (UI units). Unity's UI Outline traces the sprite by offsetting it; keep it small (2-6).")]
+    public Vector2 width = new Vector2(4f, 4f);
+    [Min(0f)] public float fadeDuration = 0.1f;
+    [Tooltip("Only while clicking the die would lock / unlock it (not mid-roll, not before the first roll, not out of rerolls).")]
+    public bool onlyWhenLockable = true;
+}
+
 /// <summary>Points a poker dice hand is worth.</summary>
 [Serializable]
 public class CombinationScore
@@ -127,6 +140,8 @@ public class DiceManager : MonoBehaviour
     [Header("Animation")]
     public DiceRollAnimation rollAnimation = new DiceRollAnimation();
     public DiceLockStyle lockStyle = new DiceLockStyle();
+    [Tooltip("Outline a die gets while the mouse is over it.")]
+    public DiceOutlineStyle hoverOutline = new DiceOutlineStyle();
 
     [Header("Audio")]
     [SerializeField] private AudioClip rollSfx;
@@ -235,6 +250,9 @@ public class DiceManager : MonoBehaviour
     }
 
     private bool CanLock => RoundActive && HasRolled && !IsRolling && !finishing && RerollsLeft > 0;
+
+    /// <summary>True when clicking a die would lock or unlock it right now.</summary>
+    public bool CanLockNow => CanLock;
 
     private bool initialized;
 
@@ -710,6 +728,10 @@ public class DiceManager : MonoBehaviour
         }
 
         if (combinationText) combinationText.text = shownScore != null ? shownScore.combinationName : "";
+
+        // Whether a die may be locked just changed (a roll started or landed): hovered dice follow.
+        foreach (Dice die in dice)
+            if (die) die.RefreshOutline();
     }
 
     private static void PlaySfx(AudioClip clip)
