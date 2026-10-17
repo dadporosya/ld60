@@ -75,7 +75,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
     // The showcase picture's frame animation.
     private List<Sprite> animFrames = new List<Sprite>();
-    private float animFps;
+    private List<float> animDurations = new List<float>();
     private bool animLoop;
     private float animTime;
     private int animFrame;
@@ -102,16 +102,27 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
     private void Update()
     {
-        if (!IsShowing || !showcaseImage || animFrames.Count < 2 || animFps <= 0f) return;
+        if (!IsShowing || !showcaseImage || animFrames.Count < 2) return;
 
-        // Unscaled, like the rest of the showcase.
+        // Unscaled, like the rest of the showcase. A frame with no time of its own holds the animation.
         animTime += Time.unscaledDeltaTime;
-        int frame = Mathf.FloorToInt(animTime * animFps);
-        frame = animLoop ? frame % animFrames.Count : Mathf.Min(frame, animFrames.Count - 1);
-        if (frame == animFrame) return;
+        int start = animFrame;
+        while (animDurations[animFrame] > 0f && animTime >= animDurations[animFrame])
+        {
+            bool last = animFrame == animFrames.Count - 1;
+            if (last && !animLoop) break;
 
-        animFrame = frame;
-        showcaseImage.sprite = animFrames[frame];
+            animTime -= animDurations[animFrame];
+            animFrame = last ? 0 : animFrame + 1;
+            if (animFrame == start)
+            {
+                // A whole lap in one frame (a hitch): drop the rest instead of spinning.
+                animTime = 0f;
+                break;
+            }
+        }
+
+        if (showcaseImage.sprite != animFrames[animFrame]) showcaseImage.sprite = animFrames[animFrame];
     }
 
     private void OnDisable()
@@ -197,7 +208,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
             FitSprite(sprite);
 
             animFrames = valid;
-            animFps = framesPerSecond;
+            animDurations = validDurations;
             animLoop = loop;
             animTime = 0f;
             animFrame = 0;

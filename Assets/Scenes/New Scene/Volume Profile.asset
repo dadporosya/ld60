@@ -15,7 +15,7 @@ MonoBehaviour:
   active: 1
   m_Intensity:
     m_OverrideState: 1
-    m_Value: 0.00333
+    m_Value: 0.001
   m_Scale:
     m_OverrideState: 1
     m_Value: 0.0481
