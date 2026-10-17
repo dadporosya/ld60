@@ -21,9 +21,14 @@ public static class RoomLightingTools
 
     /// <summary>Adds "Room Lighting" as the last sibling of the selected UI room, covering the same rect.</summary>
     [MenuItem(Menu + "Create Metro Lighting Over Selected")]
-    private static void CreateRig()
+    private static void CreateRigForSelection()
     {
-        var target = (RectTransform)Selection.activeTransform;
+        GameObject root = CreateRig((RectTransform)Selection.activeTransform);
+        Selection.activeGameObject = root;
+    }
+
+    public static GameObject CreateRig(RectTransform target)
+    {
         Vector2 size = target.rect.size;
 
         var root = new GameObject("Room Lighting", typeof(RectTransform));
@@ -64,8 +69,8 @@ public static class RoomLightingTools
         haze.Intensity = 0.12f;
         haze.FlickerSource = tube;
 
-        Selection.activeGameObject = root;
         EditorSceneManager.MarkSceneDirty(root.scene);
+        return root;
     }
 
     private static T Add<T>(RectTransform parent, string name, Vector2 position, Vector2 size) where T : RoomLightLayer
@@ -85,7 +90,7 @@ public static class RoomLightingTools
     /// vignette, grain) and enables post-processing on the main camera so it shows. VolFx overrides are untouched.
     /// </summary>
     [MenuItem(Menu + "Apply Metro Grading To Global Volume")]
-    private static void ApplyGrading()
+    public static void ApplyGrading()
     {
         Volume volume = null;
         foreach (Volume v in Object.FindObjectsByType<Volume>(FindObjectsSortMode.None))
