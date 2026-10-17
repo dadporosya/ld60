@@ -25,19 +25,21 @@ public static class DiceIcons
     /// <summary>
     /// The dice a hand is made of: a pair "x x", two pair "x x y y", a full house "x x y y y", a small straight
     /// "1 2 3 4", a large one "1 2 3 4 5". Empty for <see cref="PokerDiceCombination.Nothing"/>.
+    /// <paramref name="gap"/> goes between the icons (null: <see cref="Gap"/>).
     /// </summary>
-    public static string Combination(PokerDiceCombination combination)
+    public static string Combination(PokerDiceCombination combination, string gap = null)
     {
+        gap ??= Gap;
         switch (combination)
         {
-            case PokerDiceCombination.OnePair: return Row(X, X);
-            case PokerDiceCombination.TwoPair: return Row(X, X, Y, Y);
-            case PokerDiceCombination.ThreeOfAKind: return Row(X, X, X);
-            case PokerDiceCombination.SmallStraight: return Faces(1, 2, 3, 4);
-            case PokerDiceCombination.LargeStraight: return Faces(1, 2, 3, 4, 5);
-            case PokerDiceCombination.FullHouse: return Row(X, X, Y, Y, Y);
-            case PokerDiceCombination.FourOfAKind: return Row(X, X, X, X);
-            case PokerDiceCombination.FiveOfAKind: return Row(X, X, X, X, X);
+            case PokerDiceCombination.OnePair: return Join(gap, X, X);
+            case PokerDiceCombination.TwoPair: return Join(gap, X, X, Y, Y);
+            case PokerDiceCombination.ThreeOfAKind: return Join(gap, X, X, X);
+            case PokerDiceCombination.SmallStraight: return Join(gap, FaceIcons(1, 2, 3, 4));
+            case PokerDiceCombination.LargeStraight: return Join(gap, FaceIcons(1, 2, 3, 4, 5));
+            case PokerDiceCombination.FullHouse: return Join(gap, X, X, Y, Y, Y);
+            case PokerDiceCombination.FourOfAKind: return Join(gap, X, X, X, X);
+            case PokerDiceCombination.FiveOfAKind: return Join(gap, X, X, X, X, X);
             default: return "";
         }
     }
@@ -143,11 +145,11 @@ public static class DiceIcons
         });
     }
 
-    private static string Faces(params int[] faces)
+    private static string[] FaceIcons(params int[] faces)
     {
         string[] icons = new string[faces.Length];
         for (int i = 0; i < faces.Length; i++) icons[i] = Face(faces[i]);
-        return Row(icons);
+        return icons;
     }
 
     private static string Repeat(string icon, int count)
@@ -158,12 +160,14 @@ public static class DiceIcons
         return Row(icons);
     }
 
-    private static string Row(params string[] icons)
+    private static string Row(params string[] icons) => Join(Gap, icons);
+
+    private static string Join(string gap, params string[] icons)
     {
         StringBuilder text = new StringBuilder();
         foreach (string icon in icons)
         {
-            if (text.Length > 0) text.Append(Gap);
+            if (text.Length > 0) text.Append(gap);
             text.Append(icon);
         }
         return text.ToString();

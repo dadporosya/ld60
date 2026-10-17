@@ -117,9 +117,14 @@ public class DicePopups
 [Serializable]
 public class CombinationScore
 {
+    [Tooltip("Off: the hand doesn't count - dice making it score as the next best hand they make, and the hint paper leaves it out.")]
+    public bool enabled = true;
     public PokerDiceCombination combination;
     public string displayName;
     public int points;
+
+    // Unity builds list entries through this one: without it the field initializers (enabled = true) are skipped.
+    public CombinationScore() { }
 
     public CombinationScore(PokerDiceCombination combination, string displayName, int points)
     {
@@ -1141,17 +1146,17 @@ public class DiceManager : MonoBehaviour
     {
         int best = 0;
         foreach (CombinationScore entry in combinations)
-            if (entry != null) best = Mathf.Max(best, entry.points);
+            if (entry != null && entry.enabled) best = Mathf.Max(best, entry.points);
 
         CombinationScore score = ScoreFor(combination);
         return best > 0 && score != null ? Mathf.Clamp01((float)score.points / best) : 0f;
     }
 
-    /// <summary>Points for a combination in the scoring table (0 when it isn't listed).</summary>
+    /// <summary>Points for a combination in the scoring table (null when it isn't listed or is turned off).</summary>
     public CombinationScore ScoreFor(PokerDiceCombination combination)
     {
         foreach (CombinationScore entry in combinations)
-            if (entry != null && entry.combination == combination) return entry;
+            if (entry != null && entry.enabled && entry.combination == combination) return entry;
         return null;
     }
 

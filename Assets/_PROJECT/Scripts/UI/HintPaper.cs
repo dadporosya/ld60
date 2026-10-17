@@ -84,6 +84,8 @@ public class HintPaper : MonoBehaviour
     [SerializeField] private TMP_Text combinationsText;
     [Tooltip("One line. {0}: the combination's dice icons, {1}: its points, {2}: its name.")]
     [SerializeField] private string combinationLine = "{0} - {1}";
+    [Tooltip("Put between a combination's dice icons. Empty: the icons touch (spacing then comes from the sprite asset's glyph advance).")]
+    [SerializeField] private string iconGap = "";
     [Tooltip("Leave out combinations worth no points (Nothing).")]
     [SerializeField] private bool skipZeroPoints = true;
 
@@ -175,8 +177,8 @@ public class HintPaper : MonoBehaviour
         System.Text.StringBuilder text = new System.Text.StringBuilder();
         foreach (CombinationScore entry in dice.Combinations)
         {
-            if (entry == null || (skipZeroPoints && entry.points == 0)) continue;
-            string icons = DiceIcons.Combination(entry.combination);
+            if (entry == null || !entry.enabled || (skipZeroPoints && entry.points == 0)) continue;
+            string icons = DiceIcons.Combination(entry.combination, iconGap ?? "");
             if (icons.Length == 0) continue;
 
             if (text.Length > 0) text.Append('\n');

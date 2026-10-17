@@ -116,6 +116,32 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
+  - nodeId: 4
+    speakerId: 
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: If you dont get any combination, you will loose all your points by the
+      end of the round
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
   defaultVoiceClips: []
   objects:
   - {fileID: 0}
@@ -158,6 +184,16 @@ MonoBehaviour:
       enableEyes: 0
       talk: 1
     - enableObject: 1
+      modelId: 4
+      enableEyes: 0
+      talk: 0
+  - speakerObjectIndex: 0
+    objectSettings:
+    - enableObject: 1
+      modelId: 0
+      enableEyes: 0
+      talk: 1
+    - enableObject: 0
       modelId: 4
       enableEyes: 0
       talk: 0
