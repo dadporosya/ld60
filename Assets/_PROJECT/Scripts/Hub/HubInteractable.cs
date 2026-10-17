@@ -11,7 +11,8 @@ using UnityEngine.UI;
 /// <para>UI: put it on an Image (or a parent of one) under a Canvas with a GraphicRaycaster; the scene
 /// needs an EventSystem. Clicks land on any raycast-target Graphic of the object or its children.
 /// Clicks are ignored unless the <see cref="FuneralGameManager"/> is in the hub (no dialogue, dice or
-/// card pick running), and while a parent CanvasGroup is non-interactable.</para>
+/// card pick running) - or, for objects <see cref="UsableDuringDice"/>, in a dice round - and while a parent
+/// CanvasGroup is non-interactable.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
@@ -72,7 +73,12 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
     }
 
     private bool GameAllowsInteraction =>
-        (!FuneralGameManager.Instance || FuneralGameManager.Instance.IsInHub) && CanvasGroupsAllow();
+        (!FuneralGameManager.Instance ||
+         (UsableDuringDice ? FuneralGameManager.Instance.CanLookAround : FuneralGameManager.Instance.IsInHub)) &&
+        CanvasGroupsAllow();
+
+    /// <summary>Also clickable while a dice round is running (not only in the hub).</summary>
+    protected virtual bool UsableDuringDice => false;
 
     protected virtual void Awake()
     {

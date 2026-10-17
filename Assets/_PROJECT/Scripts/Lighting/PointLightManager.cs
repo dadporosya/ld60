@@ -10,10 +10,7 @@ using UnityEngine.UI;
 /// <para>UI: put it on a GameObject under the Canvas that holds the objects to light, as the LAST child so it
 /// draws over them (canvases drawn later, e.g. dialogue, stay unaffected). It builds two
 /// full-canvas RawImages at runtime (darkness + glow); neither is a raycast target, so clicks go through.
-/// UI Images are unlit, so a real Light can't reach them — this fakes it with the default UI shader.</para>
-///
-/// <para>Lit 3D/2D objects: optionally assign <see cref="worldLight"/> (a Point or Spot Light); it is moved
-/// to the cursor at <see cref="worldLightDepth"/> in front of the camera.</para>
+/// UI Images are unlit, so a Light can't reach them — this fakes it with the default UI shader.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class PointLightManager : MonoBehaviour
@@ -47,14 +44,6 @@ public class PointLightManager : MonoBehaviour
     [Header("Fade")]
     [SerializeField, Min(0f)] private float fadeDuration = 0.35f;
 
-    [Header("Optional world light")]
-    [Tooltip("A Point/Spot Light moved to the cursor, for lit (non-UI) objects.")]
-    [SerializeField] private Light worldLight;
-    [Tooltip("Distance from the camera the world light is placed at.")]
-    [SerializeField, Min(0f)] private float worldLightDepth = 5f;
-    [Tooltip("Camera for the world light. Defaults to the canvas camera, else Camera.main.")]
-    [SerializeField] private Camera worldCamera;
-
     private const int TextureSize = 256;
 
     private Canvas canvas;
@@ -71,7 +60,6 @@ public class PointLightManager : MonoBehaviour
     private float visibility;   // 0..1, eased by on/off fades and the off-screen hide
     private float offScreenScale = 1f;
     private float radiusMultiplier = 1f;
-    private float worldLightIntensity;
     private Tween fadeTween;
     private Tween radiusTween;
 
@@ -106,7 +94,6 @@ public class PointLightManager : MonoBehaviour
         glowImage = CreateLayer("Glow");
         RebuildTextures();
 
-        if (worldLight) worldLightIntensity = worldLight.intensity;
         visibility = lightOn ? 1f : 0f;
     }
 
@@ -175,8 +162,6 @@ public class PointLightManager : MonoBehaviour
         Color g = glow;
         g.a = Mathf.Clamp01(glow.a * glowNoise * lit);
         glowImage.color = g;
-
-        UpdateWorldLight(glowNoise * lit);
     }
 
     /// <summary>uvRect that maps the texture onto a circle of radius <paramref name="r"/> at <paramref name="center"/>
@@ -187,17 +172,6 @@ public class PointLightManager : MonoBehaviour
         float d = r * 2f;
         Vector2 fromCorner = center - area.min;
         return new Rect(-(fromCorner.x - r) / d, -(fromCorner.y - r) / d, area.width / d, area.height / d);
-    }
-
-    private void UpdateWorldLight(float intensityScale)
-    {
-        if (!worldLight || !hasPos) return;
-
-        Camera cam = worldCamera ? worldCamera : canvas && canvas.worldCamera ? canvas.worldCamera : Camera.main;
-        if (!cam) return;
-
-        worldLight.transform.position = cam.ScreenToWorldPoint(new Vector3(lightPos.x, lightPos.y, worldLightDepth));
-        worldLight.intensity = worldLightIntensity * intensityScale;
     }
 
     /// <summary>Turns the flashlight on or off (the darkness stays; the light circle opens/closes).</summary>
@@ -218,7 +192,6 @@ public class PointLightManager : MonoBehaviour
     {
         if (darknessImage) darknessImage.gameObject.SetActive(visible);
         if (glowImage) glowImage.gameObject.SetActive(visible);
-        if (worldLight) worldLight.enabled = visible;
     }
 
     /// <summary>Scales the radius over time (e.g. 1.5 to widen the beam, 1 to restore).</summary>

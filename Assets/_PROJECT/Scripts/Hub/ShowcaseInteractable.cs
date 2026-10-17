@@ -28,8 +28,12 @@ public class ShowcaseInteractable : HubInteractable
     [SerializeField] private List<DialogueContainer> dialogues = new List<DialogueContainer>();
     [Tooltip("Optional speaker for nodes that don't name one. Empty: the manager's Default Speaker.")]
     [SerializeField] private Talkable speaker;
+    [Tooltip("Can also be looked at while a dice round is running.")]
+    [SerializeField] private bool usableDuringDice = true;
 
     private int next;
+
+    protected override bool UsableDuringDice => usableDuringDice;
 
     private bool HasFrames
     {

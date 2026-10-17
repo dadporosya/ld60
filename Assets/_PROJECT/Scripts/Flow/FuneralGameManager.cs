@@ -69,8 +69,13 @@ public class FuneralGameManager : MonoBehaviour
     public Phase CurrentPhase { get; private set; } = Phase.Intro;
 
     /// <summary>True while the player is free to click around the hub.</summary>
-    public bool IsInHub => CurrentPhase == Phase.Hub && !Dialogues.IsPlaying && !ShowcaseOpen &&
-                           !(DialogueManager.Instance && DialogueManager.Instance.DialogueActive);
+    public bool IsInHub => CurrentPhase == Phase.Hub && NothingPlaying;
+
+    /// <summary>True while the player may look at things (showcases): in the hub, and during a dice round.</summary>
+    public bool CanLookAround => (CurrentPhase == Phase.Hub || CurrentPhase == Phase.Dice) && NothingPlaying;
+
+    private bool NothingPlaying => !Dialogues.IsPlaying && !ShowcaseOpen &&
+                                   !(DialogueManager.Instance && DialogueManager.Instance.DialogueActive);
 
     private static bool ShowcaseOpen => ShowcaseDialogueManager.Instance && ShowcaseDialogueManager.Instance.IsShowing;
 
@@ -262,8 +267,28 @@ public class FuneralGameManager : MonoBehaviour
         else Levels.BeginLevel();
 
         int pointsToPass = Levels ? Levels.PointsToPass : 0;
+        // Showcases stay clickable during the round; its outcome dialogue waits for one still open.
         Dice.StartRound(pointsToPass, Cards ? Cards.PermanentCards : null,
-            result => EndCall(contact, Levels ? Levels.Passes(result.score.total) : result.passed));
+            result => AfterShowcase(() => EndCall(contact, Levels ? Levels.Passes(result.score.total) : result.passed)));
+    }
+
+    /// <summary>Runs <paramref name="action"/> now, or once the open showcase (and its dialogue) is gone.</summary>
+    private static void AfterShowcase(System.Action action)
+    {
+        if (!ShowcaseOpen)
+        {
+            action();
+            return;
+        }
+
+        UnityEvent ended = ShowcaseDialogueManager.Instance.onShowcaseEnded;
+        UnityAction once = null;
+        once = () =>
+        {
+            ended.RemoveListener(once);
+            action();
+        };
+        ended.AddListener(once);
     }
 
     private void EndCall(ContactData contact, bool passed)
