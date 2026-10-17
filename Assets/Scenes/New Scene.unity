@@ -459,7 +459,7 @@ MonoBehaviour:
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
-  pointsByRound: 0a000000140000001e00000043000000
+  pointsByRound: 1e0000002f0000003c00000069000000
   onlyWinsComplete: 0
   debugKeys: 1
   onLevelStarted:
@@ -713,53 +713,56 @@ MonoBehaviour:
   unlockSfx: {fileID: 0}
   passedSfx: {fileID: 0}
   failedSfx: {fileID: 0}
+  roundsPerTurn: 1
   rerollsPerRound: 4
   autoFirstRoll: 1
   firstRollDelay: 1
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
+  nextRoundDelay: 1
   hideTableOnFinish: 1
-  riskyGoalMultiplier: 2
+  riskyGoalMultiplier: 1.5
   tutorialDialogue: {fileID: 11400000, guid: 993b1b18e1955df48adff7cb82110f37, type: 2}
   tutorialSpeaker: {fileID: 0}
   tutorialObjects: {fileID: 0}
   showSkipDuringTutorial: 1
   alwaysPlayTutorial: 0
-  addDiceSum: 0
+  addDiceSum: 1
   combinations:
   - combination: 0
     displayName: Nothing
     points: 0
   - combination: 1
     displayName: Pair
-    points: 5
+    points: 10
   - combination: 2
     displayName: Two Pair
-    points: 10
+    points: 20
   - combination: 3
     displayName: Three of a Kind
-    points: 15
+    points: 25
   - combination: 4
     displayName: Small Straight
-    points: 20
+    points: 30
   - combination: 5
     displayName: Large Straight
-    points: 30
+    points: 45
   - combination: 6
     displayName: Full House
-    points: 25
+    points: 35
   - combination: 7
     displayName: Four of a Kind
     points: 40
   - combination: 8
     displayName: Five of a Kind
-    points: 60
+    points: 65
   tableRoot: {fileID: 1819404969}
   rollButton: {fileID: 2026351235}
   rollButtonLabel: {fileID: 357885305}
   firstRollLabel: Roll
   rerollLabel: Reroll ({0})
   finishButton: {fileID: 2056738854}
+  finishLabel: Finish
   rerollsText: {fileID: 802812223}
   rerollsFormat: 'Rerolls: {0}'
   targetText: {fileID: 260250801}
@@ -768,11 +771,15 @@ MonoBehaviour:
   targetSwitchPunch: 0.2
   riskyTargetText: {fileID: 0}
   riskyTargetFormat: Risky {0}
+  roundText: {fileID: 0}
+  roundFormat: Round {0}/{1}
   scoreText: {fileID: 1617046775}
   scoreFormat: '{0}'
   scoreCounter: {fileID: 0}
   combinationText: {fileID: 548950539}
-  combinationShake: {fileID: 0}
+  combinationAnimation: {fileID: 0}
+  combinationShakeStrength: {x: 0.5, y: 6}
+  combinationShakeBlend: 0.15
   resultText: {fileID: 0}
   passedText: They still care.
   failedText: ...
@@ -797,6 +804,9 @@ MonoBehaviour:
     combinationColor: {r: 1, g: 1, b: 1, a: 1}
     goalColor: {r: 1, g: 0.9, b: 0.45, a: 1}
     riskyGoalColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
+  onTurnStarted:
+    m_PersistentCalls:
+      m_Calls: []
   onRoundStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -804,6 +814,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onRoundFinished:
+    m_PersistentCalls:
+      m_Calls: []
+  onTurnFinished:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &186178455
@@ -1002,7 +1015,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &210451665
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1112,7 +1125,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &244570389
@@ -1591,6 +1604,7 @@ GameObject:
   - component: {fileID: 346760859}
   - component: {fileID: 346760858}
   - component: {fileID: 346760860}
+  - component: {fileID: 346760861}
   m_Layer: 0
   m_Name: BG
   m_TagString: Untagged
@@ -1691,6 +1705,35 @@ MonoBehaviour:
   shakeBackDuration: 0.25
   shakeDownEase: 9
   shakeBackEase: 27
+--- !u!114 &346760861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 346760856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02d85d452436899408c02753ebfff75d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueWindowCollapse
+  dialogueManager: {fileID: 0}
+  window: {fileID: 0}
+  toggleButton: {fileID: 0}
+  arrowIcon: {fileID: 0}
+  stateIcon: {fileID: 0}
+  expandedSprite: {fileID: 0}
+  collapsedSprite: {fileID: 0}
+  slideDuration: 0.35
+  collapseEase: 10
+  expandEase: 9
+  peek: 0
+  collapseSfx: {fileID: 0}
+  expandSfx: {fileID: 0}
+  holdAdvanceWhileCollapsed: 1
+  toggleKey: 0
+  collapseKey: 64
+  expandKey: 63
 --- !u!1 &354913509
 GameObject:
   m_ObjectHideFlags: 0
@@ -3656,7 +3699,7 @@ GameObject:
   - component: {fileID: 788155894}
   - component: {fileID: 788155897}
   m_Layer: 0
-  m_Name: 5. Tutorial holes
+  m_Name: 3. Tutorial holes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3697,10 +3740,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 1743218968}
-  - {fileID: 244570388}
   - {fileID: 2052019987}
   - {fileID: 1901275428}
+  - {fileID: 1743218968}
+  - {fileID: 244570388}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -4096,7 +4139,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1931615048, guid: 42fc65f08d628f94f968548f161500a1, type: 3}
+  m_Sprite: {fileID: 7402258261366121301, guid: 6c6b2d279a2e46647b73fd0cd2a3e818, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4622,8 +4665,8 @@ RectTransform:
   - {fileID: 1819404970}
   - {fileID: 85276713}
   - {fileID: 1859262028}
-  - {fileID: 210451665}
   - {fileID: 788155893}
+  - {fileID: 210451665}
   - {fileID: 1818620956}
   m_Father: {fileID: 1161153468}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5713,7 +5756,7 @@ MonoBehaviour:
   dialogueText: {fileID: 186178459}
   portraitScalingTitle: {fileID: 0}
   dialogueScalingText: {fileID: 0}
-  advanceKeys: 01000000020000004d000000
+  advanceKeys: 01000000
   advanceMouseButtons: 00000000
   ignoreClicksOnControls: 1
   autoSkip: 0
@@ -5783,6 +5826,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   disableWindowOnStart: 1
+  cutScreenHolesFromWindow: 1
   windowAnimations: {fileID: 0}
   holdToSkip: 1
   skipKeys: 3c000000020000004d000000

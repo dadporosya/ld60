@@ -233,7 +233,7 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Hide the table root when the turn ends.")]
     [SerializeField] private bool hideTableOnFinish = true;
     [Tooltip("The risky goal is the target times this. Reaching it upgrades the next cards offered.")]
-    [SerializeField, Min(1f)] private float riskyGoalMultiplier = 2f;
+    [SerializeField, Min(1f)] private float riskyGoalMultiplier = 1.5f;
 
     [Header("Tutorial")]
     [Tooltip("Played over the table before the first round of every run (each launch / StartGame). " +
@@ -251,19 +251,21 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private bool alwaysPlayTutorial = false;
 
     [Header("Scoring")]
-    [Tooltip("Add the sum of all dice to the hand's points.")]
-    [SerializeField] private bool addDiceSum = false;
+    [Tooltip("Add the sum of all dice to the hand's points: every die scores its face value, the hand adds its bonus.")]
+    [SerializeField] private bool addDiceSum = true;
+    [Tooltip("Each hand's bonus. Defaults from Balance/dice_balance.py: pair = 10, two pair = pair + pair, " +
+             "full house = three + pair, the rest by how many throws the hand takes to make.")]
     [SerializeField] private List<CombinationScore> combinations = new List<CombinationScore>
     {
         new CombinationScore(PokerDiceCombination.Nothing, "Nothing", 0),
-        new CombinationScore(PokerDiceCombination.OnePair, "Pair", 5),
-        new CombinationScore(PokerDiceCombination.TwoPair, "Two Pair", 10),
-        new CombinationScore(PokerDiceCombination.ThreeOfAKind, "Three of a Kind", 15),
-        new CombinationScore(PokerDiceCombination.SmallStraight, "Small Straight", 20),
-        new CombinationScore(PokerDiceCombination.LargeStraight, "Large Straight", 30),
-        new CombinationScore(PokerDiceCombination.FullHouse, "Full House", 25),
+        new CombinationScore(PokerDiceCombination.OnePair, "Pair", 10),
+        new CombinationScore(PokerDiceCombination.TwoPair, "Two Pair", 20),
+        new CombinationScore(PokerDiceCombination.ThreeOfAKind, "Three of a Kind", 25),
+        new CombinationScore(PokerDiceCombination.SmallStraight, "Small Straight", 30),
+        new CombinationScore(PokerDiceCombination.LargeStraight, "Large Straight", 45),
+        new CombinationScore(PokerDiceCombination.FullHouse, "Full House", 35),
         new CombinationScore(PokerDiceCombination.FourOfAKind, "Four of a Kind", 40),
-        new CombinationScore(PokerDiceCombination.FiveOfAKind, "Five of a Kind", 60),
+        new CombinationScore(PokerDiceCombination.FiveOfAKind, "Five of a Kind", 65),
     };
 
     [Header("UI")]
