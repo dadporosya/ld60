@@ -587,7 +587,11 @@ public class VisualNovelTalkable : MonoBehaviour
         finished?.Invoke();
     }
 
-    private void HideStage()
+    /// <summary>
+    /// Hides the stage - for one left up by <see cref="PlayDialogue(VisualNovelDialogueContainer, System.Action)"/>
+    /// once the callback is done with it (e.g. after covering the screen).
+    /// </summary>
+    public void HideStage()
     {
         if (hideRootOnEnd && root)
         {

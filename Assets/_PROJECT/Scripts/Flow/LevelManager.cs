@@ -4,7 +4,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-/// <summary>One dice round's goal and what plays after it.</summary>
+/// <summary>
+/// One level: its name, whether it's final, and what plays around its dice round. How many points the round needs
+/// isn't the level's: it depends on how many rounds came before it (<see cref="LevelManager.PointsToPass"/>).
+/// </summary>
 [Serializable]
 public class Level
 {
@@ -15,11 +18,9 @@ public class Level
     [Tooltip("Final levels: played over the phone's list when the level is picked before every other level is " +
              "completed. The list stays up after it.")]
     public DialogueContainer lockedDialogue;
-    [Tooltip("Points the dice round must reach to pass.")]
-    [Min(0)] public int pointsToPass = 20;
     [Tooltip("Played before the dice round when the level is picked from the phone. Optional.")]
     public VisualNovelDialogueContainer startDialogue;
-    [Tooltip("Played when the round reaches Points To Pass.")]
+    [Tooltip("Played when the round reaches the points it needs.")]
     public VisualNovelDialogueContainer winDialogue;
     [Tooltip("Played when the round falls short.")]
     public VisualNovelDialogueContainer lossDialogue;
@@ -28,9 +29,10 @@ public class Level
 }
 
 /// <summary>
-/// The goals of the game: a list of <see cref="Level"/>s, one per dice round, played in order. Holds
-/// how many points each round needs and which dialogue plays after a win or a loss. Once the list
-/// runs out, the last level repeats. Access via <c>LevelManager.Instance</c>.
+/// The goals of the game: a list of <see cref="Level"/>s, one per dice round, played in order, with which dialogue
+/// plays after a win or a loss. Once the list runs out, the last level repeats. How many points a round needs comes
+/// from a separate list, by how many rounds have been played (<see cref="pointsByRound"/>): the first round played
+/// needs the first entry, whichever level it is. Access via <c>LevelManager.Instance</c>.
 ///
 /// <para>Levels can also be picked in any order from the phone (<see cref="LevelPhoneInteractable"/>):
 /// each can be completed once, and the <see cref="Level.isFinal"/> one only after all the others.</para>
@@ -41,10 +43,14 @@ public class LevelManager : MonoBehaviour
 
     [SerializeField] private List<Level> levels = new List<Level>
     {
-        new Level { name = "Level 1", pointsToPass = 10 },
-        new Level { name = "Level 2", pointsToPass = 20 },
-        new Level { name = "Level 3", pointsToPass = 30, isFinal = true },
+        new Level { name = "Level 1" },
+        new Level { name = "Level 2" },
+        new Level { name = "Level 3", isFinal = true },
     };
+
+    [Tooltip("Points the dice round needs to pass, by how many rounds have been played this game: [0] for the first " +
+             "round, [1] for the second, ... - whichever level is picked. The last one repeats for later rounds.")]
+    [SerializeField] private List<int> pointsByRound = new List<int> { 10, 20, 30 };
 
     [Tooltip("A level only counts as completed (struck off the phone, towards unlocking the final level) when its " +
              "round was won. Off: playing it is enough.")]
@@ -81,6 +87,9 @@ public class LevelManager : MonoBehaviour
     public int LevelsWon { get; private set; }
     public int LevelsLost { get; private set; }
 
+    /// <summary>Rounds played (won or lost) this game; the running round isn't counted until it's over.</summary>
+    public int RoundsPlayed => LevelsWon + LevelsLost;
+
     /// <summary>Index of the level whose round was played last; -1 before any round this game.</summary>
     public int LastPlayedIndex { get; private set; } = -1;
 
@@ -92,8 +101,8 @@ public class LevelManager : MonoBehaviour
     /// <summary>The level the next (or running) round plays; the last one once the list has run out.</summary>
     public Level Current => levels.Count > 0 ? levels[Mathf.Min(CurrentIndex, levels.Count - 1)] : null;
 
-    /// <summary>Points the current level needs.</summary>
-    public int PointsToPass => Current?.pointsToPass ?? 0;
+    /// <summary>Points the next (or running) round needs: <see cref="pointsByRound"/>[<see cref="RoundsPlayed"/>], the last entry once they run out.</summary>
+    public int PointsToPass => pointsByRound.Count > 0 ? Mathf.Max(0, pointsByRound[Mathf.Min(RoundsPlayed, pointsByRound.Count - 1)]) : 0;
 
     /// <summary>True once every level in the list has been played.</summary>
     public bool AllLevelsPlayed => CurrentIndex >= levels.Count;
@@ -122,7 +131,8 @@ public class LevelManager : MonoBehaviour
     private void Awake()
     {
         h.CreateStaticInstance(this, ref Instance, setDontDestroy: false);
-        if (levels.Count == 0) h.Out("LevelManager: no levels set up, rounds need 0 points.");
+        if (levels.Count == 0) h.Out("LevelManager: no levels set up.");
+        if (pointsByRound.Count == 0) h.Out("LevelManager: Points By Round is empty, rounds need 0 points.");
     }
 
     private void Update()
@@ -188,7 +198,7 @@ public class LevelManager : MonoBehaviour
     /// <summary>Call as the current level's round starts.</summary>
     public void BeginLevel()
     {
-        h.Out($"LevelManager: {Current?.name ?? "no level"} - {PointsToPass} points to pass.");
+        h.Out($"LevelManager: {Current?.name ?? "no level"} (round {RoundsPlayed + 1}) - {PointsToPass} points to pass.");
         onLevelStarted?.Invoke(CurrentIndex);
     }
 

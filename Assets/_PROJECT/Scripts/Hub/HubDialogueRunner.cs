@@ -42,8 +42,10 @@ public class HubDialogueRunner : MonoBehaviour
     /// <summary>
     /// Plays <paramref name="dialogue"/>, then <paramref name="onFinished"/>. A null dialogue just runs
     /// the callback, so optional dialogues (a contact without a greeting) need no special case.
+    /// Without <paramref name="hideStage"/> the stage stays up for the callback, which hides it with
+    /// <see cref="HideStage"/> (e.g. once the screen is covered).
     /// </summary>
-    public void Play(VisualNovelDialogueContainer dialogue, Action onFinished = null)
+    public void Play(VisualNovelDialogueContainer dialogue, Action onFinished = null, bool hideStage = true)
     {
         if (!dialogue)
         {
@@ -68,7 +70,13 @@ public class HubDialogueRunner : MonoBehaviour
         Talkable.PlayDialogue(dialogue, () =>
         {
             if (id == playId) onFinished?.Invoke();
-        }, hideStageOnFinish: true);
+        }, hideStageOnFinish: hideStage);
+    }
+
+    /// <summary>Hides a stage left up by <see cref="Play"/> with <c>hideStage: false</c>.</summary>
+    public void HideStage()
+    {
+        if (Talkable && !Talkable.IsPlaying) Talkable.HideStage();
     }
 
     /// <summary>Cuts the current dialogue off. Its callback never runs.</summary>

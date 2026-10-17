@@ -68,6 +68,41 @@ MonoBehaviour:
   m_WeightX:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &-5376475399081723546
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 772ef47f3fce34346bbb42fb4f5434b8, type: 3}
+  m_Name: PixelationVol
+  m_EditorClassIdentifier: VolFx::VolFx.PixelationVol
+  active: 0
+  m_Scale:
+    m_OverrideState: 1
+    m_Value: 0.999
+  m_Grid:
+    m_OverrideState: 1
+    m_Value: 1
+  m_Roundness:
+    m_OverrideState: 1
+    m_Value: 0
+  m_Color:
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 0}
+    hdr: 0
+  m_Palette:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+  m_Impact:
+    m_OverrideState: 1
+    m_Value: 0
+  m_Crisp:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &-4178950654380973269
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -115,6 +150,7 @@ MonoBehaviour:
   - {fileID: -4178950654380973269}
   - {fileID: 290995373692576675}
   - {fileID: 1071826207402321917}
+  - {fileID: -5376475399081723546}
 --- !u!114 &290995373692576675
 MonoBehaviour:
   m_ObjectHideFlags: 3

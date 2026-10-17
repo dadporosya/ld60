@@ -1,22 +1,40 @@
 using PrimeTween;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
 /// A hint sheet hanging from the top of the screen. Opened, it slides down into view; closed, it slides
 /// back up out of the screen until only its toggle button (at the sheet's lower edge) is left showing.
+/// The button or the toggle key flips it; the button's label says which key and what it will do.
 ///
 /// <para>Put it on the sheet's RectTransform, as it sits when OPEN (anchored to the top of the screen),
 /// with the toggle button as a child at its lower edge - inside the sheet or hanging below it. The closed
 /// position is worked out from the button: the sheet goes up until the button's top edge reaches where
 /// the sheet's top edge was.</para>
+///
+/// <para>With Auto Open on, every time the sheet is shown (its panel turned on as gameplay starts) it
+/// starts closed and slides open by itself a moment later.</para>
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
 public class HintPaper : MonoBehaviour
 {
     [SerializeField] private Button toggleButton;
+    [Tooltip("Keyboard key that does the same as clicking the toggle button. None: no key.")]
+    [SerializeField] private Key toggleKey = Key.S;
+    [Tooltip("Used when Auto Open is off: whether the sheet starts open.")]
     [SerializeField] private bool startOpen = false;
+
+    [Header("Auto open")]
+    [Tooltip("Each time the sheet is shown, start closed and slide open by itself.")]
+    [SerializeField] private bool autoOpen = true;
+    [Tooltip("Only the first time it is shown; later it keeps whatever the player left it at.")]
+    [SerializeField] private bool autoOpenOnlyOnce = false;
+    [SerializeField, Min(0f)] private float autoOpenDelay = 0.5f;
+    [SerializeField, Min(0f)] private float autoOpenDuration = 0.7f;
+    [SerializeField] private Ease autoOpenEase = Ease.OutBack;
 
     [Header("Closed position")]
     [Tooltip("Work the closed position out from the toggle button. Off: use Closed Offset.")]
@@ -33,6 +51,20 @@ public class HintPaper : MonoBehaviour
     [SerializeField] private Ease closeEase = Ease.InOutSine;
     [Tooltip("Ignore time scale (keeps working while the game is paused).")]
     [SerializeField] private bool useUnscaledTime = true;
+
+    [Header("Button label (optional)")]
+    [Tooltip("Empty: the first TMP text under the toggle button.")]
+    [SerializeField] private TMP_Text toggleLabel;
+    [Tooltip("Shown while closed. {0} is the toggle key.")]
+    [SerializeField] private string showLabel = "({0}) show hint";
+    [Tooltip("Shown while open. {0} is the toggle key.")]
+    [SerializeField] private string closeLabel = "({0}) close hint";
+
+    [Header("Button pulse")]
+    [Tooltip("Scale the button grows to and back when clicked or the key is pressed. 1: no pulse.")]
+    [SerializeField] private float pulseScale = 1.06f;
+    [Tooltip("Seconds for the grow, and again for the shrink back.")]
+    [SerializeField, Min(0f)] private float pulseDuration = 0.07f;
 
     [Header("Toggle icon (optional)")]
     [Tooltip("Turned 180 degrees while open, e.g. an arrow pointing down when closed and up when open.")]
@@ -55,17 +87,34 @@ public class HintPaper : MonoBehaviour
     private RectTransform rect;
     private Vector2 openPosition;
     private bool initialized;
+    private bool autoOpened;
     private Tween moveTween;
     private Tween iconTween;
+    private Tween autoOpenTween;
+    private Tween pulseTween;
     private float iconRestAngle;
+    private Transform pulseTarget;
+    private Vector3 pulseRestScale;
 
     private Vector2 ClosedPosition => openPosition + Vector2.up * ClosedShift();
 
     private void Awake()
     {
         rect = (RectTransform)transform;
-        if (toggleButton) toggleButton.onClick.AddListener(Toggle);
+        if (toggleButton)
+        {
+            toggleButton.onClick.AddListener(OnToggleInput);
+            pulseTarget = toggleButton.transform;
+            pulseRestScale = pulseTarget.localScale;
+            if (!toggleLabel) toggleLabel = toggleButton.GetComponentInChildren<TMP_Text>(true);
+        }
         if (toggleIcon) iconRestAngle = toggleIcon.localEulerAngles.z;
+    }
+
+    private void OnEnable()
+    {
+        // The first time, Start does it once the layout is built.
+        if (initialized) TryAutoOpen();
     }
 
     private void Start()
@@ -73,12 +122,25 @@ public class HintPaper : MonoBehaviour
         // Sizes come from the layout, which may only be built by now.
         Canvas.ForceUpdateCanvases();
         Initialize();
+        TryAutoOpen();
+    }
+
+    private void Update()
+    {
+        if (toggleKey == Key.None) return;
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null || !keyboard[toggleKey].wasPressedThisFrame) return;
+        if (toggleButton && !toggleButton.IsInteractable()) return;
+        OnToggleInput();
     }
 
     private void OnDisable()
     {
         moveTween.Stop();
         iconTween.Stop();
+        autoOpenTween.Stop();
+        pulseTween.Stop();
+        if (pulseTarget) pulseTarget.localScale = pulseRestScale;
         if (initialized) Snap(IsOpen);
     }
 
@@ -89,6 +151,30 @@ public class HintPaper : MonoBehaviour
 
         openPosition = rect.anchoredPosition;
         Snap(startOpen);
+    }
+
+    /// <summary>Snaps the sheet closed and has it slide open after <see cref="autoOpenDelay"/>.</summary>
+    private void TryAutoOpen()
+    {
+        if (!autoOpen || (autoOpenOnlyOnce && autoOpened)) return;
+
+        moveTween.Stop();
+        Snap(false);
+        autoOpenTween.Stop();
+        autoOpenTween = Tween.Delay(this, autoOpenDelay, paper => paper.AutoOpenNow(), useUnscaledTime);
+    }
+
+    private void AutoOpenNow()
+    {
+        autoOpened = true;
+        Move(true, true, autoOpenDuration, autoOpenEase);
+    }
+
+    /// <summary>The toggle button was clicked or the toggle key pressed.</summary>
+    private void OnToggleInput()
+    {
+        Pulse();
+        Toggle();
     }
 
     public void Toggle()
@@ -103,21 +189,27 @@ public class HintPaper : MonoBehaviour
 
     public void SetOpen(bool open, bool animate = true)
     {
+        // The player (or a script) got there first.
+        autoOpenTween.Stop();
+        Move(open, animate, open ? openDuration : closeDuration, open ? openEase : closeEase);
+    }
+
+    private void Move(bool open, bool animate, float duration, Ease ease)
+    {
         Initialize();
         if (open == IsOpen && !moveTween.isAlive) return;
 
         IsOpen = open;
         moveTween.Stop();
 
-        float duration = open ? openDuration : closeDuration;
         if (!animate || duration <= 0f || !isActiveAndEnabled)
             Snap(open);
         else
         {
             Vector2 target = open ? openPosition : ClosedPosition;
-            moveTween = Tween.UIAnchoredPosition(rect, target, duration, open ? openEase : closeEase,
-                useUnscaledTime: useUnscaledTime);
+            moveTween = Tween.UIAnchoredPosition(rect, target, duration, ease, useUnscaledTime: useUnscaledTime);
             AnimateIcon(open, duration);
+            UpdateLabel(open);
         }
 
         AudioClip clip = open ? openSfx : closeSfx;
@@ -150,6 +242,32 @@ public class HintPaper : MonoBehaviour
         IsOpen = open;
         rect.anchoredPosition = open ? openPosition : ClosedPosition;
         AnimateIcon(open, 0f);
+        UpdateLabel(open);
+    }
+
+    /// <summary>A slight grow-and-back of the toggle button.</summary>
+    private void Pulse()
+    {
+        if (!pulseTarget || !isActiveAndEnabled || pulseDuration <= 0f || Mathf.Approximately(pulseScale, 1f)) return;
+
+        pulseTween.Stop();
+        pulseTarget.localScale = pulseRestScale;
+        pulseTween = Tween.Scale(pulseTarget, pulseRestScale * pulseScale, pulseDuration, Ease.OutQuad,
+            cycles: 2, cycleMode: CycleMode.Yoyo, useUnscaledTime: useUnscaledTime);
+    }
+
+    private void UpdateLabel(bool open)
+    {
+        if (!toggleLabel) return;
+        toggleLabel.text = string.Format(open ? closeLabel : showLabel, KeyName());
+    }
+
+    private string KeyName()
+    {
+        if (toggleKey == Key.None) return "";
+        // The enum name, not the layout's display name, so S stays S on any keyboard layout.
+        string name = toggleKey.ToString();
+        return name.StartsWith("Digit") ? name.Substring("Digit".Length) : name;
     }
 
     private void AnimateIcon(bool open, float duration)

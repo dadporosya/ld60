@@ -77,11 +77,10 @@ public class LevelPhoneInteractable : ShowcaseInteractable
             lines.Add(new ShowcaseDialogueManager.ListLine
             {
                 text = string.Format(format, level.name),
-                // A locked final level is still clickable: it says why it won't start.
-                interactable = !completed && (!locked || lockedDialogue),
+                // A locked final level is still clickable (and lights up): it says why it won't start, and never does.
+                interactable = !completed,
+                blocked = locked,
                 dialogue = locked ? lockedDialogue : null,
-                // Locked isn't done: it reads like any other contact, even with nothing to say.
-                keepColor = locked,
                 pickDialogue = locked ? null : PickedDialogueFor(i),
             });
         }

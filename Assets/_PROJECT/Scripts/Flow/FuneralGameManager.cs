@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -9,7 +10,8 @@ using UnityEngine.Events;
 /// (<see cref="HubInteractable"/>); the phone opens the dial panel, and a call goes: the contact's
 /// call dialogue -> dice round against the current level's points (<see cref="LevelManager"/>) -> the
 /// level's win or loss dialogue -> card pick (Hope or
-/// Hate) -> back to the hub, the name struck off the list. Once everyone has been called: the good
+/// Hate) -> back to the hub (between the round and the pick the screen fades to black and back, see
+/// <see cref="fadeAroundRoundEnd"/>), the name struck off the list. Once everyone has been called: the good
 /// ending (calling dad). If the song ends first, whatever is happening is cut off: the bad ending.
 /// Both endings close the game.</para>
 ///
@@ -57,6 +59,19 @@ public class FuneralGameManager : MonoBehaviour
     [SerializeField] private float songFadeOnGoodEnding = 3f;
     [Tooltip("Finishing the final level (picked from the phone's level list) plays the good ending.")]
     [SerializeField] private bool goodEndingAfterFinalLevel = true;
+
+    [Header("Round end")]
+    [Tooltip("After a dice round the FadeImageController covers the screen: black -> win / loss dialogue -> " +
+             "black -> card pick revealed. Off: no fades.")]
+    [SerializeField] private bool fadeAroundRoundEnd = true;
+    [Tooltip("Seconds the dice table fades to black over once the round is over.")]
+    [SerializeField, Min(0f)] private float roundEndCoverDuration = 0.6f;
+    [Tooltip("Seconds the black fades away over, revealing the win / loss dialogue.")]
+    [SerializeField, Min(0f)] private float dialogueRevealDuration = 0.6f;
+    [Tooltip("Seconds the screen fades to black over once the win / loss dialogue is over.")]
+    [SerializeField, Min(0f)] private float dialogueCoverDuration = 0.6f;
+    [Tooltip("Seconds the black fades away over, revealing the card pick.")]
+    [SerializeField, Min(0f)] private float cardsRevealDuration = 0.6f;
 
     [Header("Game over")]
     [SerializeField] private bool quitAfterEnding = true;
@@ -166,6 +181,7 @@ public class FuneralGameManager : MonoBehaviour
     {
         calls.Clear();
         phoneLevel = -1;
+        CancelRoundEnd();
         if (Levels) Levels.ResetLevels();
         if (Cards) Cards.UpgradeNextChoice = false;
         onContactsChanged?.Invoke();
@@ -340,11 +356,82 @@ public class FuneralGameManager : MonoBehaviour
         SetPhase(Phase.Call);
         // The level decides what plays after the round, and moves on to the next one.
         VisualNovelDialogueContainer outcome = Levels ? Levels.CompleteLevel(passed) : null;
-        Dialogues.Play(outcome, () =>
+        CardMood mood = passed ? CardMood.Hope : CardMood.Hate;
+        int id = ++roundEndId;
+        roundEndFading = true;
+
+        // Black over the dice table -> the outcome dialogue -> black again -> the card pick, revealed.
+        RoundEndFade(true, roundEndCoverDuration, id, () =>
         {
-            onCallEnded?.Invoke(contact, passed);
-            OfferCard(passed ? CardMood.Hope : CardMood.Hate);
+            // No dialogue (none assigned, or an empty one): straight from the black to the card pick.
+            if (!outcome || outcome.nodes == null || outcome.nodes.Count == 0)
+            {
+                OfferCardRevealed(contact, passed, mood, id);
+                return;
+            }
+
+            // Revealed first: a dialogue that can't play calls back at once, and its cover then takes over.
+            RoundEndFade(false, dialogueRevealDuration, id, null);
+            // The stage stays up until the black covers it, so the dice table doesn't flash in between.
+            Dialogues.Play(outcome, () => RoundEndFade(true, dialogueCoverDuration, id, () =>
+            {
+                Dialogues.HideStage();
+                OfferCardRevealed(contact, passed, mood, id);
+            }), hideStage: false);
         });
+    }
+
+    // Bumped by every round end (and by what cuts one off): a fade callback only runs while its round end is current.
+    private int roundEndId;
+    // A round end's fades are running: the screen may be black.
+    private bool roundEndFading;
+
+    /// <summary>Puts the card pick up behind the black, then fades the black away.</summary>
+    private void OfferCardRevealed(ContactData contact, bool passed, CardMood mood, int id)
+    {
+        onCallEnded?.Invoke(contact, passed);
+        OfferCard(mood);
+        // Even without a pick (no cards, or the good ending started): whatever comes next needs to be seen.
+        roundEndFading = false;
+        RoundEndFade(false, cardsRevealDuration, id, null);
+    }
+
+    /// <summary>
+    /// Fades the <see cref="FadeImageController"/> to black (<paramref name="cover"/>) or clear, then
+    /// <paramref name="then"/> - unless round end <paramref name="id"/> was cut off meanwhile. Without fades
+    /// (none in the scene, or <see cref="fadeAroundRoundEnd"/> off) it just runs <paramref name="then"/>.
+    /// </summary>
+    private void RoundEndFade(bool cover, float duration, int id, System.Action then)
+    {
+        if (id != roundEndId) return;
+
+        FadeImageController fade = fadeAroundRoundEnd ? FadeImageController.Instance : null;
+        if (!fade)
+        {
+            then?.Invoke();
+            return;
+        }
+
+        if (duration <= 0f)
+        {
+            fade.SetAlpha(cover ? 1f : 0f);
+            then?.Invoke();
+            return;
+        }
+
+        Tween tween = cover ? fade.FadeIn(duration, useUnscaledTime: true) : fade.Fadeout(duration, useUnscaledTime: true);
+        if (then != null) tween.OnComplete(() => { if (id == roundEndId) then(); });
+    }
+
+    /// <summary>Cuts off a round end's fades, clearing the screen if it was dark.</summary>
+    private void CancelRoundEnd()
+    {
+        roundEndId++;
+        if (!roundEndFading) return;
+
+        roundEndFading = false;
+        FadeImageController fade = FadeImageController.Instance;
+        if (fade) fade.Fadeout(cardsRevealDuration, useUnscaledTime: true);
     }
 
     private void OfferCard(CardMood mood)
@@ -411,6 +498,7 @@ public class FuneralGameManager : MonoBehaviour
 
         if (Dice) Dice.CancelRound();
         if (Cards) Cards.Cancel();
+        CancelRoundEnd();
         if (ShowcaseDialogueManager.Instance) ShowcaseDialogueManager.Instance.Cancel();
         if (DialPanel) DialPanel.Hide();
 

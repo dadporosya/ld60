@@ -97,6 +97,12 @@ public class DicePopups
     [Tooltip("At the end of a round that reached the risky goal: the next cards are upgraded.")]
     public string cardUpgradedText = "Card upgraded!";
 
+    [Header("Risky Goal Popup")]
+    [Tooltip("Size of the risky goal popup, relative to the other popups.")]
+    [Min(0f)] public float riskyGoalScale = 1.15f;
+    [Tooltip("Seconds the risky goal popup stays up before fading, on top of the usual hold.")]
+    [Min(0f)] public float riskyGoalExtraHold = 1f;
+
     [Header("Colors")]
     public Color gainColor = new Color(0.45f, 0.9f, 0.45f, 1f);
     public Color lossColor = new Color(0.95f, 0.4f, 0.4f, 1f);
@@ -201,6 +207,9 @@ public class DiceManager : MonoBehaviour
     [Min(0)] public int rerollsPerRound = 2;
     [Tooltip("Throw all dice as soon as the round starts, instead of waiting for the Roll button.")]
     [SerializeField] private bool autoFirstRoll = false;
+    [Tooltip("Seconds the table waits after opening (and after the tutorial) before the first throw - the Roll " +
+             "button stays off meanwhile.")]
+    [SerializeField, Min(0f)] private float firstRollDelay = 1f;
     [Tooltip("Score the dice as soon as the last reroll lands.")]
     [SerializeField] private bool autoFinishWhenOutOfRerolls = true;
     [Tooltip("Seconds the result stays on the table before the round hands back.")]
@@ -209,6 +218,18 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private bool hideTableOnFinish = true;
     [Tooltip("The risky goal is the target times this. Reaching it upgrades the next cards offered.")]
     [SerializeField, Min(1f)] private float riskyGoalMultiplier = 2f;
+
+    [Header("Tutorial")]
+    [Tooltip("Played over the table before the first round the player ever plays (remembered across sessions, see " +
+             "PlayHistory). The first throw waits for it. Empty: no tutorial.")]
+    [SerializeField] private DialogueContainer tutorialDialogue;
+    [Tooltip("Optional speaker for the tutorial's nodes that don't name one.")]
+    [SerializeField] private Talkable tutorialSpeaker;
+    [Tooltip("Keep the skip button (the DialogueManager's hold-to-skip indicator, with its fill image) on screen " +
+             "from the tutorial's first node until it ends.")]
+    [SerializeField] private bool showSkipDuringTutorial = true;
+    [Tooltip("Debug: play the tutorial every round, not only the first time.")]
+    [SerializeField] private bool alwaysPlayTutorial = false;
 
     [Header("Scoring")]
     [Tooltip("Add the sum of all dice to the hand's points.")]
@@ -257,6 +278,9 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Counts the score up / down and shakes when it changes. Defaults to the CountingText on Score Text (added if missing).")]
     [SerializeField] private CountingText scoreCounter;
     [SerializeField] private TextMeshProUGUI combinationText;
+    [Tooltip("Shakes the combination text harder the stronger the hand (its points against the best hand in " +
+             "the scoring table). Defaults to the StrengthShake on Combination Text (added if missing).")]
+    [SerializeField] private StrengthShake combinationShake;
     [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private string passedText = "They still care.";
     [SerializeField] private string failedText = "...";
@@ -281,6 +305,17 @@ public class DiceManager : MonoBehaviour
 
     private bool finishing;
     private int landingPending;
+
+    // The round has opened but the first throw isn't allowed yet (tutorial, first roll delay).
+    private bool introRunning;
+    private Tween firstRollTween;
+    // Bumped per round and on cancel: a tutorial ending late only carries on the round it belongs to.
+    private int roundId;
+    private DialogueContainer runningTutorial;
+    private DialogueManager tutorialManager;
+    private UnityAction tutorialEnded;
+    private UnityAction tutorialFirstNode;
+    private bool tutorialPinnedSkip;
     private IReadOnlyList<CardInstance> cards = Array.Empty<CardInstance>();
     private Action<DiceRoundResult> roundCallback;
     private DiceRoundResult pendingResult;
@@ -314,6 +349,22 @@ public class DiceManager : MonoBehaviour
                 if (!scoreFormat.Contains("{1}") && !scoreFormat.Contains("{2}")) scoreCounter.Format = scoreFormat;
             }
             return scoreCounter;
+        }
+    }
+
+    /// <summary>
+    /// The combination text's shake: <see cref="combinationShake"/>, else the StrengthShake on
+    /// <see cref="combinationText"/> - added when it has none.
+    /// </summary>
+    private StrengthShake CombinationShake
+    {
+        get
+        {
+            if (combinationShake || !combinationText) return combinationShake;
+
+            combinationShake = combinationText.GetComponent<StrengthShake>();
+            if (!combinationShake) combinationShake = combinationText.gameObject.AddComponent<StrengthShake>();
+            return combinationShake;
         }
     }
 
@@ -540,18 +591,115 @@ public class DiceManager : MonoBehaviour
             if (die) die.ResetDice();
 
         StopPopups();
+        roundId++;
+        introRunning = true;
         if (tableRoot) tableRoot.SetActive(true);
         if (resultText) resultText.gameObject.SetActive(false);
         UpdateUI();
         onRoundStarted?.Invoke();
 
-        if (autoFirstRoll) Roll();
+        if (ShouldPlayTutorial) PlayTutorial(QueueFirstRoll);
+        else QueueFirstRoll();
+    }
+
+    /// <summary>The first throw becomes possible (and, with Auto First Roll, happens) after <see cref="firstRollDelay"/>.</summary>
+    private void QueueFirstRoll()
+    {
+        firstRollTween.Stop();
+        if (firstRollDelay > 0f) firstRollTween = Tween.Delay(this, firstRollDelay, manager => manager.EndIntro());
+        else EndIntro();
+    }
+
+    private void EndIntro()
+    {
+        if (!RoundActive) return;
+        introRunning = false;
+        if (autoFirstRoll && !HasRolled) Roll();
+        else UpdateUI();
+    }
+
+    // ---------------------------------------------------------------------
+    // Tutorial
+    // ---------------------------------------------------------------------
+
+    private bool ShouldPlayTutorial =>
+        tutorialDialogue && (alwaysPlayTutorial || !PlayHistory.HasPlayedDialogue(tutorialDialogue.name));
+
+    /// <summary>Plays the tutorial over the table, then <paramref name="then"/> (if this round is still on).</summary>
+    private void PlayTutorial(Action then)
+    {
+        DialogueManager manager = DialogueManager.Instance;
+        if (!manager || manager.DialogueActive)
+        {
+            h.Out(manager ? "DiceManager: a dialogue is already running, the tutorial waits for the next round."
+                          : "DiceManager: no DialogueManager in the scene, skipping the tutorial.");
+            then();
+            return;
+        }
+
+        // A runtime copy: filling in speakers writes into the nodes, which would otherwise end up in the asset.
+        DialogueContainer instance = Instantiate(tutorialDialogue);
+        instance.name = tutorialDialogue.name;
+        if (tutorialSpeaker) tutorialSpeaker.InitDialogue(instance);
+        else
+        {
+            instance.AssignNodeIds();
+            foreach (DialogueNode node in instance.nodes) node?.Init();
+        }
+
+        int id = roundId;
+        runningTutorial = instance;
+        tutorialManager = manager;
+
+        tutorialEnded = () =>
+        {
+            StopTutorial();
+            PlayHistory.MarkDialoguePlayed(tutorialDialogue.name);
+            if (id == roundId && RoundActive) then();
+        };
+        if (manager.onDialogueEnd == null) manager.onDialogueEnd = new UnityEvent();
+        manager.onDialogueEnd.AddListener(tutorialEnded);
+
+        if (showSkipDuringTutorial)
+        {
+            // From the first node on: the skip button shows as the tutorial's text does.
+            tutorialFirstNode = () =>
+            {
+                manager.onStartNode.RemoveListener(tutorialFirstNode);
+                tutorialFirstNode = null;
+                manager.PinSkipIndicator = true;
+                tutorialPinnedSkip = true;
+            };
+            if (manager.onStartNode == null) manager.onStartNode = new UnityEvent();
+            manager.onStartNode.AddListener(tutorialFirstNode);
+        }
+
+        manager.StartDialogue(instance, tutorialSpeaker);
+    }
+
+    /// <summary>Stops listening to the tutorial and drops its copy (the dialogue itself is ended by whoever ends it).</summary>
+    private void StopTutorial()
+    {
+        DialogueManager manager = tutorialManager;
+        if (manager)
+        {
+            if (tutorialEnded != null) manager.onDialogueEnd.RemoveListener(tutorialEnded);
+            if (tutorialFirstNode != null) manager.onStartNode.RemoveListener(tutorialFirstNode);
+            if (tutorialPinnedSkip) manager.PinSkipIndicator = false;
+        }
+
+        tutorialEnded = null;
+        tutorialFirstNode = null;
+        tutorialPinnedSkip = false;
+        tutorialManager = null;
+        if (runningTutorial) Destroy(runningTutorial);
+        runningTutorial = null;
     }
 
     /// <summary>First call: throws every die. Later calls: rethrows the unlocked ones, using a reroll.</summary>
     public void Roll()
     {
-        if (!RoundActive || finishing || IsRolling) return;
+        if (!RoundActive || finishing || IsRolling || introRunning) return;
 
         List<Dice> toRoll = new List<Dice>();
         foreach (Dice die in dice)
@@ -634,6 +782,10 @@ public class DiceManager : MonoBehaviour
         if (!RoundActive) return;
 
         finishTween.Stop();
+        firstRollTween.Stop();
+        roundId++;
+        introRunning = false;
+        StopTutorial();
         foreach (Dice die in dice)
             if (die) die.StopRoll();
 
@@ -685,6 +837,20 @@ public class DiceManager : MonoBehaviour
         foreach (Dice die in dice)
             if (die) values.Add(die.Value);
         return values.ToArray();
+    }
+
+    /// <summary>
+    /// How strong a hand is, 0..1: its points in the scoring table against the best hand there. Card bonuses
+    /// don't count - a pair stays a pair.
+    /// </summary>
+    public float CombinationStrength(PokerDiceCombination combination)
+    {
+        int best = 0;
+        foreach (CombinationScore entry in combinations)
+            if (entry != null) best = Mathf.Max(best, entry.points);
+
+        CombinationScore score = ScoreFor(combination);
+        return best > 0 && score != null ? Mathf.Clamp01((float)score.points / best) : 0f;
     }
 
     /// <summary>Points for a combination in the scoring table (0 when it isn't listed).</summary>
@@ -782,7 +948,7 @@ public class DiceManager : MonoBehaviour
         foreach (Dice die in dice)
             if (die && !die.IsLocked) anyUnlocked = true;
 
-        bool idle = RoundActive && !finishing && !IsRolling;
+        bool idle = RoundActive && !finishing && !IsRolling && !introRunning;
 
         if (rollButton) rollButton.interactable = idle && (!HasRolled || (RerollsLeft > 0 && anyUnlocked));
         if (rollButtonLabel) rollButtonLabel.text = HasRolled ? string.Format(rerollLabel, RerollsLeft) : firstRollLabel;
@@ -806,6 +972,8 @@ public class DiceManager : MonoBehaviour
         }
 
         if (combinationText) combinationText.text = shownScore != null ? shownScore.combinationName : "";
+        StrengthShake combinationShaker = CombinationShake;
+        if (combinationShaker) combinationShaker.SetStrength(shownScore != null ? CombinationStrength(shownScore.combination) : 0f);
 
         // Whether a die may be locked just changed (a roll started or landed): hovered dice follow.
         foreach (Dice die in dice)
@@ -863,14 +1031,16 @@ public class DiceManager : MonoBehaviour
         if (Target > 0 && oldTotal < Target && after.total >= Target)
             Popup(popups.goalReachedText, GoalAnchor, popups.goalOffset, popups.goalColor);
         if (RiskyTarget > 0 && oldTotal < RiskyTarget && after.total >= RiskyTarget)
-            Popup(popups.riskyGoalReachedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
+            Popup(popups.riskyGoalReachedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor,
+                popups.riskyGoalScale, popups.riskyGoalExtraHold);
     }
 
     /// <summary>
     /// Pops <paramref name="text"/> up at <paramref name="anchor"/> + <paramref name="offset"/> (canvas units),
-    /// <see cref="DicePopups.interval"/> after the previous popup.
+    /// <see cref="DicePopups.interval"/> after the previous popup, <paramref name="scale"/> times its usual size and
+    /// held <paramref name="extraHold"/> seconds longer.
     /// </summary>
-    private void Popup(string text, Transform anchor, Vector2 offset, Color color)
+    private void Popup(string text, Transform anchor, Vector2 offset, Color color, float scale = 1f, float extraHold = 0f)
     {
         if (!popups.enabled || string.IsNullOrEmpty(text)) return;
         if (!TextAlertManager.Instance)
@@ -885,15 +1055,24 @@ public class DiceManager : MonoBehaviour
 
         if (delay <= 0f)
         {
-            TextAlertManager.Instance.CreateTextAlert(text, anchor, color, offset);
+            CreatePopup(text, anchor, offset, color, scale, extraHold);
             return;
         }
 
         popupTweens.RemoveAll(tween => !tween.isAlive);
         popupTweens.Add(Tween.Delay(anchor, delay, a =>
         {
-            if (TextAlertManager.Instance) TextAlertManager.Instance.CreateTextAlert(text, a, color, offset);
+            if (TextAlertManager.Instance) CreatePopup(text, a, offset, color, scale, extraHold);
         }));
+    }
+
+    private static void CreatePopup(string text, Transform anchor, Vector2 offset, Color color, float scale, float extraHold)
+    {
+        AlertDamageText alert = TextAlertManager.Instance.CreateTextAlert(text, anchor, color, offset);
+        if (!alert) return;
+        // Before the alert's Start, which reads the hold to schedule its fade.
+        alert.transform.localScale *= scale;
+        alert.holdDuration += extraHold;
     }
 
     private void StopPopups()

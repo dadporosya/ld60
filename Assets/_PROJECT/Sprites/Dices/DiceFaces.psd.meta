@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: c147821b591c139429ee33f5336eb0c3
+guid: 324e3c46a6e9b5345be2296c9a0f265a
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -88,9 +88,9 @@ TextureImporter:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
-    resizeAlgorithm: 1
+    resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -131,12 +131,12 @@ TextureImporter:
       name: DiceFaces_0
       rect:
         serializedVersion: 2
-        x: 30
-        y: 843
-        width: 111
-        height: 111
+        x: 25
+        y: 839
+        width: 121
+        height: 121
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -153,10 +153,10 @@ TextureImporter:
       name: DiceFaces_1
       rect:
         serializedVersion: 2
-        x: 150
-        y: 843
-        width: 111
-        height: 111
+        x: 155
+        y: 839
+        width: 121
+        height: 121
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -175,10 +175,10 @@ TextureImporter:
       name: DiceFaces_2
       rect:
         serializedVersion: 2
-        x: 270
-        y: 843
-        width: 111
-        height: 111
+        x: 285
+        y: 839
+        width: 121
+        height: 121
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -197,10 +197,10 @@ TextureImporter:
       name: DiceFaces_3
       rect:
         serializedVersion: 2
-        x: 30
-        y: 723
-        width: 111
-        height: 111
+        x: 25
+        y: 708
+        width: 121
+        height: 121
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -219,10 +219,10 @@ TextureImporter:
       name: DiceFaces_4
       rect:
         serializedVersion: 2
-        x: 150
-        y: 723
-        width: 111
-        height: 111
+        x: 155
+        y: 708
+        width: 121
+        height: 121
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -241,10 +241,10 @@ TextureImporter:
       name: DiceFaces_5
       rect:
         serializedVersion: 2
-        x: 270
-        y: 723
-        width: 111
-        height: 111
+        x: 285
+        y: 708
+        width: 121
+        height: 121
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -263,7 +263,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: fff859e3e53a5874cb77e6659c668460
     internalID: 0
     vertices: []
     indices: 

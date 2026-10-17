@@ -34,6 +34,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
         public DialogueContainer pickDialogue;
         [Tooltip("Not interactable, but drawn in the normal line color instead of the disabled one.")]
         public bool keepColor;
+        [Tooltip("Clicking never picks it: it only plays Dialogue (when set), and the list carries on.")]
+        public bool blocked;
     }
 
     public enum SpriteFit
@@ -431,11 +433,12 @@ public class ShowcaseDialogueManager : MonoBehaviour
         if (!listOpen || !line.interactable) return;
         if (lineClickSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(lineClickSfx);
 
+        if (line.blocked && !line.dialogue) return;
         if (line.dialogue)
         {
-            if (!listCancellable)
+            if (!listCancellable || line.blocked)
             {
-                // Only a pick closes this list: it waits through the dialogue, then takes clicks again.
+                // Not a pick: the list waits through the dialogue, then takes clicks again.
                 FreezeList();
                 StartDialogue(line.dialogue, listSpeaker, UnfreezeList);
                 return;
