@@ -33,7 +33,8 @@ public class RoomLight : RoomLightLayer
     [SerializeField, Range(0f, 0.95f)] private float tubeLength = 0.6f;
 
     [Header("Flicker (play mode)")]
-    [Tooltip("Follow another light's flicker instead of flickering on its own (e.g. a pool lit by a tube).")]
+    [Tooltip("Follow another light's flicker instead of flickering on its own (e.g. a pool lit by a tube). " +
+             "While the source is inactive, this light uses its own Flicker Style.")]
     [SerializeField] private RoomLight flickerSource;
     [SerializeField] private FlickerStyle flickerStyle = FlickerStyle.Fluorescent;
     [Tooltip("Constant subtle brightness noise.")]
@@ -163,7 +164,8 @@ public class RoomLight : RoomLightLayer
             FlickerMultiplier = 1f;
             FlickerTint = Color.white;
         }
-        else if (flickerSource && flickerSource != this)
+        // An inactive source stops updating: flicker on our own style meanwhile instead of freezing.
+        else if (flickerSource && flickerSource != this && flickerSource.isActiveAndEnabled)
         {
             FlickerMultiplier = flickerSource.FlickerMultiplier;
             FlickerTint = flickerSource.FlickerTint;

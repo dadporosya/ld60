@@ -62,7 +62,7 @@ public abstract class RoomLightLayer : MonoBehaviour
     }
 
     /// <summary>Regenerates the texture and material settings on the next Update.</summary>
-    protected void MarkDirty() => dirty = true;
+    public void MarkDirty() => dirty = true;
 
     private void Rebuild()
     {
