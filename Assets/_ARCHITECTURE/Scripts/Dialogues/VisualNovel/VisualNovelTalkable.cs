@@ -149,6 +149,9 @@ public class VisualNovelTalkable : MonoBehaviour
     // Called once the current dialogue is over (see PlayDialogue(dialogue, onFinished)).
     private System.Action finishedCallback;
 
+    // Hide the stage before finishedCallback runs instead of leaving it up for the callback.
+    private bool hideStageBeforeCallback;
+
     // The first node, already staged before the window opened; PlayNode skips it once.
     private DialogueNode preStagedNode;
 
@@ -239,7 +242,15 @@ public class VisualNovelTalkable : MonoBehaviour
     /// through or skipped) and its end fade is done. With a callback the stage is NOT hidden afterwards: it is
     /// left as the dialogue ended it for whatever the callback does next (e.g. a fade and a scene load).
     /// </summary>
-    public void PlayDialogue(VisualNovelDialogueContainer dialogue, System.Action onFinished)
+    public void PlayDialogue(VisualNovelDialogueContainer dialogue, System.Action onFinished) =>
+        PlayDialogue(dialogue, onFinished, false);
+
+    /// <summary>
+    /// Like <see cref="PlayDialogue(VisualNovelDialogueContainer, System.Action)"/>; with
+    /// <paramref name="hideStageOnFinish"/> the stage is hidden as usual before <paramref name="onFinished"/>
+    /// runs - for gameplay that carries on in the same scene (the hub) rather than loading another one.
+    /// </summary>
+    public void PlayDialogue(VisualNovelDialogueContainer dialogue, System.Action onFinished, bool hideStageOnFinish)
     {
         if (!dialogue)
         {
@@ -273,6 +284,7 @@ public class VisualNovelTalkable : MonoBehaviour
         instance.Bind(this);
         CurrentDialogue = instance;
         finishedCallback = onFinished;
+        hideStageBeforeCallback = hideStageOnFinish;
 
         PrepareStage(instance);
 
@@ -482,9 +494,12 @@ public class VisualNovelTalkable : MonoBehaviour
 
         System.Action finished = finishedCallback;
         finishedCallback = null;
+        bool hideBeforeFinished = hideStageBeforeCallback;
+        hideStageBeforeCallback = false;
 
         if (isActiveAndEnabled)
-            endRoutine = StartCoroutine(EndRoutine(fade, fadeDuration, fadeColor, finished, endFade, releaseEffects));
+            endRoutine = StartCoroutine(EndRoutine(fade, fadeDuration, fadeColor, finished, endFade, releaseEffects,
+                                                   hideBeforeFinished));
         else
         {
             HideStage();
@@ -557,7 +572,7 @@ public class VisualNovelTalkable : MonoBehaviour
     /// then hides it — or, with <paramref name="finished"/>, hands over to that instead.
     /// </summary>
     private IEnumerator EndRoutine(bool fade, float duration, Color color, System.Action finished,
-                                   bool stopEffects, bool releaseEffects)
+                                   bool stopEffects, bool releaseEffects, bool hideBeforeFinished)
     {
         if (fade)
         {
@@ -568,8 +583,8 @@ public class VisualNovelTalkable : MonoBehaviour
         if (stopEffects) StopEffectsOnEnd(releaseEffects);
 
         endRoutine = null;
-        if (finished != null) finished();
-        else HideStage();
+        if (finished == null || hideBeforeFinished) HideStage();
+        finished?.Invoke();
     }
 
     private void HideStage()
