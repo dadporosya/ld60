@@ -4,12 +4,18 @@ using PrimeTween;
 using UnityEngine.Serialization;
 
 // Open/close animation for the dialogue window. The window scales up from zero in two
-// beats (X first with a sliver of Y, then Y to full) on start, and reverses on end.
+// beats (X first with a sliver of Y, then Y to full) on start, and reverses on end. Scaling is about
+// the pivot, which is moved to the window's top edge (pivotOnTopEdge) so the window unrolls downward.
 // DialogueManager drives these: it waits for OnDialogueStart before showing text, and
 // runs OnDialogueEnd alongside tearing the dialogue down (see DialogueManager).
 public class DialogueWindowAnimations : MonoBehaviour
 {
     public DialogueManager dialogueManager;
+
+    [Header("Pivot")]
+    [Tooltip("On Awake, moves the window's pivot to its top edge without moving the window, so the open " +
+             "grows down from the top and the typing bounce lifts the bottom edge.")]
+    [SerializeField] private bool pivotOnTopEdge = true;
 
     [Header("Timing")]
     [Tooltip("Duration of the X open/close beat.")]
@@ -69,10 +75,23 @@ public class DialogueWindowAnimations : MonoBehaviour
     private float appliedOffsetY;
     private float appliedHeightDelta;
 
-    private void Start()
+    // Awake, not Start: DialogueWindowCollapse records the window's resting anchoredPosition in its Start,
+    // and that has to be measured with the pivot already moved.
+    private void Awake()
     {
         if (!dialogueManager) dialogueManager = GetComponent<DialogueManager>();
         if (!dialogueManager) dialogueManager = FindObjectOfType<DialogueManager>();
+
+        if (pivotOnTopEdge && Window is RectTransform w) SetPivotY(w, 1f);
+    }
+
+    // Moving the pivot alone would drag the rect with it, so the anchored position is shifted back by the
+    // same distance. Uses the unscaled size: the window rests at scale 1.
+    private static void SetPivotY(RectTransform rect, float pivotY)
+    {
+        float shift = (pivotY - rect.pivot.y) * rect.rect.height;
+        rect.pivot = new Vector2(rect.pivot.x, pivotY);
+        rect.anchoredPosition += new Vector2(0f, shift);
     }
 
     /// <summary>A node begins typing: the window's rect gets a little shorter and grows back.</summary>

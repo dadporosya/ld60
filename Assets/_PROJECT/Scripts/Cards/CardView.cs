@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Shows one card: its title (the CardData's good or bad title, on the same text), the description
-/// and the picture in the middle. Clickable when bound with a callback (the card choice); otherwise it only
+/// (an upgraded card's points tinted <see cref="upgradedPointsColor"/>) and the picture in the middle. Clickable when bound with a callback (the card choice); otherwise it only
 /// displays. Has a CanvasGroup (added if missing) so the <see cref="CardManager"/> can fade it.
 /// </summary>
 public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
@@ -27,6 +27,12 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     [SerializeField] private GameObject permanentBadge;
     [Tooltip("Shown on immediate cards only.")]
     [SerializeField] private GameObject immediateBadge;
+
+    [Header("Upgrade")]
+    [Tooltip("An upgraded card's points ({0} in the description) are tinted this.")]
+    [SerializeField] private Color upgradedPointsColor = new Color(0.35f, 0.85f, 0.35f, 1f);
+    [Tooltip("Optional: shown on upgraded cards only.")]
+    [SerializeField] private GameObject upgradedBadge;
 
     [Header("Hover (clickable cards only)")]
     [SerializeField, Min(0f)] private float hoverScale = 1.08f;
@@ -73,7 +79,7 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         bool good = card == null || card.mood == CardMood.Hope;
         if (titleText) titleText.text = card?.Title ?? "";
 
-        if (descriptionText) descriptionText.text = card?.Description ?? "";
+        if (descriptionText) descriptionText.text = card?.DescriptionWith(upgradedPointsColor) ?? "";
         if (art)
         {
             art.sprite = card?.Art;
@@ -84,6 +90,7 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         bool permanent = card != null && card.IsPermanent;
         if (permanentBadge) permanentBadge.SetActive(permanent);
         if (immediateBadge) immediateBadge.SetActive(card != null && !permanent);
+        if (upgradedBadge) upgradedBadge.SetActive(card != null && card.IsUpgraded);
     }
 
     private bool referencesChecked;

@@ -18,7 +18,8 @@ public class AlertDamageText : MonoBehaviour
 
     private void Update()
     {
-        transform.position += Vector3.up * speed * Time.deltaTime;
+        // Local: in canvas units under a UI parent; the same as world space for an alert without a parent.
+        transform.localPosition += Vector3.up * speed * Time.deltaTime;
     }
 
     public void PlayAnimation()

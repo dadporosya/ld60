@@ -17,6 +17,9 @@ using UnityEngine.UI;
 /// <see cref="CardKind.Permanent"/> one is kept - shown in <see cref="permanentCardsSpot"/> and added to
 /// every dice round (<see cref="PermanentCards"/>). Then the menu fades out and is disabled.</para>
 ///
+/// <para><b>Upgrades</b>: with <see cref="UpgradeNextChoice"/> set (the player reached the risky goal), the next
+/// choice offers upgraded cards - their points are worth <see cref="upgradeBonus"/> more and show tinted.</para>
+///
 /// <para>Keep this component OUTSIDE <see cref="root"/>: the root is disabled between choices, and the
 /// debug key needs this object running.</para>
 /// </summary>
@@ -35,6 +38,12 @@ public class CardManager : MonoBehaviour
     [SerializeField] private bool allowOwnedPermanentCards = false;
     [Tooltip("Permanent cards the player starts with (optional).")]
     [SerializeField] private List<CardData> startingCards = new List<CardData>();
+
+    [Header("Upgrades")]
+    [Tooltip("Extra points an upgraded card grants, as a share of its own: 0.5 = 50% more, whatever its " +
+             "condition (+10 becomes +15, x1.5 becomes x1.75). Cards are offered upgraded after the player " +
+             "reaches a round's risky goal (Upgrade Next Choice).")]
+    [SerializeField, Min(0f)] private float upgradeBonus = 0.5f;
 
     [Header("Choosing menu")]
     [Tooltip("The menu: enabled while choosing, disabled after.")]
@@ -115,6 +124,15 @@ public class CardManager : MonoBehaviour
 
     public int DefaultChoiceCount => defaultChoiceCount;
 
+    /// <summary>Extra share of points an upgraded card grants (0.5 = 50% more).</summary>
+    public float UpgradeBonus => upgradeBonus;
+
+    /// <summary>
+    /// The next choice offers upgraded cards (the player reached the risky goal). Used up when that choice
+    /// opens; a picked upgraded card stays upgraded.
+    /// </summary>
+    public bool UpgradeNextChoice { get; set; }
+
     private readonly List<CardInstance> permanentCards = new List<CardInstance>();
     private readonly List<CardView> permanentViews = new List<CardView>();
     private readonly List<CardView> offered = new List<CardView>();
@@ -190,6 +208,9 @@ public class CardManager : MonoBehaviour
         onChosen = chosen;
         ClearOffered();
 
+        float upgrade = UpgradeNextChoice ? upgradeBonus : 0f;
+        UpgradeNextChoice = false;
+
         if (root) root.SetActive(true);
         FadeTo(fadeAlpha, fadeDuration);
 
@@ -199,7 +220,7 @@ public class CardManager : MonoBehaviour
             CardView view = Spawn(offer[i], chooseArea);
             if (!view) continue;
 
-            view.Bind(new CardInstance(offer[i], mood), Pick);
+            view.Bind(new CardInstance(offer[i], mood, upgrade), Pick);
             view.Clickable = false;
             Vector3 scale = view.transform.localScale;
             view.SetHoverBase(scale);
@@ -477,6 +498,7 @@ public class CardManager : MonoBehaviour
     /// <summary>Drops every kept card (a new game).</summary>
     public void ClearPermanentCards()
     {
+        UpgradeNextChoice = false;
         permanentCards.Clear();
         pendingKept = null;
         foreach (CardView view in permanentViews)

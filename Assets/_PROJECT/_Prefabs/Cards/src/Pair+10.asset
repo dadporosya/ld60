@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: We are perfect
   badTitle: We were perfect
-  description: Pair grant +10 bonus points
+  description: Pair grant +{0} bonus points
   art: {fileID: 0}
   viewPrefab: {fileID: 0}
   kind: 0

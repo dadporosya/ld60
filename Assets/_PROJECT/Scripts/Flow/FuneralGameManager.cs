@@ -12,6 +12,10 @@ using UnityEngine.Events;
 /// Hate) -> back to the hub, the name struck off the list. Once everyone has been called: the good
 /// ending (calling dad). If the song ends first, whatever is happening is cut off: the bad ending.
 /// Both endings close the game.</para>
+///
+/// <para>Alternatively the phone shows the level list (<see cref="LevelPhoneInteractable"/>): a picked level
+/// goes start dialogue -> dice -> win / loss dialogue -> card pick -> hub (<see cref="PlayLevel"/>); finishing
+/// the final level plays the good ending.</para>
 /// </summary>
 public class FuneralGameManager : MonoBehaviour
 {
@@ -51,6 +55,8 @@ public class FuneralGameManager : MonoBehaviour
     [SerializeField] private VisualNovelDialogueContainer badEndingDialogue;
     [Tooltip("Seconds the song fades out over when the good ending starts. Negative: it keeps playing.")]
     [SerializeField] private float songFadeOnGoodEnding = 3f;
+    [Tooltip("Finishing the final level (picked from the phone's level list) plays the good ending.")]
+    [SerializeField] private bool goodEndingAfterFinalLevel = true;
 
     [Header("Game over")]
     [SerializeField] private bool quitAfterEnding = true;
@@ -159,7 +165,9 @@ public class FuneralGameManager : MonoBehaviour
     public void StartGame()
     {
         calls.Clear();
+        phoneLevel = -1;
         if (Levels) Levels.ResetLevels();
+        if (Cards) Cards.UpgradeNextChoice = false;
         onContactsChanged?.Invoke();
         SetPhase(Phase.Intro);
 
@@ -207,6 +215,29 @@ public class FuneralGameManager : MonoBehaviour
         {
             if (CurrentPhase == Phase.Phone) SetPhase(Phase.Hub);
         });
+    }
+
+    // The level picked from the phone's level list whose round is running; -1 for none.
+    private int phoneLevel = -1;
+
+    /// <summary>
+    /// The phone's level list (<see cref="LevelPhoneInteractable"/>): plays levels[<paramref name="index"/>] -
+    /// its start dialogue, dice round, win / loss dialogue, card pick, then the hub (or the good ending after the
+    /// final level). Ignored unless the level can be started (<see cref="LevelManager.CanStart"/>).
+    /// </summary>
+    public void PlayLevel(int index)
+    {
+        if (!IsInHub || !Levels) return;
+        if (!Levels.CanStart(index))
+        {
+            h.Out($"FuneralGameManager: level {index} can't be started now.");
+            return;
+        }
+
+        Levels.JumpTo(index);
+        phoneLevel = index;
+        SetPhase(Phase.Call);
+        Dialogues.Play(Levels.Current.startDialogue, () => StartDice(null));
     }
 
     // ---------------------------------------------------------------------
@@ -268,8 +299,12 @@ public class FuneralGameManager : MonoBehaviour
 
         int pointsToPass = Levels ? Levels.PointsToPass : 0;
         // Showcases stay clickable during the round; its outcome dialogue waits for one still open.
-        Dice.StartRound(pointsToPass, Cards ? Cards.PermanentCards : null,
-            result => AfterShowcase(() => EndCall(contact, Levels ? Levels.Passes(result.score.total) : result.passed)));
+        Dice.StartRound(pointsToPass, Cards ? Cards.PermanentCards : null, result =>
+        {
+            // The risky goal reached: the card pick after this call offers upgraded cards.
+            if (result.riskyPassed && Cards) Cards.UpgradeNextChoice = true;
+            AfterShowcase(() => EndCall(contact, Levels ? Levels.Passes(result.score.total) : result.passed));
+        });
     }
 
     /// <summary>Runs <paramref name="action"/> now, or once the open showcase (and its dialogue) is gone.</summary>
@@ -336,6 +371,15 @@ public class FuneralGameManager : MonoBehaviour
             // Didn't strike anyone off, so it can't finish the list either.
             debugRound = false;
             SetPhase(Phase.Hub);
+            return;
+        }
+
+        if (phoneLevel >= 0)
+        {
+            bool final = Levels && Levels.IsFinal(phoneLevel);
+            phoneLevel = -1;
+            if (final && goodEndingAfterFinalLevel) GoodEnding();
+            else SetPhase(Phase.Hub);
             return;
         }
 

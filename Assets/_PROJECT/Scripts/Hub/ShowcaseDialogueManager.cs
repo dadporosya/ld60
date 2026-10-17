@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PrimeTween;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -11,11 +12,25 @@ using UnityEngine.UI;
 /// <see cref="DialogueManager"/>) runs over it. When the dialogue ends, the picture and the fade go away.
 /// Access via <c>ShowcaseDialogueManager.Instance</c>; hub objects use it through <see cref="ShowcaseInteractable"/>.
 ///
+/// <para>A showcase can show a list of clickable lines over the picture instead of a dialogue
+/// (<see cref="ShowList"/>) - the phone's level list.</para>
+///
 /// <para>Keep this component OUTSIDE <see cref="root"/> (the root is disabled between showcases).</para>
 /// </summary>
 public class ShowcaseDialogueManager : MonoBehaviour
 {
     public static ShowcaseDialogueManager Instance;
+
+    /// <summary>One line of a <see cref="ShowList"/> list.</summary>
+    [Serializable]
+    public struct ListLine
+    {
+        public string text;
+        [Tooltip("Off: shown, but clicks do nothing.")]
+        public bool interactable;
+        [Tooltip("Clicking plays this over the picture instead of picking the line; the showcase closes after it.")]
+        public DialogueContainer dialogue;
+    }
 
     public enum SpriteFit
     {
@@ -53,8 +68,24 @@ public class ShowcaseDialogueManager : MonoBehaviour
     [Tooltip("Optional speaker for nodes that don't name one (its name, portrait, voice).")]
     [SerializeField] private Talkable defaultSpeaker;
 
+    [Header("List")]
+    [Tooltip("Holds the clickable lines of a list showcase (e.g. a VerticalLayoutGroup over the phone's screen; as a " +
+             "child of the Showcase Image it moves and scales with the picture). Hidden in dialogue showcases.")]
+    [SerializeField] private RectTransform listRoot;
+    [Tooltip("A TextMeshProUGUI under List Root, copied once per line. Stays hidden itself.")]
+    [SerializeField] private TextMeshProUGUI listLineTemplate;
+    [SerializeField] private Color lineHoverColor = new Color(1f, 0.95f, 0.75f, 1f);
+    [Tooltip("Color of lines that can't be clicked.")]
+    [SerializeField] private Color lineDisabledColor = new Color(1f, 1f, 1f, 0.4f);
+    [Tooltip("Clicking the darkened screen around the picture closes the list.")]
+    [SerializeField] private bool clickOutsideClosesList = true;
+    [Tooltip("Optional button that closes the list.")]
+    [SerializeField] private Button listCloseButton;
+
     [Header("Audio")]
     [SerializeField] private AudioClip appearSfx;
+    [SerializeField] private AudioClip lineHoverSfx;
+    [SerializeField] private AudioClip lineClickSfx;
 
     [Header("Events")]
     public UnityEvent onShowcaseStarted = new UnityEvent();
@@ -80,6 +111,16 @@ public class ShowcaseDialogueManager : MonoBehaviour
     private float animTime;
     private int animFrame;
 
+    // The list showcase.
+    private readonly List<TextMeshProUGUI> listLines = new List<TextMeshProUGUI>();
+    private CanvasGroup listGroup;
+    private Color lineColor = Color.white;
+    private bool listOpen;
+    private Talkable listSpeaker;
+
+    /// <summary>True while a list showcase is waiting for a pick.</summary>
+    public bool IsListOpen => listOpen;
+
     private void Awake() => Initialize();
 
     private void Initialize()
@@ -96,7 +137,30 @@ public class ShowcaseDialogueManager : MonoBehaviour
             imageScale = showcaseImage.transform.localScale;
             showcaseImage.raycastTarget = false;
         }
-        if (fadeImage) SetAlpha(fadeImage, 0f);
+        if (fadeImage)
+        {
+            SetAlpha(fadeImage, 0f);
+            if (clickOutsideClosesList)
+            {
+                ShowcaseClickTarget outside = fadeImage.GetComponent<ShowcaseClickTarget>();
+                if (!outside) outside = fadeImage.gameObject.AddComponent<ShowcaseClickTarget>();
+                outside.onClick = CloseList;
+            }
+        }
+
+        if (listLineTemplate)
+        {
+            lineColor = listLineTemplate.color;
+            listLineTemplate.gameObject.SetActive(false);
+        }
+        if (listRoot)
+        {
+            listGroup = listRoot.GetComponent<CanvasGroup>();
+            if (!listGroup) listGroup = listRoot.gameObject.AddComponent<CanvasGroup>();
+            if (!IsShowing) listRoot.gameObject.SetActive(false);
+        }
+        if (listCloseButton) listCloseButton.onClick.AddListener(CloseList);
+
         if (root && !IsShowing) root.SetActive(false);
     }
 
@@ -163,18 +227,6 @@ public class ShowcaseDialogueManager : MonoBehaviour
     {
         Initialize();
 
-        // Empty frames are dropped together with their durations, so the timing stays with its frame.
-        List<Sprite> valid = new List<Sprite>();
-        List<float> validDurations = new List<float>();
-        if (frames != null)
-            for (int i = 0; i < frames.Count; i++)
-            {
-                if (!frames[i]) continue;
-                valid.Add(frames[i]);
-                validDurations.Add(frameDurations != null && i < frameDurations.Count ? frameDurations[i] : 0f);
-            }
-        Sprite sprite = valid.Count > 0 ? valid[0] : null;
-
         if (IsShowing)
         {
             h.Out("ShowcaseDialogueManager: a showcase is already up.");
@@ -188,8 +240,64 @@ public class ShowcaseDialogueManager : MonoBehaviour
             return false;
         }
 
-        IsShowing = true;
         finishedCallback = onFinished;
+        BeginShow(frames, frameDurations, loop);
+        if (listRoot) listRoot.gameObject.SetActive(false);
+
+        stepTween.Stop();
+        stepTween = Tween.Delay(this, appearDuration + dialogueDelay, manager => manager.StartDialogue(dialogue, speaker),
+            useUnscaledTime: true);
+        return true;
+    }
+
+    /// <summary>
+    /// Shows <paramref name="sprite"/> over the darkened screen with <paramref name="lines"/> as clickable text over
+    /// it, and waits. Clicking a line closes the showcase, then runs <paramref name="onPicked"/> with its index - so
+    /// the hub is free again by then. A line with its own dialogue plays it over the picture instead (the showcase
+    /// closes after it, like a cancel). Clicking outside the picture (or the close button) cancels:
+    /// <paramref name="onCancelled"/> runs once it's gone. Returns false (no callback) when a showcase is already up.
+    /// </summary>
+    public bool ShowList(Sprite sprite, IReadOnlyList<ListLine> lines, Action<int> onPicked, Action onCancelled = null,
+        Talkable speaker = null)
+    {
+        Initialize();
+
+        if (IsShowing)
+        {
+            h.Out("ShowcaseDialogueManager: a showcase is already up.");
+            return false;
+        }
+
+        if (!listRoot || !listLineTemplate)
+        {
+            h.Out("ShowcaseDialogueManager: set List Root and List Line Template to show a list.");
+            onCancelled?.Invoke();
+            return false;
+        }
+
+        finishedCallback = onCancelled;
+        listSpeaker = speaker;
+        BeginShow(sprite ? new[] { sprite } : null, null, true);
+        BuildList(lines, onPicked);
+        return true;
+    }
+
+    /// <summary>The fade and the picture appear; <see cref="IsShowing"/> from here on.</summary>
+    private void BeginShow(IReadOnlyList<Sprite> frames, IReadOnlyList<float> frameDurations, bool loop)
+    {
+        // Empty frames are dropped together with their durations, so the timing stays with its frame.
+        List<Sprite> valid = new List<Sprite>();
+        List<float> validDurations = new List<float>();
+        if (frames != null)
+            for (int i = 0; i < frames.Count; i++)
+            {
+                if (!frames[i]) continue;
+                valid.Add(frames[i]);
+                validDurations.Add(frameDurations != null && i < frameDurations.Count ? frameDurations[i] : 0f);
+            }
+        Sprite sprite = valid.Count > 0 ? valid[0] : null;
+
+        IsShowing = true;
         if (root) root.SetActive(true);
 
         if (fadeImage)
@@ -225,11 +333,88 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
         if (appearSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(appearSfx);
         onShowcaseStarted?.Invoke();
+    }
 
-        stepTween.Stop();
-        stepTween = Tween.Delay(this, appearDuration + dialogueDelay, manager => manager.StartDialogue(dialogue, speaker),
-            useUnscaledTime: true);
-        return true;
+    private void BuildList(IReadOnlyList<ListLine> lines, Action<int> onPicked)
+    {
+        ClearList();
+        listOpen = true;
+        listRoot.gameObject.SetActive(true);
+
+        if (lines != null)
+            for (int i = 0; i < lines.Count; i++)
+            {
+                ListLine line = lines[i];
+                TextMeshProUGUI text = Instantiate(listLineTemplate, listRoot);
+                text.gameObject.SetActive(true);
+                text.text = line.text;
+                text.raycastTarget = true;
+                text.color = line.interactable ? lineColor : lineDisabledColor;
+                listLines.Add(text);
+
+                ShowcaseClickTarget target = text.GetComponent<ShowcaseClickTarget>();
+                if (!target) target = text.gameObject.AddComponent<ShowcaseClickTarget>();
+                int index = i;
+                target.onClick = () => PickLine(line, index, onPicked);
+                target.onHover = hovered => HoverLine(text, line, hovered);
+            }
+
+        Tween.StopAll(listGroup);
+        listGroup.alpha = 0f;
+        Tween.Alpha(listGroup, 1f, appearDuration, useUnscaledTime: true);
+    }
+
+    private void HoverLine(TextMeshProUGUI text, ListLine line, bool hovered)
+    {
+        if (!listOpen || !line.interactable || !text) return;
+        text.color = hovered ? lineHoverColor : lineColor;
+        if (hovered && lineHoverSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(lineHoverSfx);
+    }
+
+    private void PickLine(ListLine line, int index, Action<int> onPicked)
+    {
+        if (!listOpen || !line.interactable) return;
+        if (lineClickSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(lineClickSfx);
+
+        HideList();
+        if (line.dialogue)
+        {
+            // The picture stays up for the dialogue; the showcase closes after it, as cancelled.
+            StartDialogue(line.dialogue, listSpeaker);
+            return;
+        }
+
+        finishedCallback = onPicked != null ? () => onPicked(index) : null;
+        Hide(animate: true);
+    }
+
+    /// <summary>Closes an open list without a pick (its cancel callback runs once the showcase is gone).</summary>
+    public void CloseList()
+    {
+        if (!listOpen) return;
+        HideList();
+        Hide(animate: true);
+    }
+
+    /// <summary>Stops taking clicks and fades the lines out; they're destroyed when the showcase is gone.</summary>
+    private void HideList()
+    {
+        listOpen = false;
+        foreach (TextMeshProUGUI line in listLines)
+            if (line) line.raycastTarget = false;
+
+        if (!listGroup) return;
+        Tween.StopAll(listGroup);
+        Tween.Alpha(listGroup, 0f, disappearDuration, useUnscaledTime: true);
+    }
+
+    private void ClearList()
+    {
+        listOpen = false;
+        foreach (TextMeshProUGUI line in listLines)
+            if (line) Destroy(line.gameObject);
+        listLines.Clear();
+        if (listGroup) Tween.StopAll(listGroup);
     }
 
     /// <summary>Closes the showcase now (its dialogue is ended too). The callback is dropped.</summary>
@@ -239,6 +424,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
         finishedCallback = null;
         stepTween.Stop();
         StopListening();
+        ClearList();
 
         if (runningDialogue && Dialogues && Dialogues.DialogueActive) Dialogues.EndDialogue(animate: false);
         DestroyRunningDialogue();
@@ -318,6 +504,9 @@ public class ShowcaseDialogueManager : MonoBehaviour
             showcaseImage.transform.localScale = imageScale;
             showcaseImage.color = imageColor;
         }
+        ClearList();
+        if (listRoot) listRoot.gameObject.SetActive(false);
+        listSpeaker = null;
         if (root) root.SetActive(false);
 
         IsShowing = false;

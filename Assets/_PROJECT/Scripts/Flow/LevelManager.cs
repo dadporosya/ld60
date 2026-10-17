@@ -8,10 +8,14 @@ using UnityEngine.InputSystem;
 [Serializable]
 public class Level
 {
-    [Tooltip("For the inspector and the logs only.")]
+    [Tooltip("Shown on the phone's level list, and in the logs.")]
     public string name = "Level";
+    [Tooltip("Can only be started from the phone once every other level is completed.")]
+    public bool isFinal;
     [Tooltip("Points the dice round must reach to pass.")]
     [Min(0)] public int pointsToPass = 20;
+    [Tooltip("Played before the dice round when the level is picked from the phone. Optional.")]
+    public VisualNovelDialogueContainer startDialogue;
     [Tooltip("Played when the round reaches Points To Pass.")]
     public VisualNovelDialogueContainer winDialogue;
     [Tooltip("Played when the round falls short.")]
@@ -24,6 +28,9 @@ public class Level
 /// The goals of the game: a list of <see cref="Level"/>s, one per dice round, played in order. Holds
 /// how many points each round needs and which dialogue plays after a win or a loss. Once the list
 /// runs out, the last level repeats. Access via <c>LevelManager.Instance</c>.
+///
+/// <para>Levels can also be picked in any order from the phone (<see cref="LevelPhoneInteractable"/>):
+/// each can be completed once, and the <see cref="Level.isFinal"/> one only after all the others.</para>
 /// </summary>
 public class LevelManager : MonoBehaviour
 {
@@ -33,8 +40,12 @@ public class LevelManager : MonoBehaviour
     {
         new Level { name = "Level 1", pointsToPass = 10 },
         new Level { name = "Level 2", pointsToPass = 20 },
-        new Level { name = "Level 3", pointsToPass = 30 },
+        new Level { name = "Level 3", pointsToPass = 30, isFinal = true },
     };
+
+    [Tooltip("A level only counts as completed (struck off the phone, towards unlocking the final level) when its " +
+             "round was won. Off: playing it is enough.")]
+    [SerializeField] private bool onlyWinsComplete = false;
 
     [Header("Debug")]
     [Tooltip("Debug only: the digit keys (top row or numpad) run a level's dice round straight away - " +
@@ -77,6 +88,27 @@ public class LevelManager : MonoBehaviour
 
     /// <summary>True once every level in the list has been played.</summary>
     public bool AllLevelsPlayed => CurrentIndex >= levels.Count;
+
+    private readonly HashSet<int> completed = new HashSet<int>();
+
+    public bool IsCompleted(int index) => completed.Contains(index);
+
+    public bool IsFinal(int index) => index >= 0 && index < levels.Count && levels[index].isFinal;
+
+    /// <summary>True once every level that isn't final is completed.</summary>
+    public bool FinalUnlocked
+    {
+        get
+        {
+            for (int i = 0; i < levels.Count; i++)
+                if (!levels[i].isFinal && !completed.Contains(i)) return false;
+            return true;
+        }
+    }
+
+    /// <summary>Whether levels[<paramref name="index"/>] can be started from the phone now.</summary>
+    public bool CanStart(int index) =>
+        index >= 0 && index < levels.Count && !IsCompleted(index) && (!IsFinal(index) || FinalUnlocked);
 
     private void Awake()
     {
@@ -139,6 +171,7 @@ public class LevelManager : MonoBehaviour
         CurrentIndex = 0;
         LevelsWon = 0;
         LevelsLost = 0;
+        completed.Clear();
     }
 
     /// <summary>Call as the current level's round starts.</summary>
@@ -158,10 +191,12 @@ public class LevelManager : MonoBehaviour
     public VisualNovelDialogueContainer CompleteLevel(bool passed)
     {
         Level level = Current;
-        int index = CurrentIndex;
+        // Past the end of the list the last level repeats; it's that one being completed.
+        int index = Mathf.Min(CurrentIndex, levels.Count - 1);
 
         if (passed) LevelsWon++;
         else LevelsLost++;
+        if (index >= 0 && (passed || !onlyWinsComplete)) completed.Add(index);
         CurrentIndex++;
 
         if (passed) onLevelWon?.Invoke(index);

@@ -67,6 +67,40 @@ public class DiceOutlineStyle
     public bool onlyWhenLockable = true;
 }
 
+/// <summary>
+/// Text popups over the table (through the <see cref="TextAlertManager"/>): the score's change, the hand the
+/// dice made, and the goals being reached.
+/// </summary>
+[Serializable]
+public class DicePopups
+{
+    public bool enabled = true;
+    [Tooltip("Seconds between popups that come at once (a landing that reaches a goal), so they don't pile up.")]
+    [Min(0f)] public float interval = 0.25f;
+
+    [Header("Where (empty: Score Text / Combination Text / Target Text)")]
+    public Transform scoreAnchor;
+    public Transform combinationAnchor;
+    public Transform goalAnchor;
+
+    [Header("Text")]
+    [Tooltip("{0} = points gained.")]
+    public string gainFormat = "+{0}";
+    [Tooltip("{0} = points lost (a positive number).")]
+    public string lossFormat = "-{0}";
+    public string goalReachedText = "Goal reached!";
+    public string riskyGoalReachedText = "You feel hopeful.";
+    [Tooltip("At the end of a round that reached the risky goal: the next cards are upgraded.")]
+    public string cardUpgradedText = "Card upgraded!";
+
+    [Header("Colors")]
+    public Color gainColor = new Color(0.45f, 0.9f, 0.45f, 1f);
+    public Color lossColor = new Color(0.95f, 0.4f, 0.4f, 1f);
+    public Color combinationColor = Color.white;
+    public Color goalColor = new Color(1f, 0.9f, 0.45f, 1f);
+    public Color riskyGoalColor = new Color(0.45f, 0.9f, 0.45f, 1f);
+}
+
 /// <summary>Points a poker dice hand is worth.</summary>
 [Serializable]
 public class CombinationScore
@@ -101,6 +135,10 @@ public class DiceRoundResult
     public DiceScore score;
     public int target;
     public bool passed;
+    /// <summary>The risky goal: <see cref="target"/> x the risky multiplier.</summary>
+    public int riskyTarget;
+    /// <summary>The score reached the risky goal: the next cards are upgraded.</summary>
+    public bool riskyPassed;
     public int[] values;
 }
 
@@ -112,6 +150,9 @@ public class DiceRoundResult
 /// clicking a die locks / unlocks it, and each further Roll (up to <see cref="rerollsPerRound"/> plus
 /// card bonuses) rethrows the unlocked ones. <see cref="Finish"/> - or running out of rerolls - scores
 /// the best poker hand the dice make, cards included, against the target.</para>
+///
+/// <para>Two goals: the target (the minimum to pass) and the risky goal, <see cref="riskyGoalMultiplier"/>
+/// times higher - reaching it upgrades the next cards offered (<see cref="DiceRoundResult.riskyPassed"/>).</para>
 /// </summary>
 public class DiceManager : MonoBehaviour
 {
@@ -162,6 +203,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField, Min(0f)] private float finishDelay = 1.5f;
     [Tooltip("Hide the table root when the round ends.")]
     [SerializeField] private bool hideTableOnFinish = true;
+    [Tooltip("The risky goal is the target times this. Reaching it upgrades the next cards offered.")]
+    [SerializeField, Min(1f)] private float riskyGoalMultiplier = 2f;
 
     [Header("Scoring")]
     [Tooltip("Add the sum of all dice to the hand's points.")]
@@ -192,8 +235,12 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI rerollsText;
     [SerializeField] private string rerollsFormat = "Rerolls: {0}";
     [SerializeField] private TextMeshProUGUI targetText;
-    [Tooltip("{0} = target score.")]
+    [Tooltip("{0} = target score, {1} = risky goal.")]
     [SerializeField] private string targetFormat = "Need {0}";
+    [Tooltip("Optional: shows the risky goal.")]
+    [SerializeField] private TextMeshProUGUI riskyTargetText;
+    [Tooltip("{0} = risky goal, {1} = target score.")]
+    [SerializeField] private string riskyTargetFormat = "Risky {0}";
     [SerializeField] private TextMeshProUGUI scoreText;
     [Tooltip("{0} = the score. Copied into the CountingText added to Score Text when it has none; a CountingText " +
              "already there keeps its own format.")]
@@ -205,6 +252,9 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private string passedText = "They still care.";
     [SerializeField] private string failedText = "...";
 
+    [Header("Popups")]
+    public DicePopups popups = new DicePopups();
+
     [Header("Events")]
     public UnityEvent onRoundStarted = new UnityEvent();
     public UnityEvent onRolled = new UnityEvent();
@@ -215,6 +265,8 @@ public class DiceManager : MonoBehaviour
     public bool HasRolled { get; private set; }
     public int RerollsLeft { get; private set; }
     public int Target { get; private set; }
+    /// <summary>The risky goal: <see cref="Target"/> x <see cref="riskyGoalMultiplier"/>.</summary>
+    public int RiskyTarget => Mathf.CeilToInt(Target * riskyGoalMultiplier);
     public bool IsRolling => landingPending > 0;
     public IReadOnlyList<Dice> AllDice => dice;
 
@@ -224,6 +276,8 @@ public class DiceManager : MonoBehaviour
     private Action<DiceRoundResult> roundCallback;
     private DiceRoundResult pendingResult;
     private Tween finishTween;
+    private readonly List<Tween> popupTweens = new List<Tween>();
+    private float nextPopupTime;
 
     // The score on screen: the last one the dice made, kept while they are rolled again.
     private DiceScore shownScore;
@@ -471,6 +525,7 @@ public class DiceManager : MonoBehaviour
         foreach (Dice die in dice)
             if (die) die.ResetDice();
 
+        StopPopups();
         if (tableRoot) tableRoot.SetActive(true);
         if (resultText) resultText.gameObject.SetActive(false);
         UpdateUI();
@@ -540,6 +595,8 @@ public class DiceManager : MonoBehaviour
             score = score,
             target = Target,
             passed = score.total >= Target,
+            riskyTarget = RiskyTarget,
+            riskyPassed = RiskyTarget > 0 && score.total >= RiskyTarget,
             values = values,
         };
 
@@ -551,6 +608,7 @@ public class DiceManager : MonoBehaviour
 
         PlaySfx(pendingResult.passed ? passedSfx : failedSfx);
         UpdateUI();
+        if (pendingResult.riskyPassed) Popup(popups.cardUpgradedText, GoalAnchor, popups.riskyGoalColor);
 
         if (finishDelay > 0f) finishTween = Tween.Delay(this, finishDelay, manager => manager.CompleteRound());
         else CompleteRound();
@@ -570,6 +628,7 @@ public class DiceManager : MonoBehaviour
         landingPending = 0;
         roundCallback = null;
         pendingResult = null;
+        StopPopups();
         if (tableRoot) tableRoot.SetActive(false);
     }
 
@@ -579,7 +638,9 @@ public class DiceManager : MonoBehaviour
         landingPending = Mathf.Max(0, landingPending - 1);
         if (landingPending > 0) return;
 
+        DiceScore before = shownScore;
         UpdateUI();
+        ShowRollPopups(before, shownScore);
         onRolled?.Invoke();
 
         if (autoFinishWhenOutOfRerolls && RerollsLeft <= 0) Finish();
@@ -646,23 +707,24 @@ public class DiceManager : MonoBehaviour
                     CardEffect effect = card?.Effect;
                     if (effect == null) continue;
 
+                    // The card's own amount / multiplier: an upgraded card's are higher.
                     switch (effect.type)
                     {
                         case CardEffectType.FlatPoints:
-                            bonus += effect.amount;
+                            bonus += card.Amount;
                             break;
                         case CardEffectType.CombinationBonus:
-                            if (effect.Matches(hand)) bonus += effect.amount;
+                            if (effect.Matches(hand)) bonus += card.Amount;
                             break;
                         case CardEffectType.CombinationMultiplier:
-                            if (effect.Matches(hand)) handPoints *= effect.multiplier;
+                            if (effect.Matches(hand)) handPoints *= card.Multiplier;
                             break;
                         case CardEffectType.FaceValueBonus:
                             foreach (int v in values)
-                                if (v == effect.faceValue) bonus += effect.amount;
+                                if (v == effect.faceValue) bonus += card.Amount;
                             break;
                         case CardEffectType.ScoreMultiplier:
-                            scoreMultiplier *= effect.multiplier;
+                            scoreMultiplier *= card.Multiplier;
                             break;
                     }
                 }
@@ -691,7 +753,7 @@ public class DiceManager : MonoBehaviour
         foreach (CardInstance card in ownedCards)
         {
             CardEffect effect = card?.Effect;
-            if (effect != null && effect.type == CardEffectType.ExtraRerolls) extra += effect.amount;
+            if (effect != null && effect.type == CardEffectType.ExtraRerolls) extra += card.Amount;
         }
         return Mathf.Max(0, extra);
     }
@@ -712,7 +774,8 @@ public class DiceManager : MonoBehaviour
         if (rollButtonLabel) rollButtonLabel.text = HasRolled ? string.Format(rerollLabel, RerollsLeft) : firstRollLabel;
         if (finishButton) finishButton.interactable = idle && HasRolled;
         if (rerollsText) rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
-        if (targetText) targetText.text = string.Format(targetFormat, Target);
+        if (targetText) targetText.text = string.Format(targetFormat, Target, RiskyTarget);
+        if (riskyTargetText) riskyTargetText.text = string.Format(riskyTargetFormat, RiskyTarget, Target);
 
         // The score is what the dice on the table make right now - never added up over rolls. While dice
         // are in the air the last one stays up; once they land it counts from that to the new score
@@ -732,6 +795,71 @@ public class DiceManager : MonoBehaviour
         // Whether a die may be locked just changed (a roll started or landed): hovered dice follow.
         foreach (Dice die in dice)
             if (die) die.RefreshOutline();
+    }
+
+    // ---------------------------------------------------------------------
+    // Popups
+    // ---------------------------------------------------------------------
+
+    private Transform ScoreAnchor => popups.scoreAnchor ? popups.scoreAnchor : scoreText ? scoreText.transform : null;
+    private Transform CombinationAnchor => popups.combinationAnchor ? popups.combinationAnchor : combinationText ? combinationText.transform : null;
+    private Transform GoalAnchor => popups.goalAnchor ? popups.goalAnchor : targetText ? targetText.transform : null;
+
+    /// <summary>
+    /// After a landing: how much the score changed (+10 / -5), the hand the dice make, and a goal reached
+    /// (the score climbing past the target or the risky goal).
+    /// </summary>
+    private void ShowRollPopups(DiceScore before, DiceScore after)
+    {
+        if (!popups.enabled || after == null) return;
+
+        int oldTotal = before?.total ?? 0;
+        int change = after.total - oldTotal;
+        if (change != 0)
+            Popup(string.Format(change > 0 ? popups.gainFormat : popups.lossFormat, Mathf.Abs(change)), ScoreAnchor,
+                change > 0 ? popups.gainColor : popups.lossColor);
+
+        if (after.combination != PokerDiceCombination.Nothing)
+            Popup(after.combinationName, CombinationAnchor, popups.combinationColor);
+
+        if (Target > 0 && oldTotal < Target && after.total >= Target)
+            Popup(popups.goalReachedText, GoalAnchor, popups.goalColor);
+        if (RiskyTarget > 0 && oldTotal < RiskyTarget && after.total >= RiskyTarget)
+            Popup(popups.riskyGoalReachedText, GoalAnchor, popups.riskyGoalColor);
+    }
+
+    /// <summary>Pops <paramref name="text"/> up at <paramref name="anchor"/>, <see cref="DicePopups.interval"/> after the previous popup.</summary>
+    private void Popup(string text, Transform anchor, Color color)
+    {
+        if (!popups.enabled || string.IsNullOrEmpty(text)) return;
+        if (!TextAlertManager.Instance)
+        {
+            h.Out($"DiceManager: no TextAlertManager for the popup '{text}'.");
+            return;
+        }
+        if (!anchor) anchor = tableRoot ? tableRoot.transform : transform;
+
+        float delay = Mathf.Max(0f, nextPopupTime - Time.time);
+        nextPopupTime = Time.time + delay + popups.interval;
+
+        if (delay <= 0f)
+        {
+            TextAlertManager.Instance.CreateTextAlert(text, anchor, color);
+            return;
+        }
+
+        popupTweens.RemoveAll(tween => !tween.isAlive);
+        popupTweens.Add(Tween.Delay(anchor, delay, a =>
+        {
+            if (TextAlertManager.Instance) TextAlertManager.Instance.CreateTextAlert(text, a, color);
+        }));
+    }
+
+    private void StopPopups()
+    {
+        foreach (Tween tween in popupTweens) tween.Stop();
+        popupTweens.Clear();
+        nextPopupTime = 0f;
     }
 
     private static void PlaySfx(AudioClip clip)

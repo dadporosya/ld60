@@ -704,6 +704,7 @@ MonoBehaviour:
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
   hideTableOnFinish: 1
+  riskyGoalMultiplier: 2
   addDiceSum: 0
   combinations:
   - combination: 0
@@ -743,6 +744,8 @@ MonoBehaviour:
   rerollsFormat: 'Rerolls: {0}'
   targetText: {fileID: 260250801}
   targetFormat: Need {0}
+  riskyTargetText: {fileID: 0}
+  riskyTargetFormat: Risky {0}
   scoreText: {fileID: 4143563}
   scoreFormat: '{0}'
   scoreCounter: {fileID: 0}
@@ -750,6 +753,22 @@ MonoBehaviour:
   resultText: {fileID: 0}
   passedText: They still care.
   failedText: ...
+  popups:
+    enabled: 1
+    interval: 0.25
+    scoreAnchor: {fileID: 0}
+    combinationAnchor: {fileID: 0}
+    goalAnchor: {fileID: 0}
+    gainFormat: +{0}
+    lossFormat: -{0}
+    goalReachedText: Goal reached!
+    riskyGoalReachedText: You feel hopeful.
+    cardUpgradedText: Card upgraded!
+    gainColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
+    lossColor: {r: 0.95, g: 0.4, b: 0.4, a: 1}
+    combinationColor: {r: 1, g: 1, b: 1, a: 1}
+    goalColor: {r: 1, g: 0.9, b: 0.45, a: 1}
+    riskyGoalColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
   onRoundStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -1276,8 +1295,66 @@ Transform:
   - {fileID: 1074680907}
   - {fileID: 1501130591}
   - {fileID: 393189331}
+  - {fileID: 294091952}
   m_Father: {fileID: 2040892597}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &294091951
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 294091952}
+  - component: {fileID: 294091953}
+  m_Layer: 0
+  m_Name: text alert manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &294091952
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294091951}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 291783876}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &294091953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294091951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 986cebbf91064bb68363b30ddaf7bf1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TextAlertManager
+  damageTextPfb: {fileID: 1232487509388113740, guid: 161e07b55f611f2489b190fa0d094902, type: 3}
+  holdDuration: 0.6
+  fadeOutDuration: 0.4
+  speed: 1
+  spread: 1
+  alertOffset: {x: 0, y: 0, z: 0}
+  alertScale: 1
+  textAlertPfb: {fileID: 1232487509388113740, guid: 161e07b55f611f2489b190fa0d094902, type: 3}
+  uiParent: {fileID: 797620591}
+  textHoldDuration: 0.9
+  textFadeOutDuration: 0.5
+  textSpeed: 60
+  textSpread: 12
 --- !u!1 &346760856
 GameObject:
   m_ObjectHideFlags: 0
@@ -1369,6 +1446,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueWindowAnimations
   dialogueManager: {fileID: 1562042182}
+  pivotOnTopEdge: 1
   xDuration: 0.18
   yDuration: 0.18
   ySliver: 0.1
@@ -2148,7 +2226,8 @@ MonoBehaviour:
   defaultPitch: 1
   useDefaultRandomPitch: 0
   defaultRandomPitchRange: {x: 0.95, y: 1.05}
-  defaultDialogueVoiceList: []
+  defaultDialogueVoiceList:
+  - {fileID: 8300000, guid: dced3d403077ca0479e17fcc17b0ca5d, type: 3}
 --- !u!1 &541169077
 GameObject:
   m_ObjectHideFlags: 0
@@ -2423,6 +2502,41 @@ Transform:
   - {fileID: 1465976792}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &797620590
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 797620591}
+  m_Layer: 0
+  m_Name: Alerts
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &797620591
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 797620590}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1819404970}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &802812221
 GameObject:
   m_ObjectHideFlags: 0
@@ -3968,6 +4082,7 @@ RectTransform:
   - {fileID: 4143562}
   - {fileID: 548950537}
   - {fileID: 230680847}
+  - {fileID: 797620591}
   m_Father: {fileID: 1152190594}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -4286,6 +4401,7 @@ MonoBehaviour:
   defaultChoiceCount: 2
   allowOwnedPermanentCards: 1
   startingCards: []
+  upgradeBonus: 0.5
   root: {fileID: 1859262027}
   fadeImage: {fileID: 1859262029}
   fadeAlpha: 0.6

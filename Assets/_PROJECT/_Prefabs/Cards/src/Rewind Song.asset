@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: Hope
   badTitle: Hate
-  description: Rewind song by 10 s
+  description: Rewind song by {0} s
   art: {fileID: 0}
   viewPrefab: {fileID: 0}
   kind: 1

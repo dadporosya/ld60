@@ -56,17 +56,35 @@ public class CardEffect
 
     public bool Matches(PokerDiceCombination hand) => hand == combination;
 
+    /// <summary>Multiplier cards: their number is the multiplier, not an amount of points.</summary>
+    public bool UsesMultiplier => type == CardEffectType.CombinationMultiplier || type == CardEffectType.ScoreMultiplier;
+
+    /// <summary>Whether an upgrade changes this bonus - everything that adds points (not rerolls).</summary>
+    public bool CanUpgrade => type != CardEffectType.ExtraRerolls;
+
+    /// <summary>Points with <paramref name="scale"/> applied (1.5 = 50% more), rounded half up.</summary>
+    public int AmountFor(float scale) => Mathf.FloorToInt(amount * scale + 0.5f);
+
+    /// <summary>The multiplier with <paramref name="scale"/> applied to what it adds: x1.5 scaled 1.5 is x1.75.</summary>
+    public float MultiplierFor(float scale) => 1f + (multiplier - 1f) * scale;
+
+    /// <summary>The bonus's number as shown on the card - the amount, or the multiplier for multiplier cards.</summary>
+    public string Value(float scale = 1f) => UsesMultiplier ? MultiplierFor(scale).ToString("0.##") : AmountFor(scale).ToString();
+
     /// <summary>Plain description of the bonus, for cards without their own text (or for {bonus}).</summary>
-    public string Describe()
+    public string Describe() => Describe(Value());
+
+    /// <summary>The plain description with <paramref name="value"/> (the amount or multiplier, maybe highlighted) in it.</summary>
+    public string Describe(string value)
     {
         switch (type)
         {
-            case CardEffectType.FlatPoints: return $"+{amount} points";
-            case CardEffectType.CombinationBonus: return $"+{amount} points for {Nicify(combination)}";
-            case CardEffectType.CombinationMultiplier: return $"{Nicify(combination)} scores x{multiplier:0.##}";
-            case CardEffectType.FaceValueBonus: return $"+{amount} points for each {faceValue}";
-            case CardEffectType.ExtraRerolls: return amount == 1 ? "+1 reroll" : $"+{amount} rerolls";
-            case CardEffectType.ScoreMultiplier: return $"Score x{multiplier:0.##}";
+            case CardEffectType.FlatPoints: return $"+{value} points";
+            case CardEffectType.CombinationBonus: return $"+{value} points for {Nicify(combination)}";
+            case CardEffectType.CombinationMultiplier: return $"{Nicify(combination)} scores x{value}";
+            case CardEffectType.FaceValueBonus: return $"+{value} points for each {faceValue}";
+            case CardEffectType.ExtraRerolls: return amount == 1 ? $"+{value} reroll" : $"+{value} rerolls";
+            case CardEffectType.ScoreMultiplier: return $"Score x{value}";
             default: return "";
         }
     }
@@ -83,11 +101,15 @@ public class ImmediateEffect
     [Tooltip("RewindSong: seconds the song is played back.")]
     [Min(0f)] public float seconds = 10f;
 
-    public string Describe()
+    public string Value() => type == ImmediateEffectType.RewindSong ? seconds.ToString("0.#") : "";
+
+    public string Describe() => Describe(Value());
+
+    public string Describe(string value)
     {
         switch (type)
         {
-            case ImmediateEffectType.RewindSong: return $"Play the song back {seconds:0.#} seconds";
+            case ImmediateEffectType.RewindSong: return $"Play the song back {value} seconds";
             default: return "";
         }
     }
@@ -96,8 +118,9 @@ public class ImmediateEffect
 /// <summary>
 /// A bonus card. <see cref="CardKind.Permanent"/> cards add to every dice round; <see cref="CardKind.Immediate"/>
 /// ones act once when picked and burn. The card shows its good or bad title depending on how the call went;
-/// the bonus is the same either way. The description may use {bonus} for the bonus's plain description; an
-/// empty description shows just that.
+/// the bonus is the same either way. The description may use {0} for the bonus's number (points, multiplier or
+/// seconds - upgraded and highlighted when the card is) and {bonus} for its plain description; an empty
+/// description shows just the plain one.
 /// </summary>
 [CreateAssetMenu(fileName = "Card", menuName = "Funeral Song/Card")]
 public class CardData : ScriptableObject
@@ -124,30 +147,61 @@ public class CardData : ScriptableObject
 
     public string BonusDescription => IsPermanent ? effect.Describe() : immediate.Describe();
 
-    public string Description()
+    /// <summary>
+    /// The card's text: {0} becomes the bonus's number with <paramref name="scale"/> applied (1.5 = an upgraded
+    /// card's 50% more), tinted <paramref name="highlight"/> when given; {bonus} the plain description.
+    /// </summary>
+    public string Description(float scale = 1f, Color? highlight = null)
     {
-        string bonus = BonusDescription;
-        return string.IsNullOrWhiteSpace(description) ? bonus : description.Replace("{bonus}", bonus);
+        string value = IsPermanent ? effect.Value(scale) : immediate.Value();
+        if (highlight.HasValue) value = $"<color=#{ColorUtility.ToHtmlStringRGBA(highlight.Value)}>{value}</color>";
+
+        string bonus = IsPermanent ? effect.Describe(value) : immediate.Describe(value);
+        string text = string.IsNullOrWhiteSpace(description) ? bonus : description.Replace("{bonus}", bonus);
+        return text.Replace("{0}", value);
     }
 }
 
-/// <summary>A card offered to or owned by the player: which card, and which of its titles it shows.</summary>
+/// <summary>
+/// A card offered to or owned by the player: which card, which of its titles it shows, and whether it is
+/// upgraded (offered after the player reached a round's risky goal: its points are worth more).
+/// </summary>
 [Serializable]
 public class CardInstance
 {
     public CardData data;
     public CardMood mood;
+    [Tooltip("Extra share of points an upgraded card grants: 0.5 = 50% more. 0: not upgraded.")]
+    public float upgradeBonus;
 
-    public CardInstance(CardData data, CardMood mood)
+    public CardInstance(CardData data, CardMood mood, float upgradeBonus = 0f)
     {
         this.data = data;
         this.mood = mood;
+        this.upgradeBonus = Mathf.Max(0f, upgradeBonus);
     }
 
     public bool IsPermanent => data && data.IsPermanent;
     /// <summary>The dice bonus - only for permanent cards; immediate ones never touch the score.</summary>
     public CardEffect Effect => IsPermanent ? data.effect : null;
+
+    /// <summary>Upgraded, and the upgrade changes its bonus (permanent cards that add points).</summary>
+    public bool IsUpgraded => upgradeBonus > 0f && IsPermanent && data.effect.CanUpgrade;
+
+    /// <summary>What the bonus's number is scaled by: 1 + the upgrade bonus when upgraded, else 1.</summary>
+    public float PointsScale => IsUpgraded ? 1f + upgradeBonus : 1f;
+
+    /// <summary>The effect's amount, upgrade included.</summary>
+    public int Amount => Effect != null ? Effect.AmountFor(PointsScale) : 0;
+
+    /// <summary>The effect's multiplier, upgrade included.</summary>
+    public float Multiplier => Effect != null ? Effect.MultiplierFor(PointsScale) : 1f;
+
     public string Title => data ? data.Title(mood) : "";
-    public string Description => data ? data.Description() : "";
+    public string Description => data ? data.Description(PointsScale) : "";
     public Sprite Art => data ? data.art : null;
+
+    /// <summary>The description with an upgraded card's number tinted <paramref name="highlight"/>.</summary>
+    public string DescriptionWith(Color highlight) =>
+        data ? data.Description(PointsScale, IsUpgraded ? highlight : (Color?)null) : "";
 }
