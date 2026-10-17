@@ -7,14 +7,15 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// A hint sheet hanging from the top of the screen. Opened, it slides down into view; closed, it slides
-/// back up out of the screen until only its toggle button (at the sheet's lower edge) is left showing.
-/// The button or the toggle key flips it; the button's label says which key and what it will do.
+/// A hint sheet that slides into view when opened and back out when closed. The button or the toggle key
+/// flips it; the button's label says which key and what it will do.
 ///
-/// <para>Put it on the sheet's RectTransform, as it sits when OPEN (anchored to the top of the screen),
-/// with the toggle button as a child at its lower edge - inside the sheet or hanging below it. The closed
-/// position is worked out from the button: the sheet goes up until the button's top edge reaches where
-/// the sheet's top edge was.</para>
+/// <para>With an Open Target: place the sheet where it sits CLOSED. Opened, it moves onto the Open Target
+/// (an empty RectTransform outside the sheet); closed, it goes back to where it started.</para>
+///
+/// <para>Without one: place the sheet as it sits OPEN (anchored to the top of the screen), with the toggle
+/// button as a child at its lower edge - inside the sheet or hanging below it. The closed position is worked
+/// out from the button: the sheet goes up until the button's top edge reaches where the sheet's top edge was.</para>
 ///
 /// <para>With Auto Open on, every time the sheet is shown (its panel turned on as gameplay starts) it
 /// starts closed and slides open by itself a moment later.</para>
@@ -41,7 +42,13 @@ public class HintPaper : MonoBehaviour
     [SerializeField, Min(0f)] private float autoOpenDuration = 0.7f;
     [SerializeField] private Ease autoOpenEase = Ease.OutBack;
 
-    [Header("Closed position")]
+    [Header("Open position")]
+    [Tooltip("Empty object the sheet moves onto when opened (its pivot onto this object's pivot); closed, it " +
+             "goes back to where it sits in the scene. Keep it outside the sheet. Empty: the sheet sits open in " +
+             "the scene and closes upward (Closed Position).")]
+    [SerializeField] private RectTransform openTarget;
+
+    [Header("Closed position (no Open Target)")]
     [Tooltip("Work the closed position out from the toggle button. Off: use Closed Offset.")]
     [SerializeField] private bool autoClosedOffset = true;
     [Tooltip("Extra amount of the sheet left showing above the button when closed (UI units). Negative hides part of the button.")]
@@ -100,7 +107,8 @@ public class HintPaper : MonoBehaviour
     public bool IsOpen { get; private set; }
 
     private RectTransform rect;
-    private Vector2 openPosition;
+    // Where the sheet sits in the scene: closed with an Open Target, open without.
+    private Vector2 startPosition;
     private bool initialized;
     private bool autoOpened;
     private Tween moveTween;
@@ -111,7 +119,8 @@ public class HintPaper : MonoBehaviour
     private Transform pulseTarget;
     private Vector3 pulseRestScale;
 
-    private Vector2 ClosedPosition => openPosition + Vector2.up * ClosedShift();
+    private Vector2 OpenPosition => openTarget ? TargetPosition() : startPosition;
+    private Vector2 ClosedPosition => openTarget ? startPosition : startPosition + Vector2.up * ClosedShift();
 
     private void Awake()
     {
@@ -211,7 +220,9 @@ public class HintPaper : MonoBehaviour
         if (initialized) return;
         initialized = true;
 
-        openPosition = rect.anchoredPosition;
+        startPosition = rect.anchoredPosition;
+        if (openTarget && openTarget.IsChildOf(rect))
+            h.Out($"HintPaper: Open Target '{openTarget.name}' is inside the sheet and moves with it. Put it outside.");
         Snap(startOpen);
     }
 
@@ -268,7 +279,7 @@ public class HintPaper : MonoBehaviour
             Snap(open);
         else
         {
-            Vector2 target = open ? openPosition : ClosedPosition;
+            Vector2 target = open ? OpenPosition : ClosedPosition;
             moveTween = Tween.UIAnchoredPosition(rect, target, duration, ease, useUnscaledTime: useUnscaledTime);
             AnimateIcon(open, duration);
             UpdateLabel(open);
@@ -299,10 +310,22 @@ public class HintPaper : MonoBehaviour
         return (sheetTop - buttonTop - extraPeek) * rect.localScale.y;
     }
 
+    /// <summary>
+    /// The anchored position that puts the sheet's pivot on <see cref="openTarget"/>'s: the gap between the two
+    /// pivots, measured in the sheet's parent, added to where the sheet is now.
+    /// </summary>
+    private Vector2 TargetPosition()
+    {
+        Transform parent = rect.parent;
+        Vector3 from = parent ? parent.InverseTransformPoint(rect.position) : rect.position;
+        Vector3 to = parent ? parent.InverseTransformPoint(openTarget.position) : openTarget.position;
+        return rect.anchoredPosition + (Vector2)(to - from);
+    }
+
     private void Snap(bool open)
     {
         IsOpen = open;
-        rect.anchoredPosition = open ? openPosition : ClosedPosition;
+        rect.anchoredPosition = open ? OpenPosition : ClosedPosition;
         AnimateIcon(open, 0f);
         UpdateLabel(open);
     }

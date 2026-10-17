@@ -330,6 +330,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI roundScoreText;
     [Tooltip("{0} = the running round's points. Copied into the CountingText added to Round Score Text when it has none.")]
     [SerializeField] private string roundScoreFormat = "{0}";
+    [Tooltip("Round Score Text's colour while the turn's total (banked rounds + this round) is under the target.")]
+    [SerializeField] private Color roundBelowTargetColor = new Color(1f, 0.35f, 0.35f, 1f);
     [SerializeField] private TextMeshProUGUI combinationText;
     [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
              "in the scoring table) by driving its Shake Strength. Defaults to the TextAnimation on Combination Text " +
@@ -433,6 +435,8 @@ public class DiceManager : MonoBehaviour
     /// <summary>The running round's counter: the CountingText on <see cref="roundScoreText"/> (added if missing).</summary>
     private CountingText RoundScoreCounter => CounterOn(roundScoreText, roundScoreFormat, ref roundScoreCounter);
     private CountingText roundScoreCounter;
+    // Round Score Text's own colour, from the scene: back to it once the target is reached.
+    private Color? roundScoreColor;
 
     private static CountingText CounterOn(TextMeshProUGUI text, string format, ref CountingText counter)
     {
@@ -1346,6 +1350,10 @@ public class DiceManager : MonoBehaviour
                 // A fresh round starts at 0; then it counts to what the dice make.
                 if (shownScore == null) roundCounter.SetInstant(0);
                 else roundCounter.SetValue(shownScore.total);
+
+                // Red until the turn's total reaches the minimum goal.
+                roundScoreColor ??= roundCounter.BaseColor;
+                roundCounter.BaseColor = TargetReached ? roundScoreColor.Value : roundBelowTargetColor;
             }
         }
 

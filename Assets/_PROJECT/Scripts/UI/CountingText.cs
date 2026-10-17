@@ -70,6 +70,23 @@ public class CountingText : MonoBehaviour
 
     public bool IsCounting => countTween.isAlive;
 
+    /// <summary>The text's resting colour: shown whenever it isn't tinted for a count.</summary>
+    public Color BaseColor
+    {
+        get
+        {
+            RememberRest();
+            return baseColor;
+        }
+        set
+        {
+            RememberRest();
+            baseColor = value;
+            baseColorKnown = true;
+            if (text && !(tintWhileCounting && IsCounting)) text.color = value;
+        }
+    }
+
     private RectTransform rect;
     private Color baseColor;
     private bool baseColorKnown;
