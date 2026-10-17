@@ -2,13 +2,23 @@ using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-/// <summary>Which side of a card the player got: Hope after a call that went well, Hate after one that didn't.</summary>
+/// <summary>Which title a card shows: the good one after a call that went well, the bad one after one that didn't.</summary>
 public enum CardMood
 {
     Hope,
     Hate,
 }
 
+/// <summary>How a card's bonus works.</summary>
+public enum CardKind
+{
+    [Tooltip("Kept: its bonus counts in every dice round, and it is shown with the player's cards.")]
+    Permanent,
+    [Tooltip("Applied once, the moment it is picked, then burned.")]
+    Immediate,
+}
+
+/// <summary>A permanent card's bonus to the dice score.</summary>
 public enum CardEffectType
 {
     [Tooltip("+Amount points to every round's score.")]
@@ -25,7 +35,16 @@ public enum CardEffectType
     ScoreMultiplier,
 }
 
-/// <summary>What a card does to the dice. Hope and Hate versions of a card share it.</summary>
+/// <summary>An immediate card's one-off effect.</summary>
+public enum ImmediateEffectType
+{
+    [Tooltip("Plays the song back by Seconds: more time left.")]
+    RewindSong,
+    [Tooltip("Nothing built in - react through CardManager.onImmediateCardApplied.")]
+    Custom,
+}
+
+/// <summary>What a permanent card does to the dice.</summary>
 [Serializable]
 public class CardEffect
 {
@@ -56,40 +75,63 @@ public class CardEffect
         Regex.Replace(combination.ToString(), "(\\B[A-Z])", " $1");
 }
 
+/// <summary>What an immediate card does once.</summary>
+[Serializable]
+public class ImmediateEffect
+{
+    public ImmediateEffectType type = ImmediateEffectType.RewindSong;
+    [Tooltip("RewindSong: seconds the song is played back.")]
+    [Min(0f)] public float seconds = 10f;
+
+    public string Describe()
+    {
+        switch (type)
+        {
+            case ImmediateEffectType.RewindSong: return $"Play the song back {seconds:0.#} seconds";
+            default: return "";
+        }
+    }
+}
+
 /// <summary>
-/// A bonus card. The bonus is the same whichever way the call went; only the name, text and art
-/// change - Hope after a good call, Hate after a bad one. Descriptions may use {bonus} for the
-/// bonus's plain description; an empty description shows just that.
+/// A bonus card. <see cref="CardKind.Permanent"/> cards add to every dice round; <see cref="CardKind.Immediate"/>
+/// ones act once when picked and burn. The card shows its good or bad title depending on how the call went;
+/// the bonus is the same either way. The description may use {bonus} for the bonus's plain description; an
+/// empty description shows just that.
 /// </summary>
 [CreateAssetMenu(fileName = "Card", menuName = "Funeral Song/Card")]
 public class CardData : ScriptableObject
 {
-    [Header("Hope (after a good call)")]
-    public string hopeTitle = "Hope";
-    [TextArea] public string hopeDescription;
-    public Sprite hopeArt;
+    [Header("Look")]
+    public string goodTitle = "Hope";
+    public string badTitle = "Hate";
+    [TextArea] public string description;
+    [Tooltip("The picture in the middle of the card.")]
+    public Sprite art;
+    [Tooltip("Optional: this card's own prefab instead of the CardManager's Card Prefab.")]
+    public CardView viewPrefab;
 
-    [Header("Hate (after a bad call)")]
-    public string hateTitle = "Hate";
-    [TextArea] public string hateDescription;
-    public Sprite hateArt;
-
-    [Header("Bonus (same for both)")]
+    [Header("Bonus")]
+    public CardKind kind = CardKind.Permanent;
+    [Tooltip("Permanent cards: the bonus to every dice round.")]
     public CardEffect effect = new CardEffect();
+    [Tooltip("Immediate cards: what happens the moment it is picked.")]
+    public ImmediateEffect immediate = new ImmediateEffect();
 
-    public string Title(CardMood mood) => mood == CardMood.Hope ? hopeTitle : hateTitle;
+    public bool IsPermanent => kind == CardKind.Permanent;
 
-    public Sprite Art(CardMood mood) => mood == CardMood.Hope ? hopeArt : hateArt;
+    public string Title(CardMood mood) => mood == CardMood.Hope ? goodTitle : badTitle;
 
-    public string Description(CardMood mood)
+    public string BonusDescription => IsPermanent ? effect.Describe() : immediate.Describe();
+
+    public string Description()
     {
-        string text = mood == CardMood.Hope ? hopeDescription : hateDescription;
-        string bonus = effect.Describe();
-        return string.IsNullOrWhiteSpace(text) ? bonus : text.Replace("{bonus}", bonus);
+        string bonus = BonusDescription;
+        return string.IsNullOrWhiteSpace(description) ? bonus : description.Replace("{bonus}", bonus);
     }
 }
 
-/// <summary>A card the player owns: which card, and which side of it they got.</summary>
+/// <summary>A card offered to or owned by the player: which card, and which of its titles it shows.</summary>
 [Serializable]
 public class CardInstance
 {
@@ -102,8 +144,10 @@ public class CardInstance
         this.mood = mood;
     }
 
-    public CardEffect Effect => data ? data.effect : null;
+    public bool IsPermanent => data && data.IsPermanent;
+    /// <summary>The dice bonus - only for permanent cards; immediate ones never touch the score.</summary>
+    public CardEffect Effect => IsPermanent ? data.effect : null;
     public string Title => data ? data.Title(mood) : "";
-    public string Description => data ? data.Description(mood) : "";
-    public Sprite Art => data ? data.Art(mood) : null;
+    public string Description => data ? data.Description() : "";
+    public Sprite Art => data ? data.art : null;
 }

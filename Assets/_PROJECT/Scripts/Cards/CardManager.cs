@@ -1,0 +1,456 @@
+using System;
+using System.Collections.Generic;
+using PrimeTween;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
+
+/// <summary>
+/// Owns the bonus cards: which ones can be offered, the choosing menu, and the cards the player keeps.
+/// Access via <c>CardManager.Instance</c>.
+///
+/// <para><b>Choosing</b> (<see cref="ChooseCards(int, CardMood, Action{CardInstance})"/>): the fade image
+/// darkens the screen a bit and the cards fly into the middle (<see cref="chooseArea"/>). Clicking one
+/// picks it: a <see cref="CardKind.Immediate"/> card applies its effect and burns; a
+/// <see cref="CardKind.Permanent"/> one is kept - shown under <see cref="permanentCardsParent"/> and added to
+/// every dice round (<see cref="PermanentCards"/>). Then the menu fades out and is disabled.</para>
+///
+/// <para>Keep this component OUTSIDE <see cref="root"/>: the root is disabled between choices, and the
+/// debug key needs this object running.</para>
+/// </summary>
+public class CardManager : MonoBehaviour
+{
+    public static CardManager Instance;
+
+    [Header("Cards")]
+    [Tooltip("Every card that can be offered.")]
+    [SerializeField] private List<CardData> availableCards = new List<CardData>();
+    [Tooltip("The card's look: good title, bad title, description, picture. A card can bring its own (CardData.viewPrefab).")]
+    [SerializeField] private CardView cardPrefab;
+    [Tooltip("Cards offered per choice when no count is given.")]
+    [SerializeField, Min(1)] private int defaultChoiceCount = 2;
+    [Tooltip("Offer permanent cards the player already has.")]
+    [SerializeField] private bool allowOwnedPermanentCards = false;
+    [Tooltip("Permanent cards the player starts with (optional).")]
+    [SerializeField] private List<CardData> startingCards = new List<CardData>();
+
+    [Header("Choosing menu")]
+    [Tooltip("The menu: enabled while choosing, disabled after.")]
+    [SerializeField] private GameObject root;
+    [Tooltip("Full-screen image that darkens the screen while choosing (and blocks clicks behind it).")]
+    [SerializeField] private Image fadeImage;
+    [SerializeField, Range(0f, 1f)] private float fadeAlpha = 0.6f;
+    [SerializeField, Min(0f)] private float fadeDuration = 0.35f;
+    [Tooltip("Where the cards to choose from spawn (the middle of the screen). With a layout group on it the " +
+             "layout places them; without one they're lined up side by side around its centre.")]
+    [SerializeField] private RectTransform chooseArea;
+    [Tooltip("Gap between the cards to choose from (UI units, no layout group only).")]
+    [SerializeField] private float cardSpacing = 40f;
+
+    [Header("Choosing animation")]
+    [SerializeField, Min(0f)] private float appearDuration = 0.35f;
+    [Tooltip("Seconds between one card appearing and the next.")]
+    [SerializeField, Min(0f)] private float appearStagger = 0.08f;
+    [SerializeField] private Ease appearEase = Ease.OutBack;
+    [Tooltip("Scale punch on the picked card.")]
+    [SerializeField, Min(0f)] private float pickPunch = 0.15f;
+    [Tooltip("Seconds the pick stays on screen before the menu closes.")]
+    [SerializeField, Min(0f)] private float pickHold = 0.45f;
+    [Tooltip("Seconds the cards take to fade (the others at once, the picked one / a burning one after the hold).")]
+    [SerializeField, Min(0f)] private float cardFadeDuration = 0.25f;
+    [Tooltip("Scale an immediate card grows to as it burns.")]
+    [SerializeField, Min(0f)] private float burnScale = 1.3f;
+
+    [Header("Permanent cards")]
+    [Tooltip("Where kept permanent cards are shown (e.g. a corner with a layout group).")]
+    [SerializeField] private RectTransform permanentCardsParent;
+    [Tooltip("Size of a kept card relative to the prefab.")]
+    [SerializeField, Min(0.01f)] private float permanentCardScale = 0.6f;
+    [SerializeField, Min(0f)] private float permanentAppearDuration = 0.3f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioClip appearSfx;
+    [SerializeField] private AudioClip pickSfx;
+    [SerializeField] private AudioClip burnSfx;
+
+    [Header("Debug")]
+    [Tooltip("Debug only: the key below opens a choice of Default Choice Count cards.")]
+    [SerializeField] private bool debugKey = false;
+    [SerializeField] private Key debugChooseKey = Key.Q;
+
+    [Header("Events")]
+    public UnityEvent onChoiceOpened = new UnityEvent();
+    public UnityEvent<CardData> onCardChosen = new UnityEvent<CardData>();
+    /// <summary>An immediate card was applied - hook custom effects (ImmediateEffectType.Custom) here.</summary>
+    public UnityEvent<CardData> onImmediateCardApplied = new UnityEvent<CardData>();
+    public UnityEvent<CardData> onPermanentCardAdded = new UnityEvent<CardData>();
+    public UnityEvent onChoiceClosed = new UnityEvent();
+
+    /// <summary>The permanent cards the player has; their bonuses go into every dice round.</summary>
+    public IReadOnlyList<CardInstance> PermanentCards
+    {
+        get
+        {
+            Initialize();
+            return permanentCards;
+        }
+    }
+
+    public bool IsChoosing { get; private set; }
+
+    public int DefaultChoiceCount => defaultChoiceCount;
+
+    private readonly List<CardInstance> permanentCards = new List<CardInstance>();
+    private readonly List<CardView> permanentViews = new List<CardView>();
+    private readonly List<CardView> offered = new List<CardView>();
+    private Action<CardInstance> onChosen;
+    private bool picking;
+    private bool initialized;
+    private Tween fadeTween;
+    private Tween stepTween;
+
+    private void Awake() => Initialize();
+
+    /// <summary>Runs from Awake, or on first use when this sits on an object that starts hidden.</summary>
+    private void Initialize()
+    {
+        if (initialized) return;
+        initialized = true;
+
+        h.CreateStaticInstance(this, ref Instance, setDontDestroy: false);
+        if (root == gameObject)
+            h.Out("CardManager: it sits on its own menu root, which is disabled between choices - move it outside " +
+                  "the root, or the debug key won't work.");
+
+        if (fadeImage) SetFadeAlpha(0f);
+        if (root && !IsChoosing) root.SetActive(false);
+
+        foreach (CardData data in startingCards)
+            if (data && data.IsPermanent) AddPermanent(new CardInstance(data, CardMood.Hope), animate: false);
+    }
+
+    private void Update()
+    {
+        if (!debugKey || IsChoosing) return;
+
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && debugChooseKey != Key.None && keyboard[debugChooseKey].wasPressedThisFrame)
+            ChooseCards(defaultChoiceCount);
+    }
+
+    // ---------------------------------------------------------------------
+    // Choosing
+    // ---------------------------------------------------------------------
+
+    /// <summary>Offers <see cref="defaultChoiceCount"/> cards with their good titles. For UnityEvents / buttons.</summary>
+    public void ChooseCards() => ChooseCards(defaultChoiceCount);
+
+    /// <summary>
+    /// Opens the choice: <paramref name="count"/> different cards showing their <paramref name="mood"/> title.
+    /// <paramref name="chosen"/> gets the picked card once the menu has closed - or null right away when there
+    /// is nothing to offer. Returns false (and never calls back) when a choice is already open.
+    /// </summary>
+    public bool ChooseCards(int count, CardMood mood = CardMood.Hope, Action<CardInstance> chosen = null)
+    {
+        Initialize();
+
+        if (IsChoosing)
+        {
+            h.Out("CardManager: a choice is already open.");
+            return false;
+        }
+
+        List<CardData> offer = PickOffer(Mathf.Max(1, count));
+        if (offer.Count == 0 || !chooseArea)
+        {
+            h.Out(!chooseArea ? "CardManager: no Choose Area to show the cards in." : "CardManager: no cards to offer.");
+            chosen?.Invoke(null);
+            return true;
+        }
+
+        IsChoosing = true;
+        picking = false;
+        onChosen = chosen;
+        ClearOffered();
+
+        if (root) root.SetActive(true);
+        FadeTo(fadeAlpha, fadeDuration);
+
+        bool layout = chooseArea.GetComponent<LayoutGroup>();
+        for (int i = 0; i < offer.Count; i++)
+        {
+            CardView view = Spawn(offer[i], chooseArea);
+            if (!view) continue;
+
+            view.Bind(new CardInstance(offer[i], mood), Pick);
+            view.Clickable = false;
+            Vector3 scale = view.transform.localScale;
+            view.SetHoverBase(scale);
+
+            if (!layout) PlaceInRow(view, i, offer.Count);
+
+            view.transform.localScale = Vector3.zero;
+            view.Group.alpha = 0f;
+            float delay = i * appearStagger;
+            Tween.Scale(view.transform, scale, appearDuration, appearEase, startDelay: delay, useUnscaledTime: true);
+            Tween.Alpha(view.Group, 1f, appearDuration * 0.6f, startDelay: delay, useUnscaledTime: true);
+            offered.Add(view);
+        }
+
+        PlaySfx(appearSfx);
+        onChoiceOpened?.Invoke();
+
+        // Clicks only once every card is in place.
+        float total = appearDuration + appearStagger * Mathf.Max(0, offered.Count - 1);
+        stepTween.Stop();
+        stepTween = Tween.Delay(this, total, manager => manager.SetOfferedClickable(true), useUnscaledTime: true);
+        return true;
+    }
+
+    /// <summary>Closes an open choice without a pick (e.g. the game ended). Its callback is dropped.</summary>
+    public void Cancel()
+    {
+        if (!IsChoosing) return;
+        onChosen = null;
+        stepTween.Stop();
+        CloseMenu(animate: false);
+    }
+
+    private void Pick(CardView view)
+    {
+        if (picking || !IsChoosing || !view) return;
+        picking = true;
+        SetOfferedClickable(false);
+
+        CardInstance card = view.Card;
+        PlaySfx(pickSfx);
+
+        // The others go at once; the pick stays up for a moment.
+        foreach (CardView other in offered)
+        {
+            if (!other || other == view) continue;
+            other.StopHover();
+            Tween.Alpha(other.Group, 0f, cardFadeDuration, useUnscaledTime: true);
+            Tween.Scale(other.transform, other.transform.localScale * 0.85f, cardFadeDuration, useUnscaledTime: true);
+        }
+
+        view.StopHover();
+        if (pickPunch > 0f)
+            Tween.PunchScale(view.transform, Vector3.one * pickPunch, 0.3f, useUnscaledTime: true);
+
+        Apply(card);
+        onCardChosen?.Invoke(card.data);
+
+        stepTween.Stop();
+        stepTween = Tween.Delay(this, pickHold, manager => manager.FinishPick(view), useUnscaledTime: true);
+    }
+
+    private void FinishPick(CardView view)
+    {
+        if (view)
+        {
+            bool burn = view.Card != null && !view.Card.IsPermanent;
+            if (burn)
+            {
+                PlaySfx(burnSfx);
+                Tween.Scale(view.transform, view.transform.localScale * burnScale, cardFadeDuration, Ease.OutQuad, useUnscaledTime: true);
+            }
+            Tween.Alpha(view.Group, 0f, cardFadeDuration, useUnscaledTime: true);
+        }
+
+        stepTween = Tween.Delay(this, cardFadeDuration, manager =>
+        {
+            CardInstance card = view ? view.Card : null;
+            manager.CloseMenu(animate: true, card);
+        }, useUnscaledTime: true);
+    }
+
+    private void CloseMenu(bool animate, CardInstance chosen = null)
+    {
+        Action<CardInstance> callback = onChosen;
+        onChosen = null;
+
+        ClearOffered();
+        IsChoosing = false;
+        picking = false;
+
+        if (animate && fadeImage && fadeDuration > 0f)
+        {
+            fadeTween.Stop();
+            fadeTween = Tween.Alpha(fadeImage, 0f, fadeDuration, useUnscaledTime: true)
+                .OnComplete(this, manager => { if (!manager.IsChoosing && manager.root) manager.root.SetActive(false); });
+        }
+        else
+        {
+            fadeTween.Stop();
+            if (fadeImage) SetFadeAlpha(0f);
+            if (root) root.SetActive(false);
+        }
+
+        onChoiceClosed?.Invoke();
+        if (animate) callback?.Invoke(chosen);
+    }
+
+    // ---------------------------------------------------------------------
+    // Effects
+    // ---------------------------------------------------------------------
+
+    /// <summary>A picked card takes effect: an immediate one acts now, a permanent one is kept.</summary>
+    private void Apply(CardInstance card)
+    {
+        if (card == null || !card.data) return;
+
+        if (card.IsPermanent)
+        {
+            AddPermanent(card);
+            return;
+        }
+
+        ImmediateEffect effect = card.data.immediate;
+        switch (effect.type)
+        {
+            case ImmediateEffectType.RewindSong:
+                if (SongTimer.Instance) SongTimer.Instance.Seek(-effect.seconds);
+                else h.Out("CardManager: no SongTimer to rewind.");
+                break;
+        }
+
+        h.Out($"CardManager: '{card.Title}' applied and burned ({card.data.BonusDescription}).");
+        onImmediateCardApplied?.Invoke(card.data);
+    }
+
+    /// <summary>Keeps <paramref name="card"/>: its bonus counts from now on, and it's shown with the player's cards.</summary>
+    public void AddPermanent(CardInstance card, bool animate = true)
+    {
+        Initialize();
+        if (card == null || !card.data) return;
+
+        permanentCards.Add(card);
+
+        if (permanentCardsParent)
+        {
+            CardView view = Spawn(card.data, permanentCardsParent);
+            if (view)
+            {
+                view.Bind(card);
+                Vector3 scale = view.transform.localScale * permanentCardScale;
+                if (animate && permanentAppearDuration > 0f)
+                {
+                    view.transform.localScale = Vector3.zero;
+                    Tween.Scale(view.transform, scale, permanentAppearDuration, Ease.OutBack, useUnscaledTime: true);
+                }
+                else view.transform.localScale = scale;
+                permanentViews.Add(view);
+            }
+        }
+
+        onPermanentCardAdded?.Invoke(card.data);
+    }
+
+    public bool OwnsPermanent(CardData data)
+    {
+        foreach (CardInstance card in PermanentCards)
+            if (card.data == data) return true;
+        return false;
+    }
+
+    /// <summary>Drops every kept card (a new game).</summary>
+    public void ClearPermanentCards()
+    {
+        permanentCards.Clear();
+        foreach (CardView view in permanentViews)
+            if (view) Destroy(view.gameObject);
+        permanentViews.Clear();
+    }
+
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+
+    private List<CardData> PickOffer(int count)
+    {
+        List<CardData> pool = new List<CardData>();
+        foreach (CardData data in availableCards)
+        {
+            if (!data || pool.Contains(data)) continue;
+            if (data.IsPermanent && !allowOwnedPermanentCards && OwnsPermanent(data)) continue;
+            pool.Add(data);
+        }
+
+        for (int i = pool.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+
+        if (pool.Count > count) pool.RemoveRange(count, pool.Count - count);
+        return pool;
+    }
+
+    private CardView Spawn(CardData data, Transform parent)
+    {
+        CardView prefab = data.viewPrefab ? data.viewPrefab : cardPrefab;
+        if (!prefab)
+        {
+            h.Out("CardManager: no Card Prefab assigned.");
+            return null;
+        }
+
+        CardView view = Instantiate(prefab, parent);
+        view.gameObject.SetActive(true);
+        return view;
+    }
+
+    /// <summary>Lines card <paramref name="index"/> of <paramref name="count"/> up side by side around the area's centre.</summary>
+    private void PlaceInRow(CardView view, int index, int count)
+    {
+        RectTransform rect = view.Rect;
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+
+        float width = rect.rect.width * Mathf.Abs(rect.localScale.x);
+        float step = width + cardSpacing;
+        float x = (index - (count - 1) * 0.5f) * step;
+        rect.anchoredPosition = new Vector2(x, 0f);
+    }
+
+    private void SetOfferedClickable(bool clickable)
+    {
+        foreach (CardView view in offered)
+            if (view) view.Clickable = clickable;
+    }
+
+    private void ClearOffered()
+    {
+        foreach (CardView view in offered)
+        {
+            if (!view) continue;
+            Tween.StopAll(view.transform);
+            Tween.StopAll(view.Group);
+            Destroy(view.gameObject);
+        }
+        offered.Clear();
+    }
+
+    private void FadeTo(float alpha, float duration)
+    {
+        if (!fadeImage) return;
+        fadeImage.gameObject.SetActive(true);
+        fadeImage.raycastTarget = true;
+        fadeTween.Stop();
+        if (duration > 0f) fadeTween = Tween.Alpha(fadeImage, alpha, duration, useUnscaledTime: true);
+        else SetFadeAlpha(alpha);
+    }
+
+    private void SetFadeAlpha(float alpha)
+    {
+        Color c = fadeImage.color;
+        c.a = alpha;
+        fadeImage.color = c;
+    }
+
+    private static void PlaySfx(AudioClip clip)
+    {
+        if (clip && SFXManager.Instance) SFXManager.Instance.PlayClip(clip);
+    }
+}

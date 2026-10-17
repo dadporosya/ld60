@@ -1,7 +1,8 @@
 {
   "dependencies": {
-    "com.kyrylokuzyk.primetween": "file:com.kyrylokuzyk.primetween.tgz",
     "com.coffee.ui-particle": "https://github.com/mob-sakai/ParticleEffectForUGUI.git",
+    "com.kyrylokuzyk.primetween": "file:com.kyrylokuzyk.primetween.tgz",
+    "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "2.0.9",
     "com.unity.cinemachine": "3.1.7",
     "com.unity.collab-proxy": "2.10.2",

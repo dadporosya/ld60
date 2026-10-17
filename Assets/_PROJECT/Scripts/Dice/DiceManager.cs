@@ -22,6 +22,12 @@ public class DiceRollAnimation
     public AnimationCurve liftCurve = new AnimationCurve(
         new Keyframe(0f, 0f, 0f, 4f), new Keyframe(0.4f, 1f, 0f, 0f), new Keyframe(1f, 0f, -3.5f, 0f));
 
+    [Tooltip("How far a rolled die travels, in a random direction (UI units). It always lands inside " +
+             "the Dice Parent's rect, clear of the other dice when there's room. Max 0: dice don't travel.")]
+    public Vector2 travelDistance = new Vector2(40f, 160f);
+    [Tooltip("Travel progress over the roll (time 0..1 -> 0..1).")]
+    public AnimationCurve travelCurve = new AnimationCurve(new Keyframe(0f, 0f, 0f, 2.2f), new Keyframe(1f, 1f, 0f, 0f));
+
     [Tooltip("Full turns per roll.")]
     [Min(0)] public int spins = 2;
     [Tooltip("Spin progress over the roll (time 0..1 -> 0..1).")]
@@ -99,6 +105,19 @@ public class DiceManager : MonoBehaviour
     public static DiceManager Instance;
 
     [Header("Dice")]
+    [Tooltip("How many dice the table has. Spawned from Dice Prefab at scene start; dice already in the " +
+             "list below count towards it.")]
+    [SerializeField, Min(1)] private int startDiceCount = 5;
+    [Tooltip("Spawned to make up Start Dice Count. A prefab asset, or a template die in the scene (hidden, " +
+             "never rolled).")]
+    [SerializeField] private Dice dicePrefab;
+    [Tooltip("The dice area: spawned dice go here, are scattered across it, and rolled dice only ever land " +
+             "inside its rect. No layout group on it - the dice move freely. Empty: the template's parent, " +
+             "else the table root.")]
+    [SerializeField] private RectTransform diceParent;
+    [Tooltip("Extra gap kept between dice when they land (UI units).")]
+    [SerializeField, Min(0f)] private float diceSpacing = 8f;
+    [Tooltip("Dice placed by hand. Spawned dice are added here at runtime.")]
     [SerializeField] private List<Dice> dice = new List<Dice>();
     [Tooltip("Faces 1 to 6, in order.")]
     [SerializeField] private Sprite[] faceSprites = new Sprite[PokerDiceEvaluator.Faces];
@@ -161,8 +180,11 @@ public class DiceManager : MonoBehaviour
     [Tooltip("{0} = target score.")]
     [SerializeField] private string targetFormat = "Need {0}";
     [SerializeField] private TextMeshProUGUI scoreText;
-    [Tooltip("{0} = total, {1} = hand points, {2} = card bonus.")]
+    [Tooltip("{0} = the score. Copied into the CountingText added to Score Text when it has none; a CountingText " +
+             "already there keeps its own format.")]
     [SerializeField] private string scoreFormat = "{0}";
+    [Tooltip("Counts the score up / down and shakes when it changes. Defaults to the CountingText on Score Text (added if missing).")]
+    [SerializeField] private CountingText scoreCounter;
     [SerializeField] private TextMeshProUGUI combinationText;
     [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private string passedText = "They still care.";
@@ -188,6 +210,30 @@ public class DiceManager : MonoBehaviour
     private DiceRoundResult pendingResult;
     private Tween finishTween;
 
+    // The score on screen: the last one the dice made, kept while they are rolled again.
+    private DiceScore shownScore;
+
+    /// <summary>
+    /// The score's counter: <see cref="scoreCounter"/>, else the CountingText on <see cref="scoreText"/> -
+    /// added when it has none, so the score always counts instead of jumping.
+    /// </summary>
+    private CountingText ScoreCounter
+    {
+        get
+        {
+            if (scoreCounter || !scoreText) return scoreCounter;
+
+            scoreCounter = scoreText.GetComponent<CountingText>();
+            if (!scoreCounter)
+            {
+                scoreCounter = scoreText.gameObject.AddComponent<CountingText>();
+                // The counter only has the total to show: {1} / {2} would have nothing to fill them.
+                if (!scoreFormat.Contains("{1}") && !scoreFormat.Contains("{2}")) scoreCounter.Format = scoreFormat;
+            }
+            return scoreCounter;
+        }
+    }
+
     private bool CanLock => RoundActive && HasRolled && !IsRolling && !finishing && RerollsLeft > 0;
 
     private bool initialized;
@@ -205,6 +251,8 @@ public class DiceManager : MonoBehaviour
 
         h.CreateStaticInstance(this, ref Instance, setDontDestroy: false);
 
+        List<Dice> spawned = SpawnDice();
+
         foreach (Dice die in dice)
         {
             if (!die) continue;
@@ -212,10 +260,167 @@ public class DiceManager : MonoBehaviour
             die.SetFaces(faceSprites);
         }
 
+        ScatterSpawned(spawned);
+
+        if (Area && Area.GetComponent<LayoutGroup>())
+            h.Out($"DiceManager: the dice area '{Area.name}' has a layout group - it will snap the dice back. " +
+                  "Remove it: the dice place and move themselves.");
+
         if (rollButton) rollButton.onClick.AddListener(Roll);
         if (finishButton) finishButton.onClick.AddListener(Finish);
         if (tableRoot) tableRoot.SetActive(false);
         if (resultText) resultText.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Where dice live: <see cref="diceParent"/>, else the template die's parent, else the table root.
+    /// Rolled dice land inside its rect.
+    /// </summary>
+    private RectTransform Area
+    {
+        get
+        {
+            if (diceParent) return diceParent;
+            if (dicePrefab && dicePrefab.gameObject.scene.IsValid() && dicePrefab.transform.parent is RectTransform templateParent)
+                return templateParent;
+            if (tableRoot && tableRoot.transform is RectTransform table) return table;
+            return transform as RectTransform;
+        }
+    }
+
+    /// <summary>Spawns dice from <see cref="dicePrefab"/> until the table has <see cref="startDiceCount"/>. Returns the new ones.</summary>
+    private List<Dice> SpawnDice()
+    {
+        List<Dice> spawned = new List<Dice>();
+        bool template = dicePrefab && dicePrefab.gameObject.scene.IsValid();
+        dice.RemoveAll(die => !die || die == dicePrefab);
+        if (template) dicePrefab.gameObject.SetActive(false);
+
+        int missing = startDiceCount - dice.Count;
+        if (missing <= 0) return spawned;
+
+        if (!dicePrefab)
+        {
+            h.Out($"DiceManager: {missing} dice short of Start Dice Count ({startDiceCount}) and no Dice Prefab to spawn them.");
+            return spawned;
+        }
+
+        Transform parent = Area ? Area : transform;
+        for (int i = 0; i < missing; i++)
+        {
+            Dice die = Instantiate(dicePrefab, parent);
+            die.name = $"{dicePrefab.name} {dice.Count + 1}";
+            die.gameObject.SetActive(true);
+            dice.Add(die);
+            spawned.Add(die);
+        }
+
+        return spawned;
+    }
+
+    // ---------------------------------------------------------------------
+    // Placement inside the dice area
+    // ---------------------------------------------------------------------
+
+    /// <summary>Spreads freshly spawned dice over the area, clear of each other and of the dice already there.</summary>
+    private void ScatterSpawned(List<Dice> spawned)
+    {
+        if (spawned.Count == 0 || !Area) return;
+
+        List<Vector3> taken = new List<Vector3>();
+        foreach (Dice die in dice)
+            if (die && !spawned.Contains(die)) taken.Add(Occupied(die, die.TablePosition));
+
+        foreach (Dice die in spawned)
+        {
+            Vector3 spot = PickSpot(die, taken, anywhere: true);
+            die.PlaceAt(spot);
+            taken.Add(Occupied(die, spot));
+        }
+    }
+
+    /// <summary>
+    /// A landing spot for <paramref name="die"/> (local, in its parent): <see cref="DiceRollAnimation.travelDistance"/>
+    /// away in a random direction - or, with <paramref name="anywhere"/>, anywhere in the area - kept inside the
+    /// area's rect and, when there's room, clear of <paramref name="taken"/> (area-space x, y and radius).
+    /// </summary>
+    private Vector3 PickSpot(Dice die, List<Vector3> taken, bool anywhere)
+    {
+        RectTransform area = Area;
+        if (!area) return die.TablePosition;
+
+        Vector2 range = rollAnimation.travelDistance.x < rollAnimation.travelDistance.y
+            ? rollAnimation.travelDistance : new Vector2(rollAnimation.travelDistance.y, rollAnimation.travelDistance.x);
+        if (!anywhere && range.y <= 0f) return die.TablePosition;
+
+        float radius = die.Radius;
+        Rect bounds = area.rect;
+        float xMin = bounds.xMin + radius, xMax = bounds.xMax - radius;
+        float yMin = bounds.yMin + radius, yMax = bounds.yMax - radius;
+        // An area smaller than the die: its centre is the only place left.
+        if (xMin > xMax) xMin = xMax = bounds.center.x;
+        if (yMin > yMax) yMin = yMax = bounds.center.y;
+
+        Vector2 from = ToArea(die, die.TablePosition);
+        Vector2 best = new Vector2(Mathf.Clamp(from.x, xMin, xMax), Mathf.Clamp(from.y, yMin, yMax));
+        float bestClearance = float.NegativeInfinity;
+
+        const int Tries = 20;
+        for (int i = 0; i < Tries; i++)
+        {
+            Vector2 spot = anywhere
+                ? new Vector2(UnityEngine.Random.Range(xMin, xMax), UnityEngine.Random.Range(yMin, yMax))
+                : from + UnityEngine.Random.insideUnitCircle.normalized * UnityEngine.Random.Range(Mathf.Max(0f, range.x), range.y);
+            spot.x = Mathf.Clamp(spot.x, xMin, xMax);
+            spot.y = Mathf.Clamp(spot.y, yMin, yMax);
+
+            float clearance = Clearance(spot, radius, taken);
+            if (clearance >= 0f) return FromArea(die, spot);
+            if (clearance > bestClearance)
+            {
+                bestClearance = clearance;
+                best = spot;
+            }
+        }
+
+        // Too crowded for a clean spot: the least overlapping one.
+        return FromArea(die, best);
+    }
+
+    /// <summary>Smallest gap between a die at <paramref name="spot"/> and the taken spots (negative: overlapping).</summary>
+    private float Clearance(Vector2 spot, float radius, List<Vector3> taken)
+    {
+        float clearance = float.PositiveInfinity;
+        foreach (Vector3 other in taken)
+        {
+            float gap = Vector2.Distance(spot, other) - radius - other.z - diceSpacing;
+            if (gap < clearance) clearance = gap;
+        }
+        return clearance;
+    }
+
+    /// <summary>A die at <paramref name="localPosition"/> as an area-space (x, y, radius) obstacle.</summary>
+    private Vector3 Occupied(Dice die, Vector3 localPosition)
+    {
+        Vector2 p = ToArea(die, localPosition);
+        return new Vector3(p.x, p.y, die.Radius);
+    }
+
+    private Vector2 ToArea(Dice die, Vector3 localPosition)
+    {
+        Transform parent = die.transform.parent;
+        if (!parent || parent == Area) return localPosition;
+        return Area.InverseTransformPoint(parent.TransformPoint(localPosition));
+    }
+
+    private Vector3 FromArea(Dice die, Vector2 areaPosition)
+    {
+        Transform parent = die.transform.parent;
+        Vector3 z = new Vector3(0f, 0f, die.TablePosition.z);
+        if (!parent || parent == Area) return (Vector3)areaPosition + z;
+        Vector3 local = parent.InverseTransformPoint(Area.TransformPoint(areaPosition));
+        local.z = die.TablePosition.z;
+        return local;
     }
 
     // ---------------------------------------------------------------------
@@ -275,10 +480,19 @@ public class DiceManager : MonoBehaviour
         HasRolled = true;
         landingPending = toRoll.Count;
 
+        // Dice staying put (locked) block their spots; each thrown die then claims where it will land.
+        List<Vector3> taken = new List<Vector3>();
+        foreach (Dice die in dice)
+            if (die && !toRoll.Contains(die)) taken.Add(Occupied(die, die.TablePosition));
+
         for (int i = 0; i < toRoll.Count; i++)
         {
+            Dice die = toRoll[i];
+            Vector3 landAt = PickSpot(die, taken, anywhere: false);
+            taken.Add(Occupied(die, landAt));
+
             int result = UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1);
-            toRoll[i].Roll(result, rollAnimation, faceSprites, tumbleSprites, i * rollAnimation.stagger, OnDieLanded);
+            die.Roll(result, rollAnimation, faceSprites, tumbleSprites, i * rollAnimation.stagger, landAt, OnDieLanded);
         }
 
         PlaySfx(rollSfx);
@@ -482,10 +696,20 @@ public class DiceManager : MonoBehaviour
         if (rerollsText) rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
         if (targetText) targetText.text = string.Format(targetFormat, Target);
 
-        bool showScore = RoundActive && HasRolled && !IsRolling;
-        DiceScore score = showScore ? Evaluate(Values(), cards) : null;
-        if (scoreText) scoreText.text = score != null ? string.Format(scoreFormat, score.total, score.basePoints, score.bonusPoints) : "";
-        if (combinationText) combinationText.text = score != null ? score.combinationName : "";
+        // The score is what the dice on the table make right now - never added up over rolls. While dice
+        // are in the air the last one stays up; once they land it counts from that to the new score
+        // (10 -> 20, or down). A new round starts empty and counts up from 0.
+        if (!RoundActive || !HasRolled) shownScore = null;
+        else if (!IsRolling) shownScore = Evaluate(Values(), cards);
+
+        CountingText counter = ScoreCounter;
+        if (counter)
+        {
+            if (shownScore == null) counter.Clear();
+            else counter.SetValue(shownScore.total);
+        }
+
+        if (combinationText) combinationText.text = shownScore != null ? shownScore.combinationName : "";
     }
 
     private static void PlaySfx(AudioClip clip)

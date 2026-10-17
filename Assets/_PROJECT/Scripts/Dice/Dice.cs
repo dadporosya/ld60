@@ -6,17 +6,17 @@ using UnityEngine.UI;
 
 /// <summary>
 /// One poker die. It only shows and animates itself; the <see cref="DiceManager"/> decides when it
-/// rolls, what it lands on and whether it may be locked (clicking a die asks the manager).
+/// rolls, where it lands, what it shows and whether it may be locked (clicking a die asks the manager).
 ///
 /// <para>UI: the faces show on <see cref="image"/> (a raycast target, so the die can be clicked) under a
-/// Canvas with a GraphicRaycaster. Animation runs on <see cref="visual"/> (the Image's transform by
-/// default; offsets are in the canvas's local units). When the dice sit in a layout group, give each
-/// die a plain root and put the Image on a child: the layout owns the root's position.</para>
+/// Canvas with a GraphicRaycaster. The die's root travels across the table (its parent, the dice area);
+/// lifting, spinning and the lock offset run on <see cref="visual"/> (the Image's transform by default).
+/// Offsets are in the canvas's UI units.</para>
 /// </summary>
 public class Dice : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image image;
-    [Tooltip("What lifts, spins and scales. Defaults to the image / sprite renderer's transform.")]
+    [Tooltip("What lifts, spins and scales. Defaults to the Image's transform.")]
     [SerializeField] private Transform visual;
     [Tooltip("Optional: shown while the die is locked (a pin, a frame).")]
     [SerializeField] private GameObject lockedIndicator;
@@ -28,15 +28,39 @@ public class Dice : MonoBehaviour, IPointerClickHandler
 
     public bool IsRolling => rollTween.isAlive;
 
+    /// <summary>Where the die sits on the table: the root's local position, lift and lock offset excluded.</summary>
+    public Vector3 TablePosition => tablePosition;
+
+    /// <summary>Half the die's largest side, in its parent's units - how much room it needs around its centre.</summary>
+    public float Radius
+    {
+        get
+        {
+            float size = 0f;
+            if (transform is RectTransform root)
+                size = Mathf.Max(root.rect.width * Mathf.Abs(root.localScale.x), root.rect.height * Mathf.Abs(root.localScale.y));
+            if (visual is RectTransform face && visual != transform)
+            {
+                Vector3 scale = Vector3.Scale(face.localScale, transform.localScale);
+                size = Mathf.Max(size, face.rect.width * Mathf.Abs(scale.x), face.rect.height * Mathf.Abs(scale.y));
+            }
+            return size * 0.5f;
+        }
+    }
+
     private DiceManager manager;
     private bool initialized;
     private Vector3 restScale;
-    private Vector3 restPosition;
+    private Vector3 visualRestPosition;
     private Color baseColor = Color.white;
+
+    // The pose: the table position plus what is layered on top of it.
+    private Vector3 tablePosition;
     private Vector3 lockOffset;
+    private float lift;
 
     private Tween rollTween;
-    private Tween moveTween;
+    private Tween lockTween;
     private Tween punchTween;
     private Tween tintTween;
 
@@ -47,9 +71,13 @@ public class Dice : MonoBehaviour, IPointerClickHandler
     private int rollResult;
     private float startAngle;
     private float endAngle;
+    private Vector3 travelFrom;
+    private Vector3 travelTo;
     private int lastFrameStep;
     private int lastFrameIndex = -1;
     private Action<Dice> onLanded;
+
+    private bool VisualIsRoot => visual == transform;
 
     /// <summary>Called by the manager before the die is used. Remembers the rest pose.</summary>
     public void Init(DiceManager owner)
@@ -63,7 +91,8 @@ public class Dice : MonoBehaviour, IPointerClickHandler
         CheckSetup();
 
         restScale = visual.localScale;
-        restPosition = visual.localPosition;
+        visualRestPosition = VisualIsRoot ? Vector3.zero : visual.localPosition;
+        tablePosition = transform.localPosition;
         baseColor = Tint;
         if (lockedIndicator) lockedIndicator.SetActive(false);
     }
@@ -76,25 +105,37 @@ public class Dice : MonoBehaviour, IPointerClickHandler
         if (manager) manager.ToggleLock(this);
     }
 
+    /// <summary>Puts the die at <paramref name="localPosition"/> (in its parent) without animating.</summary>
+    public void PlaceAt(Vector3 localPosition)
+    {
+        tablePosition = localPosition;
+        ApplyPose();
+    }
+
     // ---------------------------------------------------------------------
     // Rolling
     // ---------------------------------------------------------------------
 
     /// <summary>
-    /// Throws the die: it lifts (scales up), tumbles through <paramref name="frames"/> while spinning,
-    /// and falls back onto <paramref name="result"/>. <paramref name="landed"/> runs once it is down.
+    /// Throws the die: it travels to <paramref name="landAt"/> (local, in its parent), lifting (scaling up)
+    /// and tumbling through <paramref name="frames"/> while it spins, and lands on <paramref name="result"/>.
+    /// <paramref name="landed"/> runs once it is down.
     /// </summary>
     public void Roll(int result, DiceRollAnimation animation, Sprite[] faceSprites, Sprite[] frames, float delay,
-        Action<Dice> landed)
+        Vector3 landAt, Action<Dice> landed)
     {
         StopTweens();
-        SnapToRest();
+        lift = 0f;
+        visual.localScale = restScale;
+        ApplyPose();
 
         anim = animation;
         faces = faceSprites;
         tumbleFrames = frames != null && frames.Length > 0 ? frames : faceSprites;
         rollResult = Mathf.Clamp(result, 1, PokerDiceEvaluator.Faces);
         onLanded = landed;
+        travelFrom = tablePosition;
+        travelTo = landAt;
 
         float direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
         startAngle = visual.localEulerAngles.z;
@@ -109,7 +150,9 @@ public class Dice : MonoBehaviour, IPointerClickHandler
     {
         float height = anim.liftCurve.Evaluate(t);
         visual.localScale = restScale * Mathf.LerpUnclamped(1f, anim.liftScale, height);
-        visual.localPosition = RestPosition + Vector3.up * (anim.liftHeight * height);
+        lift = anim.liftHeight * height;
+        tablePosition = Vector3.LerpUnclamped(travelFrom, travelTo, anim.travelCurve.Evaluate(t));
+        ApplyPose();
 
         float angle = Mathf.LerpUnclamped(startAngle, endAngle, anim.spinCurve.Evaluate(t));
         visual.localEulerAngles = new Vector3(0f, 0f, angle);
@@ -136,7 +179,9 @@ public class Dice : MonoBehaviour, IPointerClickHandler
     {
         ShowFace(rollResult);
         visual.localScale = restScale;
-        visual.localPosition = RestPosition;
+        lift = 0f;
+        tablePosition = travelTo;
+        ApplyPose();
         visual.localEulerAngles = new Vector3(0f, 0f, endAngle % 360f);
 
         if (anim.landPunch > 0f && anim.landPunchDuration > 0f)
@@ -165,75 +210,85 @@ public class Dice : MonoBehaviour, IPointerClickHandler
         IsLocked = locked;
         if (lockedIndicator) lockedIndicator.SetActive(locked);
 
-        lockOffset = locked ? (Vector3)style.offset : Vector3.zero;
+        Vector3 offset = locked ? (Vector3)style.offset : Vector3.zero;
         Color tint = locked ? baseColor * style.lockedTint : baseColor;
 
-        moveTween.Stop();
+        lockTween.Stop();
         tintTween.Stop();
         if (style.duration > 0f && isActiveAndEnabled)
         {
-            moveTween = Tween.LocalPosition(visual, RestPosition, style.duration, Ease.OutQuad);
+            lockTween = Tween.Custom(this, lockOffset, offset, style.duration, (die, v) =>
+            {
+                die.lockOffset = v;
+                die.ApplyPose();
+            }, Ease.OutQuad);
             tintTween = Tween.Custom(this, Tint, tint, style.duration, (die, c) => die.Tint = c);
         }
         else
         {
-            visual.localPosition = RestPosition;
+            lockOffset = offset;
+            ApplyPose();
             Tint = tint;
         }
     }
 
-    /// <summary>Unlocked, at rest, ready for a new round. Keeps the face it shows.</summary>
+    /// <summary>Unlocked, at rest, ready for a new round. Keeps its face and its place on the table.</summary>
     public void ResetDice()
     {
         if (!initialized) return;
         StopTweens();
         IsLocked = false;
         lockOffset = Vector3.zero;
+        lift = 0f;
         if (lockedIndicator) lockedIndicator.SetActive(false);
         Tint = baseColor;
-        SnapToRest();
+        visual.localScale = restScale;
         visual.localEulerAngles = Vector3.zero;
+        ApplyPose();
     }
 
-    /// <summary>Stops a roll in flight (the round was cancelled). The landing callback is dropped.</summary>
+    /// <summary>Stops a roll in flight (the round was cancelled). The die stays where it was; the landing callback is dropped.</summary>
     public void StopRoll()
     {
         onLanded = null;
         rollTween.Stop();
-        if (initialized) SnapToRest();
+        if (!initialized) return;
+        lift = 0f;
+        visual.localScale = restScale;
+        ApplyPose();
     }
 
     // ---------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------
 
-    private Vector3 RestPosition => restPosition + lockOffset;
-
-    private void SnapToRest()
+    /// <summary>Writes the table position and the lift / lock offsets onto the root and the visual.</summary>
+    private void ApplyPose()
     {
-        visual.localScale = restScale;
-        visual.localPosition = RestPosition;
+        Vector3 offset = lockOffset + Vector3.up * lift;
+        if (VisualIsRoot)
+        {
+            transform.localPosition = tablePosition + offset;
+            return;
+        }
+
+        transform.localPosition = tablePosition;
+        visual.localPosition = visualRestPosition + offset;
     }
 
     private void StopTweens()
     {
         rollTween.Stop();
-        moveTween.Stop();
+        lockTween.Stop();
         punchTween.Stop();
         tintTween.Stop();
     }
 
-    /// <summary>Warns about UI setups where the die can't be clicked or the layout would fight the animation.</summary>
+    /// <summary>Warns about UI setups where the die can't be clicked.</summary>
     private void CheckSetup()
     {
         if (!image) h.Out($"Dice '{name}': no Image to show the faces on.");
         else if (!image.raycastTarget) h.Out($"Dice '{name}': its Image isn't a raycast target, so it can't be clicked to lock.");
-
-        // A layout group positions its children: it would snap the die's root back every rebuild
-        // (and its rest position isn't known yet when the die initializes).
-        if (visual == transform && transform.parent && transform.parent.GetComponent<LayoutGroup>())
-            h.Out($"Dice '{name}': it sits in a layout group, so put its Image on a child object - " +
-                  "the layout owns the root's position, and lifting / locking would be overridden.");
     }
 
     private void SetSprite(Sprite sprite)

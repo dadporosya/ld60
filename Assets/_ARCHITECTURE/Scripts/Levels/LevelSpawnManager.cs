@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 /// <summary>
 /// Spawns the playable level into the one gameplay scene and hides the level chooser while it is up.
-/// Access via <c>LevelManager.Instance</c>.
+/// Access via <c>LevelSpawnManager.Instance</c>.
 ///
 /// <para>Levels are prefabs, not scenes — the map and the level live in the same scene, and entering
 /// a level is "disable the chooser, instantiate the prefab". <see cref="TransitionManager"/> calls
@@ -18,9 +18,9 @@ using UnityEngine.Events;
 /// <c>TileBase</c>, <c>PopupManager</c>) never came over; this manager keeps only the parts that do not
 /// depend on it.</para>
 /// </summary>
-public class LevelManager : MonoBehaviour
+public class LevelSpawnManager : MonoBehaviour
 {
-    /// <summary>Where the game is. Read it as <c>LevelManager.Instance.State</c>.</summary>
+    /// <summary>Where the game is. Read it as <c>LevelSpawnManager.Instance.State</c>.</summary>
     public enum GameState
     {
         /// <summary>On the city map, picking a level. No level is loaded.</summary>
@@ -37,7 +37,7 @@ public class LevelManager : MonoBehaviour
     [System.Serializable]
     public class GameStateEvent : UnityEvent<GameState> { }
 
-    public static LevelManager Instance;
+    public static LevelSpawnManager Instance;
 
     [Tooltip("Level prefabs to choose from; each spawn picks one at random. Its pivot should sit at the " +
              "level's centre, on the ground: the camera is framed on the spawn point, and the pivot lands there.")]
@@ -106,7 +106,7 @@ public class LevelManager : MonoBehaviour
         GameObject prefab = RandomLevelPrefab();
         if (!prefab)
         {
-            h.Out("LevelManager: no level prefabs assigned, nothing to spawn.");
+            h.Out("LevelSpawnManager: no level prefabs assigned, nothing to spawn.");
             return null;
         }
 
@@ -119,7 +119,7 @@ public class LevelManager : MonoBehaviour
 
         SetState(GameState.BeatingLevel);
 
-        h.Out($"LevelManager: spawned level '{prefab.name}'.");
+        h.Out($"LevelSpawnManager: spawned level '{prefab.name}'.");
         return CurrentLevel;
     }
 
@@ -143,7 +143,7 @@ public class LevelManager : MonoBehaviour
         if (state == next) return;
 
         state = next;
-        h.Out($"LevelManager: state -> {next}.");
+        h.Out($"LevelSpawnManager: state -> {next}.");
         OnStateChanged.Invoke(next);
     }
 
@@ -171,7 +171,7 @@ public class LevelManager : MonoBehaviour
         }
 
         if (!TransitionManager.Instance)
-            h.Out("LevelManager: no TransitionManager, returning to the chooser without the flight out.");
+            h.Out("LevelSpawnManager: no TransitionManager, returning to the chooser without the flight out.");
 
         UnloadLevel();
     }

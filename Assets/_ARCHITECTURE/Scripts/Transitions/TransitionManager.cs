@@ -14,7 +14,7 @@ using UnityEngine.Rendering;
 /// <see cref="cloudEndColor"/>. For the last <see cref="screenCoverDuration"/> seconds
 /// <see cref="FadeImageController"/> covers the screen.</para>
 ///
-/// <para><b>Swap</b> — behind the covered screen <see cref="LevelManager"/> spawns the level and the
+/// <para><b>Swap</b> — behind the covered screen <see cref="LevelSpawnManager"/> spawns the level and the
 /// camera is placed above it, backed off along its view by <see cref="descentDistance"/>.</para>
 ///
 /// <para><b>Fade out</b> — the fade image clears onto thick dark clouds that thin out to nothing while
@@ -285,9 +285,9 @@ public class TransitionManager : MonoBehaviour
             return;
         }
 
-        if (!LevelManager.Instance)
+        if (!LevelSpawnManager.Instance)
         {
-            h.Out("TransitionManager: no LevelManager in the scene.");
+            h.Out("TransitionManager: no LevelSpawnManager in the scene.");
             return;
         }
 
@@ -320,16 +320,16 @@ public class TransitionManager : MonoBehaviour
         clouds.Clear();
 
         Vector3 levelRigPosition = rig.position;
-        if (LevelManager.Instance.SpawnLevel())
+        if (LevelSpawnManager.Instance.SpawnLevel())
         {
             // One frame for the level's Awake/Start to run before anything reads it.
             yield return null;
 
-            if (LevelManager.Instance.TryGetLevelBounds(out Bounds levelBounds))
+            if (LevelSpawnManager.Instance.TryGetLevelBounds(out Bounds levelBounds))
                 rtsCamera.SetMapBounds(levelBounds);
 
             levelRigPosition = RigPositionLookingAt(
-                LevelManager.Instance.LevelFocusPoint, playDistance, forward, cameraOffset);
+                LevelSpawnManager.Instance.LevelFocusPoint, playDistance, forward, cameraOffset);
         }
 
         rig.position = levelRigPosition - forward * descentDistance;
@@ -346,7 +346,7 @@ public class TransitionManager : MonoBehaviour
 
     /// <summary>
     /// Flies back out of the loaded level to the level chooser: the flight in, reversed. The level
-    /// is unloaded by <see cref="LevelManager"/> behind the cloud cover, and the camera comes out of
+    /// is unloaded by <see cref="LevelSpawnManager"/> behind the cloud cover, and the camera comes out of
     /// the clouds on the map exactly where it dived from.
     ///
     /// <para><paramref name="target"/> is the map tile to come out over; left empty it is the one
@@ -367,9 +367,9 @@ public class TransitionManager : MonoBehaviour
             return;
         }
 
-        if (!LevelManager.Instance)
+        if (!LevelSpawnManager.Instance)
         {
-            h.Out("TransitionManager: no LevelManager in the scene.");
+            h.Out("TransitionManager: no LevelSpawnManager in the scene.");
             return;
         }
 
@@ -395,7 +395,7 @@ public class TransitionManager : MonoBehaviour
         // ---- Screen is covered: swap the level back for the map.
         clouds.Clear();
 
-        LevelManager.Instance.UnloadLevel();
+        LevelSpawnManager.Instance.UnloadLevel();
 
         // One frame for the chooser to come back up before the camera is placed against it.
         yield return null;

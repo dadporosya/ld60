@@ -1,0 +1,294 @@
+fileFormatVersion: 2
+guid: fee2b8d6eca52b346be9ed9a162a6c10
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5585235101267928744
+    second: Hint_0
+  - first:
+      213: -7304149974895811750
+    second: Hint_1
+  - first:
+      213: -6949308249279176607
+    second: Hint_2
+  - first:
+      213: -5013553018334378257
+    second: Hint_3
+  - first:
+      213: -7378926534155464165
+    second: Hint_4
+  - first:
+      213: 2688626292761634311
+    second: Hint_5
+  - first:
+      213: -6557381271402280325
+    second: Hint_6
+  - first:
+      213: 1302438860203847412
+    second: Hint_7
+  - first:
+      213: 4670642457182999912
+    second: Hint_8
+  - first:
+      213: 162409146487569888
+    second: Hint_9
+  - first:
+      213: -1645341584882062380
+    second: Hint_10
+  - first:
+      213: 871318515555893248
+    second: Hint_11
+  - first:
+      213: 2119105941423152602
+    second: Hint_12
+  - first:
+      213: -2835220186442749483
+    second: Hint_13
+  - first:
+      213: 5224612700139491014
+    second: Hint_14
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Hint_0
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 377
+        width: 426
+        height: 604
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a62e169bbdb28d40800000000000000
+      internalID: 5585235101267928744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hint_1
+      rect:
+        serializedVersion: 2
+        x: 497
+        y: 376
+        width: 423
+        height: 600
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5328200c4272aa90800000000000000
+      internalID: -7304149974895811750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hint_27
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 262
+        width: 88
+        height: 43
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be4d44c523cc1f746b793ce1b037a01a
+      internalID: -1292181560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hint_28
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 261
+        width: 90
+        height: 39
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 97b8467c77d2e40408c35f4c37132360
+      internalID: -427721647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: ae3181fb6efa5b14b8fcab1663c332a1
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      Hint_0: 5585235101267928744
+      Hint_1: -7304149974895811750
+      Hint_10: -1645341584882062380
+      Hint_11: 871318515555893248
+      Hint_12: 2119105941423152602
+      Hint_13: -2835220186442749483
+      Hint_14: 5224612700139491014
+      Hint_15: 932949228
+      Hint_16: 1263135595
+      Hint_17: 494626680
+      Hint_18: 956151091
+      Hint_19: -1497210939
+      Hint_2: -6949308249279176607
+      Hint_20: 22282653
+      Hint_21: -1573066502
+      Hint_22: -1722815992
+      Hint_23: 1085199761
+      Hint_24: -231919156
+      Hint_25: -1626649532
+      Hint_26: 23500816
+      Hint_27: -1292181560
+      Hint_28: -427721647
+      Hint_3: -5013553018334378257
+      Hint_4: -7378926534155464165
+      Hint_5: 2688626292761634311
+      Hint_6: -6557381271402280325
+      Hint_7: 1302438860203847412
+      Hint_8: 4670642457182999912
+      Hint_9: 162409146487569888
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

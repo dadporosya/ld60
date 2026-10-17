@@ -7,7 +7,8 @@ using UnityEngine.Events;
 ///
 /// <para><b>Flow.</b> Intro dialogue -> the song starts -> Hub. From the hub the player clicks things
 /// (<see cref="HubInteractable"/>); the phone opens the dial panel, and a call goes: the contact's
-/// call dialogue -> dice round against their target -> good or bad dialogue -> card pick (Hope or
+/// call dialogue -> dice round against the current level's points (<see cref="LevelManager"/>) -> the
+/// level's win or loss dialogue -> card pick (Hope or
 /// Hate) -> back to the hub, the name struck off the list. Once everyone has been called: the good
 /// ending (calling dad). If the song ends first, whatever is happening is cut off: the bad ending.
 /// Both endings close the game.</para>
@@ -31,9 +32,9 @@ public class FuneralGameManager : MonoBehaviour
     [SerializeField] private SongTimer song;
     [SerializeField] private HubDialogueRunner dialogues;
     [SerializeField] private DiceManager diceManager;
-    [SerializeField] private CardHand hand;
-    [SerializeField] private CardDraft cardDraft;
+    [SerializeField] private CardManager cardManager;
     [SerializeField] private PhoneDialPanel dialPanel;
+    [SerializeField] private LevelManager levelManager;
 
     [Header("Contacts")]
     [Tooltip("Everyone the hero has to call, in list order.")]
@@ -87,9 +88,9 @@ public class FuneralGameManager : MonoBehaviour
         }
     }
     private DiceManager Dice => Resolve(ref diceManager, DiceManager.Instance);
-    private CardHand Hand => Resolve(ref hand, CardHand.Instance);
-    private CardDraft Draft => Resolve(ref cardDraft, null);
+    private CardManager Cards => Resolve(ref cardManager, CardManager.Instance);
     private PhoneDialPanel DialPanel => Resolve(ref dialPanel, null);
+    private LevelManager Levels => Resolve(ref levelManager, LevelManager.Instance);
 
     /// <summary>
     /// The assigned system, else its Instance, else one found in the scene - inactive ones included, since
@@ -150,6 +151,7 @@ public class FuneralGameManager : MonoBehaviour
     public void StartGame()
     {
         calls.Clear();
+        if (Levels) Levels.ResetLevels();
         onContactsChanged?.Invoke();
         SetPhase(Phase.Intro);
 
@@ -204,6 +206,30 @@ public class FuneralGameManager : MonoBehaviour
     // ---------------------------------------------------------------------
 
     /// <summary>Calls <paramref name="contact"/>: dialogue, dice, outcome, card.</summary>
+    // ---------------------------------------------------------------------
+    // Debug
+    // ---------------------------------------------------------------------
+
+    // The running round was started by DebugRunCurrentLevel: no contact, back to the hub after it.
+    private bool debugRound;
+
+    /// <summary>Debug level rounds can start from the hub or during the intro.</summary>
+    public bool CanRunDebugLevel => CurrentPhase == Phase.Hub || CurrentPhase == Phase.Intro;
+
+    /// <summary>
+    /// Debug: runs the <see cref="LevelManager"/>'s current level without a call - dice round, win / loss
+    /// dialogue, card pick, then the hub. A hub dialogue or the intro still playing is cut off (the song
+    /// then doesn't start by itself).
+    /// </summary>
+    public void DebugRunCurrentLevel()
+    {
+        if (!CanRunDebugLevel) return;
+
+        if (Dialogues.IsPlaying) Dialogues.Interrupt();
+        debugRound = true;
+        StartDice(null);
+    }
+
     public void Call(ContactData contact)
     {
         if (!contact || HasCalled(contact) || CurrentPhase == Phase.Ending) return;
@@ -229,18 +255,29 @@ public class FuneralGameManager : MonoBehaviour
         }
 
         SetPhase(Phase.Dice);
-        Dice.StartRound(contact.targetScore, Hand ? Hand.Cards : null, result => EndCall(contact, result.passed));
+        if (!Levels) h.Out("FuneralGameManager: no LevelManager, the round needs 0 points.");
+        else Levels.BeginLevel();
+
+        int pointsToPass = Levels ? Levels.PointsToPass : 0;
+        Dice.StartRound(pointsToPass, Cards ? Cards.PermanentCards : null,
+            result => EndCall(contact, Levels ? Levels.Passes(result.score.total) : result.passed));
     }
 
     private void EndCall(ContactData contact, bool passed)
     {
         if (CurrentPhase == Phase.Ending) return;
 
-        calls[contact] = passed;
-        onContactsChanged?.Invoke();
+        // A debug round (LevelManager's level keys) has no contact.
+        if (contact)
+        {
+            calls[contact] = passed;
+            onContactsChanged?.Invoke();
+        }
 
         SetPhase(Phase.Call);
-        Dialogues.Play(passed ? contact.goodDialogue : contact.badDialogue, () =>
+        // The level decides what plays after the round, and moves on to the next one.
+        VisualNovelDialogueContainer outcome = Levels ? Levels.CompleteLevel(passed) : null;
+        Dialogues.Play(outcome, () =>
         {
             onCallEnded?.Invoke(contact, passed);
             OfferCard(passed ? CardMood.Hope : CardMood.Hate);
@@ -251,23 +288,28 @@ public class FuneralGameManager : MonoBehaviour
     {
         if (CurrentPhase == Phase.Ending) return;
 
-        if (!Draft)
+        if (!Cards)
         {
             AfterCall();
             return;
         }
 
+        // The CardManager applies the pick itself (keeps a permanent card, fires an immediate one).
         SetPhase(Phase.CardDraft);
-        Draft.Show(mood, Hand, card =>
-        {
-            if (card != null && Hand) Hand.Add(card);
-            AfterCall();
-        });
+        if (!Cards.ChooseCards(Cards.DefaultChoiceCount, mood, _ => AfterCall())) AfterCall();
     }
 
     private void AfterCall()
     {
         if (CurrentPhase == Phase.Ending) return;
+
+        if (debugRound)
+        {
+            // Didn't strike anyone off, so it can't finish the list either.
+            debugRound = false;
+            SetPhase(Phase.Hub);
+            return;
+        }
 
         if (HasUncalledContacts) SetPhase(Phase.Hub);
         else GoodEnding();
@@ -296,7 +338,7 @@ public class FuneralGameManager : MonoBehaviour
         SetPhase(Phase.Ending);
 
         if (Dice) Dice.CancelRound();
-        if (Draft) Draft.Hide();
+        if (Cards) Cards.Cancel();
         if (DialPanel) DialPanel.Hide();
 
         onBadEnding?.Invoke();
