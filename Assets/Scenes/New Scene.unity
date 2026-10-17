@@ -7208,8 +7208,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardManager
   availableCards:
-  - {fileID: 11400000, guid: 2a7cac7f4e915404888315a0d33cd012, type: 2}
-  - {fileID: 11400000, guid: 0d0f87a9cf956f94c902db5dc9aa1dda, type: 2}
+  - {fileID: 11400000, guid: 46e16d97d03745e883a686dd04599acc, type: 2}
+  - {fileID: 11400000, guid: f6929a370ce64792abd98f553aed291d, type: 2}
+  - {fileID: 11400000, guid: e75940984c6b4888a2000c6973befec9, type: 2}
+  - {fileID: 11400000, guid: 77d9b49d07e246cc94ea79473180be73, type: 2}
+  - {fileID: 11400000, guid: 0af3101b02754847a4040893a26f32c4, type: 2}
+  - {fileID: 11400000, guid: b500047f19e84cd39520a4197a2b207d, type: 2}
+  - {fileID: 11400000, guid: 92a51201d3124ebbab2666d4e75d5ddb, type: 2}
+  - {fileID: 11400000, guid: 95e7a6d7970b4acd92e4ff96f12b80ad, type: 2}
+  - {fileID: 11400000, guid: 53e7507cb72249eaa5f735ce160563c9, type: 2}
+  - {fileID: 11400000, guid: 425ae5416ce9473e866507971e649793, type: 2}
+  - {fileID: 11400000, guid: 9f236161d674491799c7456c266985e7, type: 2}
+  - {fileID: 11400000, guid: be188dc245904921bd1cbfa0f6879c44, type: 2}
+  - {fileID: 11400000, guid: 4c85a0366af9492c96840db5c9ec9bf2, type: 2}
+  - {fileID: 11400000, guid: 81fe26b6c38941ce8d19b2493e54f0cd, type: 2}
+  - {fileID: 11400000, guid: 9c1fcd6d91db461b92cab88b0bca8be4, type: 2}
+  - {fileID: 11400000, guid: 24de1a1d803c443f9b44258003db6e5e, type: 2}
+  - {fileID: 11400000, guid: 30ad7245d5604010bf012f8310811d87, type: 2}
+  - {fileID: 11400000, guid: 9d799193f4824825a51f5c485ea69fcc, type: 2}
+  - {fileID: 11400000, guid: da02adc847c0423d88530f46c768e1d4, type: 2}
+  - {fileID: 11400000, guid: 2b9ad4ae1ccd45d38f7a4fe7e0942a32, type: 2}
+  - {fileID: 11400000, guid: 03f1ce308c2c4a3aa578d8c51a0db947, type: 2}
+  - {fileID: 11400000, guid: 8aa99602762f40c281bccbcd6a8e4d31, type: 2}
   cardPrefab: {fileID: 8211534820775114999, guid: 18ecd4166aa7d224ba714c034fe6bcc3, type: 3}
   defaultChoiceCount: 2
   allowOwnedPermanentCards: 1

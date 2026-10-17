@@ -158,7 +158,7 @@ TextureImporter:
         width: 121
         height: 121
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -180,7 +180,7 @@ TextureImporter:
         width: 121
         height: 121
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -202,7 +202,7 @@ TextureImporter:
         width: 121
         height: 121
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -224,7 +224,7 @@ TextureImporter:
         width: 121
         height: 121
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -246,7 +246,7 @@ TextureImporter:
         width: 121
         height: 121
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -255,6 +255,94 @@ TextureImporter:
       bones: []
       spriteID: 41e162120df3efbc0800000000000000
       internalID: -3747487676783780332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DiceFaces_6
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 577
+        width: 121
+        height: 121
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a30f70a5bb0bede44bdc21c7b6f43c02
+      internalID: 1164372070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DiceFaces_7
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 449
+        width: 121
+        height: 121
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5c3188cd78092be47ac5f14677088a97
+      internalID: -1267793374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DiceFaces_8
+      rect:
+        serializedVersion: 2
+        x: 155
+        y: 577
+        width: 121
+        height: 121
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae1e3c4d9f78e0c40866de24c0b6bef7
+      internalID: 785190239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DiceFaces_9
+      rect:
+        serializedVersion: 2
+        x: 155
+        y: 449
+        width: 121
+        height: 121
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 935607188fc14254091560f0b9c30177
+      internalID: 337532622
       vertices: []
       indices: 
       edges: []
@@ -279,6 +367,10 @@ TextureImporter:
       DiceFaces_3: 7121122770714732116
       DiceFaces_4: 8232859317097496210
       DiceFaces_5: -3747487676783780332
+      DiceFaces_6: 1164372070
+      DiceFaces_7: -1267793374
+      DiceFaces_8: 785190239
+      DiceFaces_9: 337532622
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -26,6 +26,9 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
     public bool IsLocked { get; private set; }
 
+    /// <summary>Destroyed by a card for the rest of the round: off the table, not scored.</summary>
+    public bool IsRemoved { get; private set; }
+
     public bool IsRolling => rollTween.isAlive;
 
     /// <summary>Where the die sits on the table: the root's local position, lift and lock offset excluded.</summary>
@@ -123,12 +126,14 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
     /// <summary>
     /// Outlined while hovered - and, with <see cref="DiceOutlineStyle.onlyWhenLockable"/>, only while clicking it
-    /// would lock / unlock it. The manager calls this whenever that may have changed (a roll starts or ends).
+    /// would lock / unlock it or right clicking it would use a card. The manager calls this whenever that may have
+    /// changed (a roll starts or ends).
     /// </summary>
     public void RefreshOutline()
     {
         DiceOutlineStyle style = manager ? manager.hoverOutline : null;
-        bool show = hovered && style != null && style.enabled && (!style.onlyWhenLockable || manager.CanLockNow);
+        bool show = hovered && !IsRemoved && style != null && style.enabled &&
+                    (!style.onlyWhenLockable || manager.CanLockNow || manager.HasDieAction(this));
         ShowOutline(show);
     }
 
@@ -170,10 +175,12 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         if (!show) outlineTween.OnComplete(outline, o => o.enabled = false);
     }
 
+    /// <summary>Left click locks / unlocks; right click uses a card on the die (reroll, destroy, flip).</summary>
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left) return;
-        if (manager) manager.ToggleLock(this);
+        if (!manager) return;
+        if (eventData.button == PointerEventData.InputButton.Left) manager.ToggleLock(this);
+        else if (eventData.button == PointerEventData.InputButton.Right) manager.UseDieAction(this);
     }
 
     /// <summary>Puts the die at <paramref name="localPosition"/> (in its parent) without animating.</summary>
@@ -274,6 +281,60 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     }
 
     public void SetFaces(Sprite[] faceSprites) => faces = faceSprites;
+
+    // ---------------------------------------------------------------------
+    // Card actions
+    // ---------------------------------------------------------------------
+
+    private const float FlipDuration = 0.18f;
+    private const float RemoveDuration = 0.2f;
+
+    /// <summary>Turns over to <paramref name="value"/>: it counts at once, the face swaps halfway through the turn.</summary>
+    public void Flip(int value)
+    {
+        Value = Mathf.Clamp(value, 1, PokerDiceEvaluator.Faces);
+        if (!isActiveAndEnabled)
+        {
+            ShowFace(Value);
+            return;
+        }
+
+        punchTween.Stop();
+        float half = FlipDuration * 0.5f;
+        punchTween = Tween.ScaleX(visual, 0f, half, Ease.InQuad)
+            .OnComplete(this, die =>
+            {
+                die.ShowFace(die.Value);
+                die.punchTween = Tween.ScaleX(die.visual, die.restScale.x, half, Ease.OutQuad);
+            });
+    }
+
+    /// <summary>Destroyed for the round: it shrinks away and leaves the table until <see cref="Restore"/>.</summary>
+    public void Remove()
+    {
+        IsRemoved = true;
+        hovered = false;
+        ShowOutline(false, instant: true);
+        if (lockedIndicator) lockedIndicator.SetActive(false);
+
+        StopTweens();
+        if (!isActiveAndEnabled)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+        punchTween = Tween.Scale(visual, Vector3.zero, RemoveDuration, Ease.InBack)
+            .OnComplete(this, die => die.gameObject.SetActive(false));
+    }
+
+    /// <summary>Back on the table after being destroyed (a new round).</summary>
+    public void Restore()
+    {
+        if (!IsRemoved) return;
+        IsRemoved = false;
+        gameObject.SetActive(true);
+        if (initialized) visual.localScale = restScale;
+    }
 
     // ---------------------------------------------------------------------
     // Locking

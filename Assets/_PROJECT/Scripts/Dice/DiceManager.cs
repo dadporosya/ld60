@@ -96,6 +96,8 @@ public class DicePopups
     public string riskyGoalReachedText = "You feel hopeful.";
     [Tooltip("At the end of a round that reached the risky goal: the next cards are upgraded.")]
     public string cardUpgradedText = "Card upgraded!";
+    [Tooltip("A die destroyed for rerolls (a card's right click). {0} = rerolls gained.")]
+    public string rerollsGainedFormat = "+{0} reroll";
 
     [Header("Risky Goal Popup")]
     [Tooltip("Size of the risky goal popup, relative to the other popups.")]
@@ -170,6 +172,10 @@ public class DiceTurnResult
 /// <see cref="Finish"/> - or running out of rerolls - scores the best poker hand the dice make, cards
 /// included, and banks it. After the last round the banked points are checked against the target.</para>
 ///
+/// <para>Cards can add dice to the table (<see cref="CardEffectType.ExtraDice"/>) and let the player right click
+/// dice showing certain faces (<see cref="CardEffect.IsDieAction"/>): reroll it alone for free, destroy it for the
+/// rest of the round for rerolls, or flip it to another face. Destroyed dice don't score.</para>
+///
 /// <para>Two goals: the target (the minimum to pass) and the risky goal, <see cref="riskyGoalMultiplier"/>
 /// times higher - reaching it upgrades the next cards offered (<see cref="DiceTurnResult.riskyPassed"/>).</para>
 /// </summary>
@@ -179,7 +185,7 @@ public class DiceManager : MonoBehaviour
 
     [Header("Dice")]
     [Tooltip("How many dice the table has. Spawned from Dice Prefab at scene start; dice already in the " +
-             "list below count towards it.")]
+             "list below count towards it. Extra Dice cards spawn more for the turns they're owned in.")]
     [SerializeField, Min(1)] private int startDiceCount = 5;
     [Tooltip("Spawned to make up Start Dice Count. A prefab asset, or a template die in the scene (hidden, " +
              "never rolled).")]
@@ -208,6 +214,10 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private AudioClip landSfx;
     [SerializeField] private AudioClip lockSfx;
     [SerializeField] private AudioClip unlockSfx;
+    [Tooltip("A die flipped to another face (a card's right click).")]
+    [SerializeField] private AudioClip flipSfx;
+    [Tooltip("A die destroyed (a card's right click).")]
+    [SerializeField] private AudioClip destroySfx;
     [SerializeField] private AudioClip passedSfx;
     [SerializeField] private AudioClip failedSfx;
 
@@ -224,7 +234,7 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Seconds the table waits after opening (and after the tutorial) before the first throw - the Roll " +
              "button stays off meanwhile.")]
     [SerializeField, Min(0f)] private float firstRollDelay = 1f;
-    [Tooltip("Score the dice as soon as the last reroll lands.")]
+    [Tooltip("Score the dice as soon as the last reroll lands - unless a card's right click could still change them.")]
     [SerializeField] private bool autoFinishWhenOutOfRerolls = true;
     [Tooltip("Seconds the result stays on the table before the turn hands back.")]
     [SerializeField, Min(0f)] private float finishDelay = 1.5f;
@@ -347,9 +357,24 @@ public class DiceManager : MonoBehaviour
     public int RiskyTarget => Mathf.CeilToInt(Target * riskyGoalMultiplier);
     public bool IsRolling => landingPending > 0;
     public IReadOnlyList<Dice> AllDice => dice;
+    /// <summary>Dice in the running round: the turn's dice count, without the ones destroyed this round.</summary>
+    public IReadOnlyList<Dice> DiceInPlay
+    {
+        get
+        {
+            List<Dice> inPlay = new List<Dice>();
+            foreach (Dice die in dice)
+                if (InPlay(die)) inPlay.Add(die);
+            return inPlay;
+        }
+    }
+
+    private static bool InPlay(Dice die) => die && die.gameObject.activeSelf && !die.IsRemoved;
 
     private bool finishing;
     private int landingPending;
+    // Dice on the table this turn (the first ones of the list); the rest are hidden.
+    private int diceInTurn;
 
     // The round has opened but the first throw isn't allowed yet (tutorial, first roll delay).
     private bool introRunning;
@@ -471,7 +496,7 @@ public class DiceManager : MonoBehaviour
 
         h.CreateStaticInstance(this, ref Instance, setDontDestroy: false);
 
-        List<Dice> spawned = SpawnDice();
+        List<Dice> spawned = SpawnDice(startDiceCount);
 
         foreach (Dice die in dice)
         {
@@ -515,20 +540,20 @@ public class DiceManager : MonoBehaviour
         }
     }
 
-    /// <summary>Spawns dice from <see cref="dicePrefab"/> until the table has <see cref="startDiceCount"/>. Returns the new ones.</summary>
-    private List<Dice> SpawnDice()
+    /// <summary>Spawns dice from <see cref="dicePrefab"/> until the table has <paramref name="count"/>. Returns the new ones.</summary>
+    private List<Dice> SpawnDice(int count)
     {
         List<Dice> spawned = new List<Dice>();
         bool template = dicePrefab && dicePrefab.gameObject.scene.IsValid();
         dice.RemoveAll(die => !die || die == dicePrefab);
         if (template) dicePrefab.gameObject.SetActive(false);
 
-        int missing = startDiceCount - dice.Count;
+        int missing = count - dice.Count;
         if (missing <= 0) return spawned;
 
         if (!dicePrefab)
         {
-            h.Out($"DiceManager: {missing} dice short of Start Dice Count ({startDiceCount}) and no Dice Prefab to spawn them.");
+            h.Out($"DiceManager: {missing} dice short of {count} and no Dice Prefab to spawn them.");
             return spawned;
         }
 
@@ -549,6 +574,26 @@ public class DiceManager : MonoBehaviour
     // Placement inside the dice area
     // ---------------------------------------------------------------------
 
+    /// <summary>
+    /// Puts <paramref name="count"/> dice on the table for the turn: spawns the missing ones (Extra Dice cards)
+    /// and hides the ones over the count.
+    /// </summary>
+    private void SetDiceCount(int count)
+    {
+        List<Dice> spawned = SpawnDice(count);
+        foreach (Dice die in spawned)
+        {
+            die.Init(this);
+            die.SetFaces(faceSprites);
+        }
+
+        diceInTurn = count;
+        for (int i = 0; i < dice.Count; i++)
+            if (dice[i]) dice[i].gameObject.SetActive(i < count);
+
+        ScatterSpawned(spawned);
+    }
+
     /// <summary>Spreads freshly spawned dice over the area, clear of each other and of the dice already there.</summary>
     private void ScatterSpawned(List<Dice> spawned)
     {
@@ -556,7 +601,7 @@ public class DiceManager : MonoBehaviour
 
         List<Vector3> taken = new List<Vector3>();
         foreach (Dice die in dice)
-            if (die && !spawned.Contains(die)) taken.Add(Occupied(die, die.TablePosition));
+            if (die && die.gameObject.activeSelf && !spawned.Contains(die)) taken.Add(Occupied(die, die.TablePosition));
 
         foreach (Dice die in spawned)
         {
@@ -682,6 +727,7 @@ public class DiceManager : MonoBehaviour
         turnId++;
         if (tableRoot) tableRoot.SetActive(true);
         if (resultText) resultText.gameObject.SetActive(false);
+        SetDiceCount(DiceCountFor(cards));
         onTurnStarted?.Invoke();
 
         PrepareRound();
@@ -696,12 +742,15 @@ public class DiceManager : MonoBehaviour
         HasRolled = false;
         finishing = false;
         landingPending = 0;
-        RerollsLeft = rerollsPerRound + ExtraRerolls(cards);
+        RerollsLeft = RerollsFor(cards);
 
-        // A fresh round starts on random faces - they don't score until the first throw lands.
-        foreach (Dice die in dice)
+        // A fresh round starts on random faces - they don't score until the first throw lands. Dice
+        // destroyed last round are back.
+        for (int i = 0; i < Mathf.Min(diceInTurn, dice.Count); i++)
         {
+            Dice die = dice[i];
             if (!die) continue;
+            die.Restore();
             die.ResetDice();
             die.ShowFace(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
         }
@@ -828,8 +877,8 @@ public class DiceManager : MonoBehaviour
         if (!TurnActive || finishing || IsRolling || introRunning) return;
 
         List<Dice> toRoll = new List<Dice>();
-        foreach (Dice die in dice)
-            if (die && (!HasRolled || !die.IsLocked)) toRoll.Add(die);
+        foreach (Dice die in DiceInPlay)
+            if (!HasRolled || !die.IsLocked) toRoll.Add(die);
 
         if (HasRolled)
         {
@@ -839,12 +888,20 @@ public class DiceManager : MonoBehaviour
 
         if (toRoll.Count == 0) return;
         HasRolled = true;
+        Throw(toRoll);
+        PlaySfx(rollSfx);
+        UpdateUI();
+    }
+
+    /// <summary>Throws <paramref name="toRoll"/>; the others stay put.</summary>
+    private void Throw(List<Dice> toRoll)
+    {
         landingPending = toRoll.Count;
 
         // Dice staying put (locked) block their spots; each thrown die then claims where it will land.
         List<Vector3> taken = new List<Vector3>();
-        foreach (Dice die in dice)
-            if (die && !toRoll.Contains(die)) taken.Add(Occupied(die, die.TablePosition));
+        foreach (Dice die in DiceInPlay)
+            if (!toRoll.Contains(die)) taken.Add(Occupied(die, die.TablePosition));
 
         for (int i = 0; i < toRoll.Count; i++)
         {
@@ -855,9 +912,6 @@ public class DiceManager : MonoBehaviour
             int result = UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1);
             die.Roll(result, rollAnimation, faceSprites, tumbleSprites, i * rollAnimation.stagger, landAt, OnDieLanded);
         }
-
-        PlaySfx(rollSfx);
-        UpdateUI();
     }
 
     /// <summary>Locks or unlocks <paramref name="die"/>, when locking is allowed right now.</summary>
@@ -868,6 +922,76 @@ public class DiceManager : MonoBehaviour
         die.SetLocked(!die.IsLocked, lockStyle);
         PlaySfx(die.IsLocked ? lockSfx : unlockSfx);
         UpdateUI();
+    }
+
+    // ---------------------------------------------------------------------
+    // Die actions (cards used by right clicking a die)
+    // ---------------------------------------------------------------------
+
+    /// <summary>Dice can be acted on: the round's dice are down and it isn't being scored.</summary>
+    private bool CanAct => TurnActive && HasRolled && !IsRolling && !finishing && !introRunning;
+
+    /// <summary>The owned card a right click on <paramref name="die"/> would use right now, or null.</summary>
+    public CardInstance DieActionFor(Dice die)
+    {
+        if (!CanAct || !InPlay(die)) return null;
+
+        foreach (CardInstance card in cards)
+        {
+            CardEffect effect = card?.Effect;
+            if (effect == null || !effect.ActsOn(die.Value)) continue;
+            // The last die can't go: the round needs something to score.
+            if (effect.type == CardEffectType.DestroyFace && DiceInPlay.Count <= 1) continue;
+            return card;
+        }
+        return null;
+    }
+
+    /// <summary>True when right clicking <paramref name="die"/> would use a card on it.</summary>
+    public bool HasDieAction(Dice die) => DieActionFor(die) != null;
+
+    /// <summary>Right click: uses the first owned card that acts on <paramref name="die"/>'s face.</summary>
+    public void UseDieAction(Dice die)
+    {
+        CardInstance card = DieActionFor(die);
+        if (card == null) return;
+
+        CardEffect effect = card.Effect;
+        DiceScore before = shownScore;
+        switch (effect.type)
+        {
+            case CardEffectType.RerollFace:
+                // Free: no reroll used. The landing scores it like any other throw.
+                Throw(new List<Dice> { die });
+                PlaySfx(rollSfx);
+                UpdateUI();
+                return;
+
+            case CardEffectType.DestroyFace:
+                int gained = Mathf.Max(0, card.Amount);
+                RerollsLeft += gained;
+                die.Remove();
+                PlaySfx(destroySfx);
+                if (gained > 0)
+                    Popup(string.Format(popups.rerollsGainedFormat, gained), ScoreAnchor, popups.scoreOffset, popups.gainColor);
+                break;
+
+            case CardEffectType.FlipFace:
+                die.Flip(effect.FlipOf(die.Value));
+                PlaySfx(flipSfx);
+                break;
+        }
+
+        UpdateUI();
+        ShowRollPopups(before, shownScore);
+    }
+
+    /// <summary>Whether a right click could still change something about the dice on the table.</summary>
+    private bool AnyDieAction()
+    {
+        foreach (Dice die in DiceInPlay)
+            if (HasDieAction(die)) return true;
+        return false;
     }
 
     /// <summary>
@@ -964,7 +1088,8 @@ public class DiceManager : MonoBehaviour
         ShowRollPopups(before, shownScore);
         onRolled?.Invoke();
 
-        if (autoFinishWhenOutOfRerolls && RerollsLeft <= 0) Finish();
+        // A card's right click could still change the dice: the player finishes themselves.
+        if (autoFinishWhenOutOfRerolls && RerollsLeft <= 0 && !AnyDieAction()) Finish();
     }
 
     private void CompleteTurn()
@@ -990,8 +1115,7 @@ public class DiceManager : MonoBehaviour
     public int[] Values()
     {
         List<int> values = new List<int>();
-        foreach (Dice die in dice)
-            if (die) values.Add(die.Value);
+        foreach (Dice die in DiceInPlay) values.Add(die.Value);
         return values.ToArray();
     }
 
@@ -1138,8 +1262,8 @@ public class DiceManager : MonoBehaviour
     private void UpdateUI()
     {
         bool anyUnlocked = false;
-        foreach (Dice die in dice)
-            if (die && !die.IsLocked) anyUnlocked = true;
+        foreach (Dice die in DiceInPlay)
+            if (!die.IsLocked) anyUnlocked = true;
 
         bool idle = TurnActive && !finishing && !IsRolling && !introRunning;
 

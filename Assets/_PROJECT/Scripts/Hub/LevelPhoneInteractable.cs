@@ -8,7 +8,7 @@ using UnityEngine;
 /// <item>Clicked, it's shown up close like any showcase object, and its dialogue plays (the Dialogues list, in
 /// order, the last one repeating; none: straight to the list).</item>
 /// <item>Then the level list appears over it (<see cref="ShowcaseDialogueManager.ShowList(IReadOnlyList{Sprite}, IReadOnlyList{float}, bool, DialogueContainer, IReadOnlyList{ShowcaseDialogueManager.ListLine}, Action{int}, Action, Talkable)"/>),
-/// one line per <see cref="LevelManager"/> level; completed levels are struck through and can't be picked.</item>
+/// one line per <see cref="LevelManager"/> level; completed levels are struck through (keeping their color) and can't be picked.</item>
 /// <item>Picking a level plays its picked dialogue with the list still on screen, then starts the level
 /// (<see cref="FuneralGameManager.PlayLevel"/>).</item>
 /// </list>
@@ -79,6 +79,8 @@ public class LevelPhoneInteractable : ShowcaseInteractable
                 text = string.Format(format, level.name),
                 // A locked final level is still clickable (and lights up): it says why it won't start, and never does.
                 interactable = !completed,
+                // Completed levels are only struck through (completedFormat), not faded.
+                keepColor = completed,
                 blocked = locked,
                 dialogue = locked ? lockedDialogue : null,
                 pickDialogue = locked ? null : PickedDialogueFor(i),
