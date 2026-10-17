@@ -1,23 +1,38 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
-/// The phone with the level list: clicking it shows the phone up close (<see cref="ShowcaseDialogueManager.ShowList"/>)
-/// with one clickable line per <see cref="LevelManager"/> level. Picking a line starts that level
-/// (<see cref="FuneralGameManager.PlayLevel"/>); completed levels are struck through and can't be picked. The final
-/// level, picked before every other level is completed, plays <see cref="finalLockedDialogue"/> over the phone
-/// instead of starting.
+/// The phone with the level list, in three steps:
+/// <list type="number">
+/// <item>Clicked, it's shown up close like any showcase object, and its dialogue plays (the Dialogues list, in
+/// order, the last one repeating; none: straight to the list).</item>
+/// <item>Then the level list appears over it (<see cref="ShowcaseDialogueManager.ShowList(IReadOnlyList{Sprite}, IReadOnlyList{float}, bool, DialogueContainer, IReadOnlyList{ShowcaseDialogueManager.ListLine}, Action{int}, Action, Talkable)"/>),
+/// one line per <see cref="LevelManager"/> level; completed levels are struck through and can't be picked.</item>
+/// <item>Picking a level plays its picked dialogue with the list still on screen, then starts the level
+/// (<see cref="FuneralGameManager.PlayLevel"/>).</item>
+/// </list>
+/// The final level, picked before every other level is completed, plays <see cref="finalLockedDialogue"/> instead of
+/// starting.
 /// </summary>
-public class LevelPhoneInteractable : HubInteractable
+public class LevelPhoneInteractable : ShowcaseInteractable
 {
-    [Header("Phone")]
-    [Tooltip("The picture shown in the middle of the screen. Empty: this object's own Image sprite.")]
-    [SerializeField] private Sprite phoneSprite;
+    [Serializable]
+    public class LevelDialogue
+    {
+        [Tooltip("Index in the LevelManager's level list (0 = the first level).")]
+        [Min(0)] public int level;
+        public DialogueContainer dialogue;
+    }
+
+    [Header("Level picked")]
+    [Tooltip("Played over the phone, with the list still on screen, once a level is picked; the level starts after " +
+             "it. Used for levels with no entry below. Empty: the level starts right away.")]
+    [SerializeField] private DialogueContainer pickedDialogue;
+    [Tooltip("Per level: played instead of Picked Dialogue.")]
+    [SerializeField] private List<LevelDialogue> levelPickedDialogues = new List<LevelDialogue>();
     [Tooltip("Played over the phone when the final level is picked before everything else is completed.")]
     [SerializeField] private DialogueContainer finalLockedDialogue;
-    [Tooltip("Optional speaker for the dialogue's nodes that don't name one. Empty: the showcase's Default Speaker.")]
-    [SerializeField] private Talkable speaker;
 
     [Header("Line text")]
     [Tooltip("{0} = level name.")]
@@ -27,31 +42,21 @@ public class LevelPhoneInteractable : HubInteractable
     [Tooltip("{0} = level name. The final level while it's still locked.")]
     [SerializeField] private string lockedFinalFormat = "{0}";
 
-    private Sprite Sprite
-    {
-        get
-        {
-            if (phoneSprite) return phoneSprite;
-            Image image = GetComponentInChildren<Image>();
-            return image ? image.sprite : null;
-        }
-    }
+    // Levels are started from the hub only.
+    protected override bool UsableDuringDice => false;
 
     protected override bool IsAvailable() =>
-        LevelManager.Instance && LevelManager.Instance.Levels.Count > 0 &&
-        (!ShowcaseDialogueManager.Instance || !ShowcaseDialogueManager.Instance.IsShowing);
+        LevelManager.Instance && LevelManager.Instance.Levels.Count > 0 && !ShowcaseBusy;
 
     protected override void Interact()
     {
-        ShowcaseDialogueManager showcase = ShowcaseDialogueManager.Instance;
-        if (!showcase) showcase = FindFirstObjectByType<ShowcaseDialogueManager>(FindObjectsInactive.Include);
-        if (!showcase)
-        {
-            h.Out($"LevelPhoneInteractable '{name}': no ShowcaseDialogueManager in the scene.");
-            return;
-        }
+        ShowcaseDialogueManager showcase = FindShowcase();
+        if (!showcase) return;
 
-        showcase.ShowList(Sprite, BuildLines(LevelManager.Instance), PickLevel, speaker: speaker);
+        DialogueContainer intro = CurrentDialogue;
+        GetPicture(out List<Sprite> frames, out List<float> durations, out bool loop);
+        if (showcase.ShowList(frames, durations, loop, intro, BuildLines(LevelManager.Instance), PickLevel, speaker: Speaker))
+            OnDialogueShown(intro);
     }
 
     private List<ShowcaseDialogueManager.ListLine> BuildLines(LevelManager levels)
@@ -70,9 +75,17 @@ public class LevelPhoneInteractable : HubInteractable
                 // A locked final level is still clickable: it says why it won't start.
                 interactable = !completed && (!locked || finalLockedDialogue),
                 dialogue = locked ? finalLockedDialogue : null,
+                pickDialogue = locked ? null : PickedDialogueFor(i),
             });
         }
         return lines;
+    }
+
+    private DialogueContainer PickedDialogueFor(int level)
+    {
+        foreach (LevelDialogue entry in levelPickedDialogues)
+            if (entry.level == level && entry.dialogue) return entry.dialogue;
+        return pickedDialogue;
     }
 
     private static void PickLevel(int index)

@@ -78,6 +78,12 @@ public class LevelManager : MonoBehaviour
     public int LevelsWon { get; private set; }
     public int LevelsLost { get; private set; }
 
+    /// <summary>Index of the level whose round was played last; -1 before any round this game.</summary>
+    public int LastPlayedIndex { get; private set; } = -1;
+
+    /// <summary>Whether the last played round (<see cref="LastPlayedIndex"/>) was won.</summary>
+    public bool LastPlayedPassed { get; private set; }
+
     public IReadOnlyList<Level> Levels => levels;
 
     /// <summary>The level the next (or running) round plays; the last one once the list has run out.</summary>
@@ -171,6 +177,8 @@ public class LevelManager : MonoBehaviour
         CurrentIndex = 0;
         LevelsWon = 0;
         LevelsLost = 0;
+        LastPlayedIndex = -1;
+        LastPlayedPassed = false;
         completed.Clear();
     }
 
@@ -197,6 +205,8 @@ public class LevelManager : MonoBehaviour
         if (passed) LevelsWon++;
         else LevelsLost++;
         if (index >= 0 && (passed || !onlyWinsComplete)) completed.Add(index);
+        LastPlayedIndex = index;
+        LastPlayedPassed = passed;
         CurrentIndex++;
 
         if (passed) onLevelWon?.Invoke(index);

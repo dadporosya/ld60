@@ -30,6 +30,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
         public bool interactable;
         [Tooltip("Clicking plays this over the picture instead of picking the line; the showcase closes after it.")]
         public DialogueContainer dialogue;
+        [Tooltip("Clicking plays this over the picture with the list still on screen; the pick goes through after it.")]
+        public DialogueContainer pickDialogue;
     }
 
     public enum SpriteFit
@@ -101,6 +103,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
     private Vector3 imageScale = Vector3.one;
     private Action finishedCallback;
     private DialogueContainer runningDialogue;
+    // What happens when the running dialogue ends; null: the showcase closes.
+    private Action afterDialogue;
     private UnityAction onDialogueEnded;
     private Tween stepTween;
 
@@ -258,6 +262,16 @@ public class ShowcaseDialogueManager : MonoBehaviour
     /// <paramref name="onCancelled"/> runs once it's gone. Returns false (no callback) when a showcase is already up.
     /// </summary>
     public bool ShowList(Sprite sprite, IReadOnlyList<ListLine> lines, Action<int> onPicked, Action onCancelled = null,
+        Talkable speaker = null) =>
+        ShowList(sprite ? new[] { sprite } : null, null, true, null, lines, onPicked, onCancelled, speaker);
+
+    /// <summary>
+    /// Like <see cref="ShowList(Sprite, IReadOnlyList{ListLine}, Action{int}, Action, Talkable)"/>, with an animated
+    /// picture (see <see cref="Show(IReadOnlyList{Sprite}, IReadOnlyList{float}, bool, DialogueContainer, Talkable, Action)"/>)
+    /// and <paramref name="introDialogue"/> played over it first: the list only appears once it's over.
+    /// </summary>
+    public bool ShowList(IReadOnlyList<Sprite> frames, IReadOnlyList<float> frameDurations, bool loop,
+        DialogueContainer introDialogue, IReadOnlyList<ListLine> lines, Action<int> onPicked, Action onCancelled = null,
         Talkable speaker = null)
     {
         Initialize();
@@ -277,8 +291,20 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
         finishedCallback = onCancelled;
         listSpeaker = speaker;
-        BeginShow(sprite ? new[] { sprite } : null, null, true);
-        BuildList(lines, onPicked);
+        BeginShow(frames, frameDurations, loop);
+
+        if (!introDialogue || !Dialogues)
+        {
+            if (introDialogue) h.Out("ShowcaseDialogueManager: no DialogueManager in the scene, skipping the list's intro.");
+            BuildList(lines, onPicked);
+            return true;
+        }
+
+        listRoot.gameObject.SetActive(false);
+        stepTween.Stop();
+        stepTween = Tween.Delay(this, appearDuration + dialogueDelay,
+            manager => manager.StartDialogue(introDialogue, speaker, () => manager.BuildList(lines, onPicked)),
+            useUnscaledTime: true);
         return true;
     }
 
@@ -355,7 +381,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
                 ShowcaseClickTarget target = text.GetComponent<ShowcaseClickTarget>();
                 if (!target) target = text.gameObject.AddComponent<ShowcaseClickTarget>();
                 int index = i;
-                target.onClick = () => PickLine(line, index, onPicked);
+                target.onClick = () => PickLine(text, line, index, onPicked);
                 target.onHover = hovered => HoverLine(text, line, hovered);
             }
 
@@ -371,20 +397,36 @@ public class ShowcaseDialogueManager : MonoBehaviour
         if (hovered && lineHoverSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(lineHoverSfx);
     }
 
-    private void PickLine(ListLine line, int index, Action<int> onPicked)
+    private void PickLine(TextMeshProUGUI text, ListLine line, int index, Action<int> onPicked)
     {
         if (!listOpen || !line.interactable) return;
         if (lineClickSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(lineClickSfx);
 
-        HideList();
         if (line.dialogue)
         {
             // The picture stays up for the dialogue; the showcase closes after it, as cancelled.
+            HideList();
             StartDialogue(line.dialogue, listSpeaker);
             return;
         }
 
-        finishedCallback = onPicked != null ? () => onPicked(index) : null;
+        Action pick = onPicked != null ? () => onPicked(index) : null;
+        if (line.pickDialogue)
+        {
+            // The list stays on screen, the picked line lit, while the dialogue plays; the pick goes through after it.
+            FreezeList();
+            if (text) text.color = lineHoverColor;
+            StartDialogue(line.pickDialogue, listSpeaker, () =>
+            {
+                HideList();
+                finishedCallback = pick;
+                Hide(animate: true);
+            });
+            return;
+        }
+
+        HideList();
+        finishedCallback = pick;
         Hide(animate: true);
     }
 
@@ -399,13 +441,18 @@ public class ShowcaseDialogueManager : MonoBehaviour
     /// <summary>Stops taking clicks and fades the lines out; they're destroyed when the showcase is gone.</summary>
     private void HideList()
     {
-        listOpen = false;
-        foreach (TextMeshProUGUI line in listLines)
-            if (line) line.raycastTarget = false;
-
+        FreezeList();
         if (!listGroup) return;
         Tween.StopAll(listGroup);
         Tween.Alpha(listGroup, 0f, disappearDuration, useUnscaledTime: true);
+    }
+
+    /// <summary>Stops taking clicks (and hovers); the lines stay on screen as they are.</summary>
+    private void FreezeList()
+    {
+        listOpen = false;
+        foreach (TextMeshProUGUI line in listLines)
+            if (line) line.raycastTarget = false;
     }
 
     private void ClearList()
@@ -422,6 +469,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
     {
         if (!IsShowing) return;
         finishedCallback = null;
+        afterDialogue = null;
         stepTween.Stop();
         StopListening();
         ClearList();
@@ -431,11 +479,16 @@ public class ShowcaseDialogueManager : MonoBehaviour
         Hide(animate: false);
     }
 
-    private void StartDialogue(DialogueContainer dialogue, Talkable speaker)
+    /// <summary>
+    /// Plays <paramref name="dialogue"/> over the picture; then <paramref name="after"/> runs, or without one the
+    /// showcase closes.
+    /// </summary>
+    private void StartDialogue(DialogueContainer dialogue, Talkable speaker, Action after = null)
     {
         if (!dialogue)
         {
-            Hide(animate: true);
+            if (after != null) after();
+            else Hide(animate: true);
             return;
         }
 
@@ -451,6 +504,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
         }
 
         runningDialogue = instance;
+        afterDialogue = after;
         if (Dialogues.onDialogueEnd == null) Dialogues.onDialogueEnd = new UnityEvent();
         Dialogues.onDialogueEnd.RemoveListener(onDialogueEnded);
         Dialogues.onDialogueEnd.AddListener(onDialogueEnded);
@@ -461,7 +515,11 @@ public class ShowcaseDialogueManager : MonoBehaviour
     {
         StopListening();
         DestroyRunningDialogue();
-        Hide(animate: true);
+
+        Action after = afterDialogue;
+        afterDialogue = null;
+        if (after != null) after();
+        else Hide(animate: true);
     }
 
     private void Hide(bool animate)
@@ -507,6 +565,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
         ClearList();
         if (listRoot) listRoot.gameObject.SetActive(false);
         listSpeaker = null;
+        afterDialogue = null;
         if (root) root.SetActive(false);
 
         IsShowing = false;
