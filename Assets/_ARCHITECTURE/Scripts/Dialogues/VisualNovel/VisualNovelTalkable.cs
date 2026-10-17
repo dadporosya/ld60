@@ -186,7 +186,7 @@ public class VisualNovelTalkable : MonoBehaviour
 
     private void Update()
     {
-        if (!debug) return;
+        if (!DebugHotkeys.Allowed(debug)) return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;

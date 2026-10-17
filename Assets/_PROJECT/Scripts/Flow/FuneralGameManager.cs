@@ -69,7 +69,10 @@ public class FuneralGameManager : MonoBehaviour
     public Phase CurrentPhase { get; private set; } = Phase.Intro;
 
     /// <summary>True while the player is free to click around the hub.</summary>
-    public bool IsInHub => CurrentPhase == Phase.Hub && !Dialogues.IsPlaying;
+    public bool IsInHub => CurrentPhase == Phase.Hub && !Dialogues.IsPlaying && !ShowcaseOpen &&
+                           !(DialogueManager.Instance && DialogueManager.Instance.DialogueActive);
+
+    private static bool ShowcaseOpen => ShowcaseDialogueManager.Instance && ShowcaseDialogueManager.Instance.IsShowing;
 
     public IReadOnlyList<ContactData> Contacts => contacts;
 
@@ -339,6 +342,7 @@ public class FuneralGameManager : MonoBehaviour
 
         if (Dice) Dice.CancelRound();
         if (Cards) Cards.Cancel();
+        if (ShowcaseDialogueManager.Instance) ShowcaseDialogueManager.Instance.Cancel();
         if (DialPanel) DialPanel.Hide();
 
         onBadEnding?.Invoke();

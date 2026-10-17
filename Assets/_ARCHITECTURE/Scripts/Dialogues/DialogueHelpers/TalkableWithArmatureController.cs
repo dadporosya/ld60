@@ -42,7 +42,7 @@ public class TalkableWithArmatureController : MonoBehaviour
 
     private void Update()
     {
-        if (!debug) return;
+        if (!DebugHotkeys.Allowed(debug)) return;
         if (Input.GetKeyDown(KeyCode.T)) Talk();
     }
 

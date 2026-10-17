@@ -4,6 +4,7 @@ using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
@@ -13,7 +14,7 @@ using UnityEngine.UI;
 /// <para><b>Choosing</b> (<see cref="ChooseCards(int, CardMood, Action{CardInstance})"/>): the fade image
 /// darkens the screen a bit and the cards fly into the middle (<see cref="chooseArea"/>). Clicking one
 /// picks it: a <see cref="CardKind.Immediate"/> card applies its effect and burns; a
-/// <see cref="CardKind.Permanent"/> one is kept - shown under <see cref="permanentCardsParent"/> and added to
+/// <see cref="CardKind.Permanent"/> one is kept - shown in <see cref="permanentCardsSpot"/> and added to
 /// every dice round (<see cref="PermanentCards"/>). Then the menu fades out and is disabled.</para>
 ///
 /// <para>Keep this component OUTSIDE <see cref="root"/>: the root is disabled between choices, and the
@@ -63,10 +64,23 @@ public class CardManager : MonoBehaviour
     [SerializeField, Min(0f)] private float burnScale = 1.3f;
 
     [Header("Permanent cards")]
-    [Tooltip("Where kept permanent cards are shown (e.g. a corner with a layout group).")]
-    [SerializeField] private RectTransform permanentCardsParent;
+    [Tooltip("Where kept permanent cards are shown - e.g. a RectTransform inside the dice gameplay window, so the " +
+             "player sees the bonuses they've collected. With a layout group on it the layout places the cards; " +
+             "without one they're lined up from its top-left corner, wrapping into new rows.")]
+    [FormerlySerializedAs("permanentCardsParent")]
+    [SerializeField] private RectTransform permanentCardsSpot;
     [Tooltip("Size of a kept card relative to the prefab.")]
     [SerializeField, Min(0.01f)] private float permanentCardScale = 0.6f;
+    [Tooltip("Kept cards grow when hovered, so the player can read them.")]
+    [SerializeField] private bool keptCardsHoverable = true;
+    [Tooltip("How much a hovered kept card grows (1.67 with Permanent Card Scale 0.6 = full card size).")]
+    [SerializeField, Min(1f)] private float keptHoverScale = 1.67f;
+    [Tooltip("Gap between kept cards (UI units, no layout group only).")]
+    [SerializeField, Min(0f)] private float permanentCardSpacing = 12f;
+    [Tooltip("Seconds the chosen card flies from the menu into its place in the spot, when the spot is on " +
+             "screen. 0 (or the spot hidden): it pops up there instead.")]
+    [SerializeField, Min(0f)] private float flyDuration = 0.5f;
+    [SerializeField] private Ease flyEase = Ease.InOutQuad;
     [SerializeField, Min(0f)] private float permanentAppearDuration = 0.3f;
 
     [Header("Audio")]
@@ -104,6 +118,8 @@ public class CardManager : MonoBehaviour
     private readonly List<CardInstance> permanentCards = new List<CardInstance>();
     private readonly List<CardView> permanentViews = new List<CardView>();
     private readonly List<CardView> offered = new List<CardView>();
+    // A permanent card just chosen: its view in the spot, hidden until the chosen card has flown there.
+    private CardView pendingKept;
     private Action<CardInstance> onChosen;
     private bool picking;
     private bool initialized;
@@ -132,7 +148,7 @@ public class CardManager : MonoBehaviour
 
     private void Update()
     {
-        if (!debugKey || IsChoosing) return;
+        if (!DebugHotkeys.Allowed(debugKey) || IsChoosing) return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null && debugChooseKey != Key.None && keyboard[debugChooseKey].wasPressedThisFrame)
@@ -248,6 +264,16 @@ public class CardManager : MonoBehaviour
 
     private void FinishPick(CardView view)
     {
+        CardView kept = pendingKept;
+        if (view && kept && kept.gameObject.activeInHierarchy && flyDuration > 0f)
+        {
+            FlyToKept(view, kept);
+            return;
+        }
+
+        // The spot is off screen (or there's no flight): the kept card just pops up in it.
+        RevealPending(pop: true);
+
         if (view)
         {
             bool burn = view.Card != null && !view.Card.IsPermanent;
@@ -266,8 +292,39 @@ public class CardManager : MonoBehaviour
         }, useUnscaledTime: true);
     }
 
+    /// <summary>The chosen card flies from the menu into its kept card's place, which then takes over.</summary>
+    private void FlyToKept(CardView view, CardView kept)
+    {
+        // The spot's layout must be final before its position is read.
+        Canvas.ForceUpdateCanvases();
+
+        Tween.StopAll(view.transform);
+        float ratio = kept.transform.lossyScale.x / Mathf.Max(0.0001f, view.transform.lossyScale.x);
+        Tween.Position(view.transform, kept.transform.position, flyDuration, flyEase, useUnscaledTime: true);
+        Tween.Scale(view.transform, view.transform.localScale * ratio, flyDuration, flyEase, useUnscaledTime: true);
+
+        stepTween = Tween.Delay(this, flyDuration, manager =>
+        {
+            if (view) view.Group.alpha = 0f;
+            manager.RevealPending(pop: false);
+            if (kept && manager.pickPunch > 0f)
+                Tween.PunchScale(kept.transform, Vector3.one * manager.pickPunch, 0.25f, useUnscaledTime: true);
+            manager.CloseMenu(animate: true, view ? view.Card : null);
+        }, useUnscaledTime: true);
+    }
+
+    private void RevealPending(bool pop)
+    {
+        CardView kept = pendingKept;
+        pendingKept = null;
+        Reveal(kept, pop);
+    }
+
     private void CloseMenu(bool animate, CardInstance chosen = null)
     {
+        // Cut short mid-flight (Cancel): the kept card still shows.
+        RevealPending(pop: false);
+
         Action<CardInstance> callback = onChosen;
         onChosen = null;
 
@@ -303,7 +360,8 @@ public class CardManager : MonoBehaviour
 
         if (card.IsPermanent)
         {
-            AddPermanent(card);
+            // Laid out but hidden: the chosen card flies into its place first (FinishPick).
+            pendingKept = AddPermanent(card, animate: false, hidden: true);
             return;
         }
 
@@ -321,31 +379,92 @@ public class CardManager : MonoBehaviour
     }
 
     /// <summary>Keeps <paramref name="card"/>: its bonus counts from now on, and it's shown with the player's cards.</summary>
-    public void AddPermanent(CardInstance card, bool animate = true)
+    public void AddPermanent(CardInstance card, bool animate = true) => AddPermanent(card, animate, hidden: false);
+
+    /// <summary>
+    /// Keeps the card and puts its view in <see cref="permanentCardsSpot"/>. With <paramref name="hidden"/> the
+    /// view is laid out but invisible - the chosen card flies into its place, then <see cref="Reveal"/> shows it.
+    /// </summary>
+    private CardView AddPermanent(CardInstance card, bool animate, bool hidden)
     {
         Initialize();
-        if (card == null || !card.data) return;
+        if (card == null || !card.data) return null;
 
         permanentCards.Add(card);
 
-        if (permanentCardsParent)
+        CardView view = null;
+        if (permanentCardsSpot)
         {
-            CardView view = Spawn(card.data, permanentCardsParent);
+            view = Spawn(card.data, permanentCardsSpot);
             if (view)
             {
                 view.Bind(card);
-                Vector3 scale = view.transform.localScale * permanentCardScale;
-                if (animate && permanentAppearDuration > 0f)
-                {
-                    view.transform.localScale = Vector3.zero;
-                    Tween.Scale(view.transform, scale, permanentAppearDuration, Ease.OutBack, useUnscaledTime: true);
-                }
-                else view.transform.localScale = scale;
+                view.transform.localScale *= permanentCardScale;
+                view.SetHoverBase(view.transform.localScale);
+                view.HoverOnly = keptCardsHoverable;
+                view.HoverScaleOverride = keptHoverScale;
+                view.BringToFrontOnHover = !permanentCardsSpot.GetComponent<LayoutGroup>();
+                view.Group.blocksRaycasts = keptCardsHoverable;
                 permanentViews.Add(view);
+                ArrangeKept();
+
+                if (hidden) view.Group.alpha = 0f;
+                else Reveal(view, animate);
             }
         }
+        else h.Out("CardManager: no Permanent Cards Spot - the card counts, but isn't shown.");
 
         onPermanentCardAdded?.Invoke(card.data);
+        return view;
+    }
+
+    /// <summary>Shows a kept card's view, popping it in when <paramref name="pop"/>.</summary>
+    private void Reveal(CardView view, bool pop)
+    {
+        if (!view) return;
+        view.Group.alpha = 1f;
+        if (!pop || permanentAppearDuration <= 0f) return;
+
+        Vector3 scale = view.transform.localScale;
+        view.transform.localScale = Vector3.zero;
+        Tween.Scale(view.transform, scale, permanentAppearDuration, Ease.OutBack, useUnscaledTime: true);
+    }
+
+    /// <summary>
+    /// Places the kept cards: a layout group on the spot does it itself; otherwise they go in rows from the
+    /// spot's top-left corner, a new row whenever the next card wouldn't fit.
+    /// </summary>
+    private void ArrangeKept()
+    {
+        if (!permanentCardsSpot) return;
+
+        if (permanentCardsSpot.GetComponent<LayoutGroup>())
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(permanentCardsSpot);
+            return;
+        }
+
+        float width = permanentCardsSpot.rect.width;
+        float x = 0f, y = 0f, rowHeight = 0f;
+        foreach (CardView view in permanentViews)
+        {
+            if (!view) continue;
+            RectTransform rect = view.Rect;
+            rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+
+            float w = rect.rect.width * Mathf.Abs(rect.localScale.x);
+            float hgt = rect.rect.height * Mathf.Abs(rect.localScale.y);
+            if (x > 0f && x + w > width)
+            {
+                x = 0f;
+                y -= rowHeight + permanentCardSpacing;
+                rowHeight = 0f;
+            }
+
+            rect.anchoredPosition = new Vector2(x + w * rect.pivot.x, y - hgt * (1f - rect.pivot.y));
+            x += w + permanentCardSpacing;
+            rowHeight = Mathf.Max(rowHeight, hgt);
+        }
     }
 
     public bool OwnsPermanent(CardData data)
@@ -359,6 +478,7 @@ public class CardManager : MonoBehaviour
     public void ClearPermanentCards()
     {
         permanentCards.Clear();
+        pendingKept = null;
         foreach (CardView view in permanentViews)
             if (view) Destroy(view.gameObject);
         permanentViews.Clear();

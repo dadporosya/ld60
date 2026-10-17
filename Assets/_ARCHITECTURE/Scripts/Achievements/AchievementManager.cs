@@ -154,7 +154,7 @@ public class AchievementManager : MonoBehaviour
 
     private void Update()
     {
-        if (!debugMode) return;
+        if (!DebugHotkeys.Allowed(debugMode)) return;
 
         bool pPressed = false;
 #if ENABLE_INPUT_SYSTEM

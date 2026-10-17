@@ -233,7 +233,7 @@ public class TransitionManager : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null) return;
+        if (Keyboard.current == null || !DebugHotkeys.Enabled) return;
 
         if (debugKey != Key.None && Keyboard.current[debugKey].wasPressedThisFrame)
             TransitionToLevel(debugTarget);

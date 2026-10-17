@@ -53,7 +53,7 @@ public class PencilRecorder : MonoBehaviour
     private void Update()
     {
         Keyboard keyboard = Keyboard.current;
-        if (keyboard != null && toggleKey != Key.None && keyboard[toggleKey].wasPressedThisFrame)
+        if (keyboard != null && DebugHotkeys.Enabled && toggleKey != Key.None && keyboard[toggleKey].wasPressedThisFrame)
         {
             if (IsRecording) StopRecording();
             else StartRecording();

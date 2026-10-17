@@ -282,6 +282,7 @@ public class PerfProbe : MonoBehaviour
     private void HandleKeys()
     {
         bool hud = false, flush = false;
+        if (!DebugHotkeys.Enabled) return;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null)
         {

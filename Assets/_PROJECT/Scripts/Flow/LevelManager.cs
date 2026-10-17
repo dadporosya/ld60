@@ -86,7 +86,7 @@ public class LevelManager : MonoBehaviour
 
     private void Update()
     {
-        if (!debugKeys) return;
+        if (!DebugHotkeys.Allowed(debugKeys)) return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;

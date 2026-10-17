@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6176344725694977912
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe55091dfd4841048e296c5388108375, type: 3}
+  m_Name: JitterVol
+  m_EditorClassIdentifier: VolFx::VolFx.JitterVol
+  active: 1
+  m_Intensity:
+    m_OverrideState: 1
+    m_Value: 0.00333
+  m_Scale:
+    m_OverrideState: 1
+    m_Value: 0.0481
+  m_Speed:
+    m_OverrideState: 1
+    m_Value: 1.2
+  m_Smooth:
+    m_OverrideState: 1
+    m_Value: 0
+  m_Spikes:
+    m_OverrideState: 1
+    m_Value: 0.67
+  m_Focus:
+    m_OverrideState: 1
+    m_Value: 0
+  m_R:
+    m_OverrideState: 1
+    m_Value: 1
+  m_G:
+    m_OverrideState: 1
+    m_Value: 1
+  m_B:
+    m_OverrideState: 1
+    m_Value: 1
+  m_WeightY:
+    m_OverrideState: 1
+    m_Value: 0.665
+  m_WeightX:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: Volume Profile
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
+  components:
+  - {fileID: 5265645544436989074}
+  - {fileID: -6176344725694977912}
+--- !u!114 &5265645544436989074
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb28ea5c871044b4c90a10169555151b, type: 3}
+  m_Name: OldMovieVol
+  m_EditorClassIdentifier: VolFx::VolFx.OldMovieVol
+  active: 1
+  m_Grain:
+    m_OverrideState: 1
+    m_Value: 0.135
+  m_Noise:
+    m_OverrideState: 1
+    m_Value: 0
+  m_NoiseAlpha:
+    m_OverrideState: 1
+    m_Value: 0
+  m_Jolt:
+    m_OverrideState: 0
+    m_Value: 0.06
+  m_Fps:
+    m_OverrideState: 0
+    m_Value: 16
+  m_Vignette:
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 0}
+  m_GrainTex:
+    m_OverrideState: 1
+    m_Value: 8
+  m_Audio:
+    m_OverrideState: 1
+    m_Value: 0
+  m_Volume:
+    m_OverrideState: 1
+    m_Value: 0
+  m_Pich:
+    m_OverrideState: 1
+    m_Value: 0

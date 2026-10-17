@@ -35,6 +35,16 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
              "targets, so showing it never steals the hover from the object.")]
     [SerializeField] private GameObject hoverHighlight;
 
+    [Header("Outline on hover")]
+    [SerializeField] private bool outlineOnHover = true;
+    [Tooltip("The Image that gets outlined. Defaults to this object's Image, else the first one in its children.")]
+    [SerializeField] private Graphic outlineTarget;
+    [SerializeField] private Color outlineColor = new Color(1f, 0.95f, 0.75f, 1f);
+    [Tooltip("Outline thickness (UI units). Unity's UI Outline traces the sprite's shape by offsetting it; keep it " +
+             "small (2-6) or the copies show.")]
+    [SerializeField] private Vector2 outlineWidth = new Vector2(4f, 4f);
+    [SerializeField, Min(0f)] private float outlineFadeDuration = 0.12f;
+
     [Header("Events")]
     public UnityEvent onHoverEnter = new UnityEvent();
     public UnityEvent onHoverExit = new UnityEvent();
@@ -42,6 +52,8 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
 
     private Vector3 restScale;
     private Tween hoverTween;
+    private Outline outline;
+    private Tween outlineTween;
     private bool hovered;
     private bool used;
 
@@ -75,6 +87,7 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
         }
 
         SetUpHitArea();
+        SetUpOutline();
     }
 
     /// <summary>Applies <see cref="alphaHitThreshold"/> and warns about setups that can't be clicked.</summary>
@@ -123,6 +136,56 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
         hovered = false;
         if (visual) visual.localScale = restScale;
         if (hoverHighlight) hoverHighlight.SetActive(false);
+        ShowOutline(false, instant: true);
+    }
+
+    /// <summary>Adds a UI Outline to the target Image (or reuses one on it), hidden until hovered.</summary>
+    private void SetUpOutline()
+    {
+        if (!outlineOnHover) return;
+
+        if (!outlineTarget) outlineTarget = GetComponent<Graphic>();
+        if (!outlineTarget)
+            foreach (Graphic graphic in GetComponentsInChildren<Graphic>(true))
+            {
+                if (hoverHighlight && graphic.transform.IsChildOf(hoverHighlight.transform)) continue;
+                outlineTarget = graphic;
+                break;
+            }
+
+        if (!outlineTarget)
+        {
+            h.Out($"HubInteractable '{name}': no Image to outline.");
+            return;
+        }
+
+        outline = outlineTarget.GetComponent<Outline>();
+        if (!outline) outline = outlineTarget.gameObject.AddComponent<Outline>();
+        outline.effectDistance = outlineWidth;
+        outline.useGraphicAlpha = true;
+        ShowOutline(false, instant: true);
+    }
+
+    private void ShowOutline(bool show, bool instant = false)
+    {
+        if (!outline) return;
+
+        outlineTween.Stop();
+        Color hidden = outlineColor;
+        hidden.a = 0f;
+
+        if (instant || outlineFadeDuration <= 0f || !isActiveAndEnabled)
+        {
+            outline.effectColor = show ? outlineColor : hidden;
+            outline.enabled = show;
+            return;
+        }
+
+        // Hidden outlines are switched off, so idle objects don't pay for the extra geometry.
+        outline.enabled = true;
+        outlineTween = Tween.Custom(outline, outline.effectColor, show ? outlineColor : hidden, outlineFadeDuration,
+            (o, c) => o.effectColor = c);
+        if (!show) outlineTween.OnComplete(outline, o => o.enabled = false);
     }
 
     /// <summary>What a click does.</summary>
@@ -164,6 +227,7 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
         hovered = value;
 
         if (hoverHighlight) hoverHighlight.SetActive(value);
+        ShowOutline(value);
         if (!visual) return;
 
         hoverTween.Stop();
