@@ -9,6 +9,12 @@ public class AlertDamageText : MonoBehaviour
     public float fadeOutDuration = 0.4f;
     public float speed          = 2f;
 
+    private void Awake()
+    {
+        // A popup is decoration: it must never swallow clicks meant for what's under it (dice, buttons).
+        foreach (var g in GetComponentsInChildren<UnityEngine.UI.Graphic>(true)) g.raycastTarget = false;
+    }
+
     private void Start()
     {
         if (!damageText) damageText = GetComponent<TMP_Text>();
