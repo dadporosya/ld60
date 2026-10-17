@@ -228,12 +228,15 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         float angle = Mathf.LerpUnclamped(startAngle, endAngle, anim.spinCurve.Evaluate(t));
         visual.localEulerAngles = new Vector3(0f, 0f, angle);
 
-        int step = Mathf.FloorToInt(t * anim.duration / Mathf.Max(anim.frameInterval, 0.01f));
-        if (step != lastFrameStep && tumbleFrames != null && tumbleFrames.Length > 0)
-        {
-            lastFrameStep = step;
-            SetSprite(tumbleFrames[NextFrameIndex()]);
-        }
+        float interval = Mathf.Max(anim.frameInterval, 0.01f);
+        int step = Mathf.FloorToInt(t * anim.duration / interval);
+        if (step == lastFrameStep) return;
+        lastFrameStep = step;
+
+        // The last frame before landing is the result, so the die lands on the face it keeps.
+        bool lastFrame = anim.duration * (1f - t) <= interval;
+        if (lastFrame && faces != null && faces.Length >= rollResult) SetSprite(faces[rollResult - 1]);
+        else if (tumbleFrames != null && tumbleFrames.Length > 0) SetSprite(tumbleFrames[NextFrameIndex()]);
     }
 
     /// <summary>A random frame, never the same one twice in a row.</summary>

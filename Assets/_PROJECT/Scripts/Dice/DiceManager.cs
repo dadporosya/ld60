@@ -139,30 +139,39 @@ public class DiceScore
     public int total;
 }
 
-/// <summary>How a dice round ended.</summary>
+/// <summary>How one round (one dice game) of a turn ended.</summary>
 public class DiceRoundResult
 {
     public DiceScore score;
+    public int[] values;
+}
+
+/// <summary>How a dice turn ended: every round's points added up, against the target.</summary>
+public class DiceTurnResult
+{
+    public List<DiceRoundResult> rounds = new List<DiceRoundResult>();
+    /// <summary>The points of all rounds added up.</summary>
+    public int total;
     public int target;
     public bool passed;
     /// <summary>The risky goal: <see cref="target"/> x the risky multiplier.</summary>
     public int riskyTarget;
-    /// <summary>The score reached the risky goal: the next cards are upgraded.</summary>
+    /// <summary>The total reached the risky goal: the next cards are upgraded.</summary>
     public bool riskyPassed;
-    public int[] values;
 }
 
 /// <summary>
 /// The poker dice table. Owns the dice, the roll animation, lock looks, the scoring table and the
 /// table's UI; a <see cref="Dice"/> only animates itself.
 ///
-/// <para>A round (<see cref="StartRound"/>): the first <see cref="Roll"/> throws every die. After it,
-/// clicking a die locks / unlocks it, and each further Roll (up to <see cref="rerollsPerRound"/> plus
-/// card bonuses) rethrows the unlocked ones. <see cref="Finish"/> - or running out of rerolls - scores
-/// the best poker hand the dice make, cards included, against the target.</para>
+/// <para>A turn (<see cref="StartTurn"/>) is <see cref="roundsPerTurn"/> rounds. A round is one dice game:
+/// the first <see cref="Roll"/> throws every die. After it, clicking a die locks / unlocks it, and each
+/// further Roll (up to <see cref="rerollsPerRound"/> plus card bonuses) rethrows the unlocked ones.
+/// <see cref="Finish"/> - or running out of rerolls - scores the best poker hand the dice make, cards
+/// included, and banks it. After the last round the banked points are checked against the target.</para>
 ///
 /// <para>Two goals: the target (the minimum to pass) and the risky goal, <see cref="riskyGoalMultiplier"/>
-/// times higher - reaching it upgrades the next cards offered (<see cref="DiceRoundResult.riskyPassed"/>).</para>
+/// times higher - reaching it upgrades the next cards offered (<see cref="DiceTurnResult.riskyPassed"/>).</para>
 /// </summary>
 public class DiceManager : MonoBehaviour
 {
@@ -202,6 +211,11 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private AudioClip passedSfx;
     [SerializeField] private AudioClip failedSfx;
 
+    [Header("Turn")]
+    [Tooltip("Dice games per turn. Each round gets its own rerolls; the points of every round add up, and " +
+             "the total is checked against the target after the last one.")]
+    [Min(1)] public int roundsPerTurn = 1;
+
     [Header("Round")]
     [Tooltip("Rerolls after the first throw (cards can add more).")]
     [Min(0)] public int rerollsPerRound = 2;
@@ -212,9 +226,11 @@ public class DiceManager : MonoBehaviour
     [SerializeField, Min(0f)] private float firstRollDelay = 1f;
     [Tooltip("Score the dice as soon as the last reroll lands.")]
     [SerializeField] private bool autoFinishWhenOutOfRerolls = true;
-    [Tooltip("Seconds the result stays on the table before the round hands back.")]
+    [Tooltip("Seconds the result stays on the table before the turn hands back.")]
     [SerializeField, Min(0f)] private float finishDelay = 1.5f;
-    [Tooltip("Hide the table root when the round ends.")]
+    [Tooltip("Seconds a finished round's dice stay on the table before the next round of the turn starts.")]
+    [SerializeField, Min(0f)] private float nextRoundDelay = 1f;
+    [Tooltip("Hide the table root when the turn ends.")]
     [SerializeField] private bool hideTableOnFinish = true;
     [Tooltip("The risky goal is the target times this. Reaching it upgrades the next cards offered.")]
     [SerializeField, Min(1f)] private float riskyGoalMultiplier = 2f;
@@ -225,6 +241,9 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private DialogueContainer tutorialDialogue;
     [Tooltip("Optional speaker for the tutorial's nodes that don't name one.")]
     [SerializeField] private Talkable tutorialSpeaker;
+    [Tooltip("Binds its scene objects into a DialogueContainerWithModels tutorial (models enabled per node). " +
+             "Defaults to the first one found.")]
+    [SerializeField] private TalkableWModelsController tutorialObjects;
     [Tooltip("Keep the skip button (the DialogueManager's hold-to-skip indicator, with its fill image) on screen " +
              "from the tutorial's first node until it ends.")]
     [SerializeField] private bool showSkipDuringTutorial = true;
@@ -271,6 +290,11 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI riskyTargetText;
     [Tooltip("{0} = risky goal, {1} = target score.")]
     [SerializeField] private string riskyTargetFormat = "Risky {0}";
+    [Tooltip("Optional: which round of the turn is on. Hidden while a turn has a single round.")]
+    [SerializeField] private TextMeshProUGUI roundText;
+    [Tooltip("{0} = current round, {1} = rounds per turn.")]
+    [SerializeField] private string roundFormat = "Round {0}/{1}";
+    [Tooltip("The turn's total so far (rounds banked + the dice on the table).")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [Tooltip("{0} = the score. Copied into the CountingText added to Score Text when it has none; a CountingText " +
              "already there keeps its own format.")]
@@ -678,6 +702,19 @@ public class DiceManager : MonoBehaviour
             };
             if (manager.onStartNode == null) manager.onStartNode = new UnityEvent();
             manager.onStartNode.AddListener(tutorialFirstNode);
+        }
+
+        // A models dialogue only drives the objects bound into it: started straight through the manager
+        // its slots stay empty and no model ever turns on. The controller binds them and plays their intro.
+        if (instance is DialogueContainerWithModels modelsDialogue)
+        {
+            if (!tutorialObjects) tutorialObjects = FindFirstObjectByType<TalkableWModelsController>(FindObjectsInactive.Include);
+            if (tutorialObjects)
+            {
+                tutorialObjects.PlayDialogue(modelsDialogue, tutorialSpeaker);
+                return;
+            }
+            h.Out($"DiceManager: '{instance.name}' has models but no TalkableWModelsController is in the scene.");
         }
 
         manager.StartDialogue(instance, tutorialSpeaker);

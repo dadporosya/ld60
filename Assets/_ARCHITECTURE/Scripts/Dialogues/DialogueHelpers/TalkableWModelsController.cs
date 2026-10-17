@@ -74,7 +74,8 @@ public class TalkableWModelsController : MonoBehaviour
         PlayDialogue(dialogue);
     }
 
-    public void PlayDialogue(DialogueContainerWithModels dialogue)
+    /// <param name="source">Optional talkable handed to the DialogueManager as the dialogue's source.</param>
+    public void PlayDialogue(DialogueContainerWithModels dialogue, Talkable source = null)
     {
         if (!dialogue)
         {
@@ -89,14 +90,14 @@ public class TalkableWModelsController : MonoBehaviour
             return;
         }
         h.Out($"Start talking {dialogue}");
-        StartCoroutine(TalkRoutine(dialogue));
+        StartCoroutine(TalkRoutine(dialogue, source));
     }
 
     /// <summary>
     /// Binds the objects, plays each object's intro lifecycle to completion (mirrors
     /// Talkable), then hands the dialogue to the manager so the window opens afterwards.
     /// </summary>
-    private IEnumerator TalkRoutine(DialogueContainerWithModels dialogue)
+    private IEnumerator TalkRoutine(DialogueContainerWithModels dialogue, Talkable source)
     {
         // Clean slate: everything off, the dialogue enables only what its nodes ask for.
         DeactivateObjects();
@@ -105,7 +106,7 @@ public class TalkableWModelsController : MonoBehaviour
 
         yield return StartCoroutine(dialogue.RunBeforeDialogueStart(this));
 
-        dialogueManager.StartDialogue(dialogue);
+        dialogueManager.StartDialogue(dialogue, source);
     }
 
     // private void Update()
