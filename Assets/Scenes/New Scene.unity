@@ -461,7 +461,7 @@ MonoBehaviour:
     lossDialogue: {fileID: 0}
   pointsByRound: 6f000000ba000000ff000000be010000
   onlyWinsComplete: 0
-  defaultEndDialogue: {fileID: 11400000, guid: b29eb017bb0441e88f72d87a4f7009fa, type: 2}
+  defaultEndDialogue: {fileID: 0}
   debugKeys: 1
   onLevelStarted:
     m_PersistentCalls:
@@ -791,6 +791,7 @@ MonoBehaviour:
   scoreCounter: {fileID: 0}
   roundScoreText: {fileID: 1185190418}
   roundScoreFormat: '{0}'
+  roundBelowTargetColor: {r: 1, g: 0.35, b: 0.35, a: 1}
   combinationText: {fileID: 548950539}
   combinationAnimation: {fileID: 0}
   combinationShakeStrength: {x: 0.5, y: 6}
@@ -1031,7 +1032,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &210451665
 RectTransform:
   m_ObjectHideFlags: 0
