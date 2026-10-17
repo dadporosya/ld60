@@ -250,15 +250,18 @@ public class CardData : ScriptableObject
 
     /// <summary>
     /// The card's text: {0} becomes the bonus's number with <paramref name="scale"/> applied (1.5 = an upgraded
-    /// card's 50% more), tinted <paramref name="highlight"/> when given; {bonus} the plain description.
+    /// card's 50% more), tinted <paramref name="highlight"/> when given; {bonus} the plain description. The dice
+    /// the card is about show as icons (<see cref="DiceIcons.InText"/>) - worked out before the number goes in,
+    /// so the number never becomes a die.
     /// </summary>
     public string Description(float scale = 1f, Color? highlight = null)
     {
         string value = IsPermanent ? effect.Value(scale) : immediate.Value();
         if (highlight.HasValue) value = $"<color=#{ColorUtility.ToHtmlStringRGBA(highlight.Value)}>{value}</color>";
 
-        string bonus = IsPermanent ? effect.Describe(value) : immediate.Describe(value);
+        string bonus = IsPermanent ? effect.Describe("{0}") : immediate.Describe("{0}");
         string text = string.IsNullOrWhiteSpace(description) ? bonus : description.Replace("{bonus}", bonus);
+        if (IsPermanent) text = DiceIcons.InText(text, effect);
         return text.Replace("{0}", value);
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// TMP sprite tags for the dice icons in the default sprite asset (DiceFaces): faces 1..6, "x" and "y"
@@ -92,6 +93,54 @@ public static class DiceIcons
             default:
                 return "";
         }
+    }
+
+    // Skipped as a whole: rich text tags and {placeholders}. Then a lone face digit (not part of a number, an
+    // amount like +1 / -1, or a decimal), or the word odd / even.
+    private static readonly Regex DiceWords = new Regex(
+        @"<[^>]*>|\{[^}]*\}|(?<![\w+\-.])(?<face>[1-6])(?![\w%]|\.\d)|\b(?<parity>odd|even)\b",
+        RegexOptions.IgnoreCase);
+
+    /// <summary>
+    /// <paramref name="text"/> with the dice the card is about turned into icons: the faces of its face value,
+    /// flip face or pattern ("Each 1 grants" - the 1 becomes a die), and "odd" / "even" on parity cards.
+    /// Other numbers ("Lose 1 reroll" on a card about no face), combination names, tags and {placeholders}
+    /// stay as they are.
+    /// </summary>
+    public static string InText(string text, CardEffect effect)
+    {
+        if (string.IsNullOrEmpty(text) || effect == null) return text;
+
+        bool[] faces = new bool[PokerDiceEvaluator.Faces + 1];
+        switch (effect.type)
+        {
+            case CardEffectType.FaceValueBonus:
+            case CardEffectType.RerollFace:
+            case CardEffectType.DestroyFace:
+                faces[effect.faceValue] = true;
+                break;
+            case CardEffectType.FlipFace:
+                faces[effect.faceValue] = faces[effect.flipFace] = true;
+                break;
+            case CardEffectType.PatternBonus:
+            case CardEffectType.PatternMultiplier:
+                foreach (char c in effect.pattern ?? "")
+                    if (c >= '1' && c - '0' <= PokerDiceEvaluator.Faces) faces[c - '0'] = true;
+                break;
+        }
+        bool parity = effect.type is CardEffectType.ParityBonus or CardEffectType.ParityMultiplier;
+
+        return DiceWords.Replace(text, match =>
+        {
+            Group face = match.Groups["face"];
+            if (face.Success && faces[face.Value[0] - '0']) return Face(face.Value[0] - '0');
+
+            Group word = match.Groups["parity"];
+            if (word.Success && parity)
+                return Parity(string.Equals(word.Value, "even", System.StringComparison.OrdinalIgnoreCase) ? DiceParity.Even : DiceParity.Odd);
+
+            return match.Value;
+        });
     }
 
     private static string Faces(params int[] faces)

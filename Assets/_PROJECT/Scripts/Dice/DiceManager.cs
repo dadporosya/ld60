@@ -263,6 +263,8 @@ public class DiceManager : MonoBehaviour
     [Header("Scoring")]
     [Tooltip("Add the sum of all dice to the hand's points: every die scores its face value, the hand adds its bonus.")]
     [SerializeField] private bool addDiceSum = true;
+    [Tooltip("A round whose dice make no hand (Nothing) scores 0 - no dice sum, no card bonuses.")]
+    [SerializeField] private bool noPointsWithoutCombination = false;
     [Tooltip("Each hand's bonus. Defaults from Balance/dice_balance.py: pair = 10, two pair = pair + pair, " +
              "full house = three + pair, the rest by how many throws the hand takes to make.")]
     [SerializeField] private List<CombinationScore> combinations = new List<CombinationScore>
@@ -309,13 +311,20 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI roundText;
     [Tooltip("{0} = current round, {1} = rounds per turn.")]
     [SerializeField] private string roundFormat = "Round {0}/{1}";
-    [Tooltip("The turn's total so far (rounds banked + the dice on the table).")]
+    [Tooltip("The turn's total so far (rounds banked + the dice on the table). With more than one round per " +
+             "turn: the points of the finished rounds only - the running round's go to Round Score Text, and " +
+             "are added here as the round finishes.")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [Tooltip("{0} = the score. Copied into the CountingText added to Score Text when it has none; a CountingText " +
              "already there keeps its own format.")]
     [SerializeField] private string scoreFormat = "{0}";
     [Tooltip("Counts the score up / down and shakes when it changes. Defaults to the CountingText on Score Text (added if missing).")]
     [SerializeField] private CountingText scoreCounter;
+    [Tooltip("Optional: the running round's points (what the dice on the table make). Only shown while a turn " +
+             "has more than one round. Counts like Score Text (a CountingText is added if missing).")]
+    [SerializeField] private TextMeshProUGUI roundScoreText;
+    [Tooltip("{0} = the running round's points. Copied into the CountingText added to Round Score Text when it has none.")]
+    [SerializeField] private string roundScoreFormat = "{0}";
     [SerializeField] private TextMeshProUGUI combinationText;
     [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
              "in the scoring table) by driving its Shake Strength. Defaults to the TextAnimation on Combination Text " +
@@ -414,21 +423,24 @@ public class DiceManager : MonoBehaviour
     /// The score's counter: <see cref="scoreCounter"/>, else the CountingText on <see cref="scoreText"/> -
     /// added when it has none, so the score always counts instead of jumping.
     /// </summary>
-    private CountingText ScoreCounter
-    {
-        get
-        {
-            if (scoreCounter || !scoreText) return scoreCounter;
+    private CountingText ScoreCounter => CounterOn(scoreText, scoreFormat, ref scoreCounter);
 
-            scoreCounter = scoreText.GetComponent<CountingText>();
-            if (!scoreCounter)
-            {
-                scoreCounter = scoreText.gameObject.AddComponent<CountingText>();
-                // The counter only has the total to show: {1} / {2} would have nothing to fill them.
-                if (!scoreFormat.Contains("{1}") && !scoreFormat.Contains("{2}")) scoreCounter.Format = scoreFormat;
-            }
-            return scoreCounter;
+    /// <summary>The running round's counter: the CountingText on <see cref="roundScoreText"/> (added if missing).</summary>
+    private CountingText RoundScoreCounter => CounterOn(roundScoreText, roundScoreFormat, ref roundScoreCounter);
+    private CountingText roundScoreCounter;
+
+    private static CountingText CounterOn(TextMeshProUGUI text, string format, ref CountingText counter)
+    {
+        if (counter || !text) return counter;
+
+        counter = text.GetComponent<CountingText>();
+        if (!counter)
+        {
+            counter = text.gameObject.AddComponent<CountingText>();
+            // The counter only has the one number to show: {1} / {2} would have nothing to fill them.
+            if (!format.Contains("{1}") && !format.Contains("{2}")) counter.Format = format;
         }
+        return counter;
     }
 
     /// <summary>
@@ -1146,7 +1158,8 @@ public class DiceManager : MonoBehaviour
     /// <summary>
     /// The best score <paramref name="values"/> can make: every hand they contain is scored with the
     /// cards' bonuses and the highest total wins. Order: hand bonus x hand / pattern multipliers (+ dice
-    /// sum), + flat / hand / face / pattern / parity bonuses, x score / parity multipliers.
+    /// sum), + flat / hand / face / pattern / parity bonuses, x score / parity multipliers. With
+    /// <see cref="noPointsWithoutCombination"/>, dice that make no hand score 0.
     /// </summary>
     public DiceScore Evaluate(IReadOnlyList<int> values, IReadOnlyList<CardInstance> ownedCards)
     {
@@ -1156,6 +1169,9 @@ public class DiceManager : MonoBehaviour
         DiceScore best = null;
         foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values))
         {
+            // No hand, no points: the dice only score through a combination.
+            if (noPointsWithoutCombination && hand == PokerDiceCombination.Nothing) continue;
+
             CombinationScore entry = ScoreFor(hand);
             if (entry == null) continue;
 
@@ -1221,7 +1237,14 @@ public class DiceManager : MonoBehaviour
             };
         }
 
-        return best ?? new DiceScore { combination = PokerDiceCombination.Nothing, combinationName = "Nothing" };
+        if (best != null) return best;
+
+        CombinationScore nothing = ScoreFor(PokerDiceCombination.Nothing);
+        return new DiceScore
+        {
+            combination = PokerDiceCombination.Nothing,
+            combinationName = nothing != null && !string.IsNullOrEmpty(nothing.displayName) ? nothing.displayName : "Nothing",
+        };
     }
 
     private static bool AllOfParity(IReadOnlyList<int> values, CardEffect effect)
@@ -1294,11 +1317,31 @@ public class DiceManager : MonoBehaviour
         // to reach it with (with Auto Finish off the round would otherwise be stuck).
         if (finishButton) finishButton.interactable = idle && HasRolled && (TargetReached || RerollsLeft <= 0);
 
+        // One round: the score is the turn's total. Several: it is what the finished rounds banked (the round
+        // being scored joins it as it finishes), and the running round's points get their own label.
+        bool multiRound = RoundsInTurn > 1;
         CountingText counter = ScoreCounter;
         if (counter)
         {
-            if (shownScore == null && CurrentRound <= 1) counter.SetInstant(0);
-            else counter.SetValue(TurnTotal(shownScore));
+            if (!multiRound)
+            {
+                if (shownScore == null && CurrentRound <= 1) counter.SetInstant(0);
+                else counter.SetValue(TurnTotal(shownScore));
+            }
+            else if (CurrentRound <= 1 && !HasRolled) counter.SetInstant(0);
+            else counter.SetValue(BankedScore + (finishing ? shownScore?.total ?? 0 : 0));
+        }
+
+        if (roundScoreText)
+        {
+            roundScoreText.gameObject.SetActive(TurnActive && multiRound);
+            CountingText roundCounter = RoundScoreCounter;
+            if (roundCounter)
+            {
+                // A fresh round starts at 0; then it counts to what the dice make.
+                if (shownScore == null) roundCounter.SetInstant(0);
+                else roundCounter.SetValue(shownScore.total);
+            }
         }
 
         if (combinationText) combinationText.text = shownScore != null ? shownScore.combinationName : "";
