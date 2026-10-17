@@ -371,7 +371,7 @@ MonoBehaviour:
   descriptionText: {fileID: 5751703946601795351}
   icon: {fileID: 3371381800924763724}
   crop: 1
-  cropPadding: 6
+  cropPadding: 80.5
   background: {fileID: 4883596851575184716}
   frame: {fileID: 0}
   goodColor: {r: 1, g: 1, b: 1, a: 1}

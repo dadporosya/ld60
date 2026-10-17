@@ -732,31 +732,40 @@ MonoBehaviour:
   addDiceSum: 1
   noPointsWithoutCombination: 0
   combinations:
-  - combination: 0
+  - enabled: 1
+    combination: 0
     displayName: Nothing
     points: 0
-  - combination: 1
+  - enabled: 1
+    combination: 1
     displayName: Pair
     points: 10
-  - combination: 2
+  - enabled: 1
+    combination: 2
     displayName: Two Pair
     points: 20
-  - combination: 3
+  - enabled: 1
+    combination: 3
     displayName: Three of a Kind
     points: 30
-  - combination: 4
+  - enabled: 1
+    combination: 4
     displayName: Small Straight
     points: 50
-  - combination: 5
+  - enabled: 1
+    combination: 5
     displayName: Large Straight
     points: 100
-  - combination: 6
+  - enabled: 1
+    combination: 6
     displayName: Full House
     points: 67
-  - combination: 7
+  - enabled: 1
+    combination: 7
     displayName: Four of a Kind
     points: 100
-  - combination: 8
+  - enabled: 1
+    combination: 8
     displayName: Five of a Kind
     points: 200
   tableRoot: {fileID: 1819404969}
@@ -4901,10 +4910,10 @@ RectTransform:
   - {fileID: 1720350102}
   m_Father: {fileID: 1819404970}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: -464.42996, y: 28}
-  m_SizeDelta: {x: 625.25, y: 847.93}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: -464.42996, y: -512}
+  m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364
 MonoBehaviour:
@@ -4945,6 +4954,7 @@ MonoBehaviour:
   closedIconSprite: {fileID: -1292181560, guid: fee2b8d6eca52b346be9ed9a162a6c10, type: 3}
   combinationsText: {fileID: 1720350104}
   combinationLine: '{0} - {1}'
+  iconGap: 
   skipZeroPoints: 1
   openSfx: {fileID: 0}
   closeSfx: {fileID: 0}
@@ -4975,13 +4985,13 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: -7304149974895811750, guid: fee2b8d6eca52b346be9ed9a162a6c10, type: 3}
-  m_Type: 0
+  m_Type: 3
   m_PreserveAspect: 1
   m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
+  m_FillMethod: 1
+  m_FillAmount: 0.83
   m_FillClockwise: 1
-  m_FillOrigin: 0
+  m_FillOrigin: 1
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
 --- !u!222 &1046197366
@@ -6729,7 +6739,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
+  m_fontSize: 42.6
   m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -6742,7 +6752,7 @@ MonoBehaviour:
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
-  m_lineSpacing: 20
+  m_lineSpacing: 31.44
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0

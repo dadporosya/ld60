@@ -106,19 +106,39 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         if (upgradedBadge) upgradedBadge.SetActive(card != null && card.IsUpgraded);
     }
 
+    // The sizes the last crop was measured at: a layout resizing the card (or its text) after Bind re-wraps
+    // the description, so the crop is redone.
+    private Vector2 croppedCardSize, croppedTextSize;
+    private bool cropDirty;
+
+    private void OnEnable() => cropDirty = true;
+
+    private void LateUpdate()
+    {
+        if (!crop || !descriptionText) return;
+        if (cropDirty || Rect.rect.size != croppedCardSize || descriptionText.rectTransform.rect.size != croppedTextSize)
+            Crop();
+    }
+
     /// <summary>
     /// Cuts the background off <see cref="cropPadding"/> below the description's last line: the image fills
     /// top-down only that far, and clicks below it miss the card.
     /// </summary>
     private void Crop()
     {
+        cropDirty = false;
         if (!background || !descriptionText) return;
+
+        croppedCardSize = Rect.rect.size;
+        croppedTextSize = descriptionText.rectTransform.rect.size;
 
         RectTransform bgRect = background.rectTransform;
         Rect drawn = DrawnRect(background);
 
         // Where the text ends, in the background's space. No text: where the description's box starts.
-        descriptionText.ForceMeshUpdate();
+        // Laid out even while hidden (a kept card bound under an inactive parent): otherwise TMP skips it and
+        // the text looks empty, cropping the card right at the description's top.
+        descriptionText.ForceMeshUpdate(ignoreActiveState: true);
         RectTransform textRect = descriptionText.rectTransform;
         float textBottom = descriptionText.textInfo.characterCount > 0 ? descriptionText.textBounds.min.y : textRect.rect.yMax;
         float bottom = bgRect.InverseTransformPoint(textRect.TransformPoint(new Vector3(0f, textBottom, 0f))).y - cropPadding;
