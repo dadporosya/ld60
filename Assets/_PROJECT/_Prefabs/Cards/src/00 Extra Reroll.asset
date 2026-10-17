@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Extra Reroll"
   badTitle: "Extra Reroll"
   description: "Gain {0} additional reroll"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 2
   kind: 0

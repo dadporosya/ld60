@@ -367,9 +367,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d972c76b0be5b0843916564eb071b83a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardView
-  titleText: {fileID: 0}
-  descriptionText: {fileID: 0}
-  art: {fileID: 0}
+  titleText: {fileID: 8037645299256102435}
+  descriptionText: {fileID: 5751703946601795351}
+  icon: {fileID: 3371381800924763724}
+  crop: 1
+  cropPadding: 6
+  background: {fileID: 4883596851575184716}
   frame: {fileID: 0}
   goodColor: {r: 1, g: 1, b: 1, a: 1}
   badColor: {r: 0.75, g: 0.55, b: 0.55, a: 1}

@@ -711,6 +711,8 @@ MonoBehaviour:
   landSfx: {fileID: 0}
   lockSfx: {fileID: 0}
   unlockSfx: {fileID: 0}
+  flipSfx: {fileID: 0}
+  destroySfx: {fileID: 0}
   passedSfx: {fileID: 0}
   failedSfx: {fileID: 0}
   roundsPerTurn: 1
@@ -797,6 +799,7 @@ MonoBehaviour:
     goalReachedText: Goal reached!
     riskyGoalReachedText: You feel hopeful.
     cardUpgradedText: Card upgraded!
+    rerollsGainedFormat: +{0} reroll
     riskyGoalScale: 1.15
     riskyGoalExtraHold: 1
     gainColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
@@ -1015,7 +1018,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &210451665
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4892,6 +4895,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1901275428}
+  - {fileID: 1720350102}
   m_Father: {fileID: 1819404970}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
@@ -4936,6 +4940,9 @@ MonoBehaviour:
   toggleIconImage: {fileID: 0}
   openIconSprite: {fileID: -427721647, guid: fee2b8d6eca52b346be9ed9a162a6c10, type: 3}
   closedIconSprite: {fileID: -1292181560, guid: fee2b8d6eca52b346be9ed9a162a6c10, type: 3}
+  combinationsText: {fileID: 1720350104}
+  combinationLine: '{0} - {1}'
+  skipZeroPoints: 1
   openSfx: {fileID: 0}
   closeSfx: {fileID: 0}
   onOpened:
@@ -4964,7 +4971,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 5585235101267928744, guid: fee2b8d6eca52b346be9ed9a162a6c10, type: 3}
+  m_Sprite: {fileID: -7304149974895811750, guid: fee2b8d6eca52b346be9ed9a162a6c10, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -6605,6 +6612,165 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1617046772}
   m_CullTransparentMesh: 1
+--- !u!1 &1720350101
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1720350102}
+  - component: {fileID: 1720350103}
+  - component: {fileID: 1720350104}
+  m_Layer: 5
+  m_Name: Combinations
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1720350102
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720350101}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1046197363}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &1720350103
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720350101}
+  m_CullTransparentMesh: 1
+--- !u!114 &1720350104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720350101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: '<sprite name="x"> <sprite name="x"> - 10
+
+    <sprite name="x"> <sprite
+    name="x"> <sprite name="y"> <sprite name="y"> - 20
+
+    <sprite name="x"> <sprite
+    name="x"> <sprite name="x"> - 25
+
+    <sprite name="1"> <sprite name="2"> <sprite
+    name="3"> <sprite name="4"> - 30
+
+    <sprite name="1"> <sprite name="2"> <sprite
+    name="3"> <sprite name="4"> <sprite name="5"> - 45
+
+    <sprite name="x"> <sprite
+    name="x"> <sprite name="y"> <sprite name="y"> <sprite name="y"> - 35
+
+    <sprite
+    name="x"> <sprite name="x"> <sprite name="x"> <sprite name="x"> - 40
+
+    <sprite
+    name="x"> <sprite name="x"> <sprite name="x"> <sprite name="x"> <sprite name="x">
+    - 65'
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 00604d11578add94aa7857da48d3ba69, type: 2}
+  m_sharedMaterial: {fileID: -800732366874278159, guid: 00604d11578add94aa7857da48d3ba69, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4281213217
+  m_fontColor: {r: 0.13, g: 0.13, b: 0.18, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 42.6
+  m_fontSizeBase: 40
+  m_fontWeight: 400
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 18
+  m_fontSizeMax: 42.6
+  m_fontStyle: 1
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 20
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 95, y: 60, z: 50, w: 60}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &1742070563
 GameObject:
   m_ObjectHideFlags: 0

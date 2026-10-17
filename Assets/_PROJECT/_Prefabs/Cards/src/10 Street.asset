@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Street"
   badTitle: "Street"
   description: "A straight multiplies the combination's points by {0}"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

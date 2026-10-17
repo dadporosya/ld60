@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "All Even"
   badTitle: "All Even"
   description: "The result is multiplied by {0} if all dice are even"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Flip Two Five"
   badTitle: "Flip Two Five"
   description: "You can flip a 2 to 5 and vice versa (right click), any number of times"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

@@ -221,8 +221,9 @@ public class CardData : ScriptableObject
     public string goodTitle = "Hope";
     public string badTitle = "Hate";
     [TextArea] public string description;
-    [Tooltip("The picture in the middle of the card.")]
-    public Sprite art;
+    [Tooltip("Optional: what the icon in the middle of the card shows (TMP rich text, <sprite name=\"1\"> etc. allowed). " +
+             "Empty: the dice the bonus is about - its combination, pattern, face or parity.")]
+    [TextArea] public string icon;
     [Tooltip("Optional: this card's own prefab instead of the CardManager's Card Prefab.")]
     public CardView viewPrefab;
 
@@ -243,6 +244,9 @@ public class CardData : ScriptableObject
     public string Title(CardMood mood) => mood == CardMood.Hope ? goodTitle : badTitle;
 
     public string BonusDescription => IsPermanent ? effect.Describe() : immediate.Describe();
+
+    /// <summary>The card's icon: <see cref="icon"/>, or the dice icons of its bonus (<see cref="DiceIcons.ForEffect"/>).</summary>
+    public string Icon => !string.IsNullOrWhiteSpace(icon) ? icon : IsPermanent ? DiceIcons.ForEffect(effect) : "";
 
     /// <summary>
     /// The card's text: {0} becomes the bonus's number with <paramref name="scale"/> applied (1.5 = an upgraded
@@ -296,7 +300,7 @@ public class CardInstance
 
     public string Title => data ? data.Title(mood) : "";
     public string Description => data ? data.Description(PointsScale) : "";
-    public Sprite Art => data ? data.art : null;
+    public string Icon => data ? data.Icon : "";
 
     /// <summary>The description with an upgraded card's number tinted <paramref name="highlight"/>.</summary>
     public string DescriptionWith(Color highlight) =>

@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Three Ones"
   badTitle: "Three Ones"
   description: "1 1 1 multiplies the combination's points by {0}"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

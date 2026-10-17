@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Three and Four"
   badTitle: "Three and Four"
   description: "3 4 grants {0} bonus points"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

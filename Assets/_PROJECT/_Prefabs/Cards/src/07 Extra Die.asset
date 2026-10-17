@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Extra Die"
   badTitle: "Extra Die"
   description: "Gain {0} additional die. Lose 1 reroll"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Destroy Sixes"
   badTitle: "Destroy Sixes"
   description: "You can destroy a 6 (right click) to gain {0} additional reroll"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

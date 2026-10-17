@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Reroll Fours"
   badTitle: "Reroll Fours"
   description: "You may reroll a 4 any number of times (right click)"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

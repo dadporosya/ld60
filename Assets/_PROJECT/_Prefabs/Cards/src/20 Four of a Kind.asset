@@ -15,7 +15,7 @@ MonoBehaviour:
   goodTitle: "Four of a Kind"
   badTitle: "Four of a Kind"
   description: "Four of a Kind grants {0} bonus points"
-  art: {fileID: 0}
+  icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0

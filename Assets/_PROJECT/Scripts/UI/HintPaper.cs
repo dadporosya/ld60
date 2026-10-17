@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
@@ -17,6 +18,10 @@ using UnityEngine.UI;
 ///
 /// <para>With Auto Open on, every time the sheet is shown (its panel turned on as gameplay starts) it
 /// starts closed and slides open by itself a moment later.</para>
+///
+/// <para>With a Combinations Text it lists the dice combinations as sprite icons with their points, from the
+/// DiceManager's scoring table (<see cref="RefreshCombinations"/>) - written as the scene starts, even while
+/// the sheet is hidden, and again each time it is shown.</para>
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
 public class HintPaper : MonoBehaviour
@@ -74,6 +79,14 @@ public class HintPaper : MonoBehaviour
     [SerializeField] private Sprite openIconSprite;
     [SerializeField] private Sprite closedIconSprite;
 
+    [Header("Combinations (optional)")]
+    [Tooltip("Filled with the DiceManager's scoring table: one line per combination, its dice as sprite icons, then its points.")]
+    [SerializeField] private TMP_Text combinationsText;
+    [Tooltip("One line. {0}: the combination's dice icons, {1}: its points, {2}: its name.")]
+    [SerializeField] private string combinationLine = "{0} - {1}";
+    [Tooltip("Leave out combinations worth no points (Nothing).")]
+    [SerializeField] private bool skipZeroPoints = true;
+
     [Header("Audio")]
     [SerializeField] private AudioClip openSfx;
     [SerializeField] private AudioClip closeSfx;
@@ -114,15 +127,62 @@ public class HintPaper : MonoBehaviour
     private void OnEnable()
     {
         // The first time, Start does it once the layout is built.
-        if (initialized) TryAutoOpen();
+        if (initialized)
+        {
+            RefreshCombinations();
+            TryAutoOpen();
+        }
     }
 
     private void Start()
     {
+        RefreshCombinations();
         // Sizes come from the layout, which may only be built by now.
         Canvas.ForceUpdateCanvases();
         Initialize();
         TryAutoOpen();
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void HookSceneLoads()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// Every scene start fills its hint papers' combinations from the scoring table - hidden ones too, so the
+    /// text is right before a paper is ever shown.
+    /// </summary>
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        foreach (HintPaper paper in FindObjectsByType<HintPaper>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (paper.gameObject.scene == scene) paper.RefreshCombinations();
+    }
+
+    /// <summary>Writes the scoring table into <see cref="combinationsText"/>: "dice icons - points" per combination.</summary>
+    public void RefreshCombinations()
+    {
+        if (!combinationsText) return;
+
+        DiceManager dice = DiceManager.Instance ? DiceManager.Instance : FindFirstObjectByType<DiceManager>(FindObjectsInactive.Include);
+        if (!dice)
+        {
+            h.Out("HintPaper: no DiceManager to list the combinations from.");
+            return;
+        }
+
+        System.Text.StringBuilder text = new System.Text.StringBuilder();
+        foreach (CombinationScore entry in dice.Combinations)
+        {
+            if (entry == null || (skipZeroPoints && entry.points == 0)) continue;
+            string icons = DiceIcons.Combination(entry.combination);
+            if (icons.Length == 0) continue;
+
+            if (text.Length > 0) text.Append('\n');
+            text.AppendFormat(combinationLine, icons, entry.points, entry.displayName);
+        }
+        combinationsText.text = text.ToString();
     }
 
     private void Update()

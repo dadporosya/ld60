@@ -7,16 +7,28 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Shows one card: its title (the CardData's good or bad title, on the same text), the description
-/// (an upgraded card's points tinted <see cref="upgradedPointsColor"/>) and the picture in the middle. Clickable when bound with a callback (the card choice); otherwise it only
+/// (an upgraded card's points tinted <see cref="upgradedPointsColor"/>) and the icon in the middle - dice
+/// sprite tags (<see cref="DiceIcons"/>) on a text. Clickable when bound with a callback (the card choice); otherwise it only
 /// displays. Has a CanvasGroup (added if missing) so the <see cref="CardManager"/> can fade it.
+///
+/// <para>With <see cref="crop"/> on, the card's background is cut off just below where the description's
+/// text ends (a top-down vertical fill), and so is its clickable area.</para>
 /// </summary>
 public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Tooltip("Shows the card's good title after a good call, its bad title after a bad one (both set in the CardData).")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI descriptionText;
-    [Tooltip("The picture in the middle of the card.")]
-    [SerializeField] private Image art;
+    [Tooltip("The icon in the middle of the card: the dice the bonus is about, as sprite tags (or the CardData's own Icon text).")]
+    [SerializeField] private TMP_Text icon;
+
+    [Header("Crop")]
+    [Tooltip("Cut the card's background off just below where the description's text ends.")]
+    [SerializeField] private bool crop = true;
+    [Tooltip("Card left below the description's last line when cropped (UI units).")]
+    [SerializeField] private float cropPadding = 30f;
+    [Tooltip("The card's background image that gets cropped. Empty: the Image on the card itself.")]
+    [SerializeField] private Image background;
 
     [Header("Optional")]
     [Tooltip("Tinted Good Color / Bad Color.")]
@@ -80,12 +92,13 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         if (titleText) titleText.text = card?.Title ?? "";
 
         if (descriptionText) descriptionText.text = card?.DescriptionWith(upgradedPointsColor) ?? "";
-        if (art)
+        if (icon)
         {
-            art.sprite = card?.Art;
-            art.enabled = art.sprite;
+            icon.text = card?.Icon ?? "";
+            icon.enabled = icon.text.Length > 0;
         }
         if (frame) frame.color = good ? goodColor : badColor;
+        if (crop) Crop();
 
         bool permanent = card != null && card.IsPermanent;
         if (permanentBadge) permanentBadge.SetActive(permanent);
@@ -93,12 +106,59 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         if (upgradedBadge) upgradedBadge.SetActive(card != null && card.IsUpgraded);
     }
 
+    /// <summary>
+    /// Cuts the background off <see cref="cropPadding"/> below the description's last line: the image fills
+    /// top-down only that far, and clicks below it miss the card.
+    /// </summary>
+    private void Crop()
+    {
+        if (!background || !descriptionText) return;
+
+        RectTransform bgRect = background.rectTransform;
+        Rect drawn = DrawnRect(background);
+
+        // Where the text ends, in the background's space. No text: where the description's box starts.
+        descriptionText.ForceMeshUpdate();
+        RectTransform textRect = descriptionText.rectTransform;
+        float textBottom = descriptionText.textInfo.characterCount > 0 ? descriptionText.textBounds.min.y : textRect.rect.yMax;
+        float bottom = bgRect.InverseTransformPoint(textRect.TransformPoint(new Vector3(0f, textBottom, 0f))).y - cropPadding;
+
+        background.type = Image.Type.Filled;
+        background.fillMethod = Image.FillMethod.Vertical;
+        background.fillOrigin = (int)Image.OriginVertical.Top;
+        background.fillAmount = drawn.height > 0f ? Mathf.Clamp01((drawn.yMax - bottom) / drawn.height) : 1f;
+
+        Vector4 padding = background.raycastPadding;
+        padding.y = Mathf.Max(0f, Mathf.Max(bottom, drawn.yMin) - bgRect.rect.yMin);
+        background.raycastPadding = padding;
+    }
+
+    /// <summary>The part of the image's rect its sprite is drawn in - smaller with Preserve Aspect, as Image does it.</summary>
+    private static Rect DrawnRect(Image image)
+    {
+        RectTransform rect = image.rectTransform;
+        Rect r = rect.rect;
+        if (!image.preserveAspect || !image.sprite) return r;
+
+        Vector2 size = image.sprite.rect.size;
+        if (size.x <= 0f || size.y <= 0f) return r;
+
+        float spriteRatio = size.x / size.y;
+        if (spriteRatio > r.width / r.height)
+        {
+            float height = r.width / spriteRatio;
+            r.y += (r.height - height) * rect.pivot.y;
+            r.height = height;
+        }
+        return r;
+    }
+
     private bool referencesChecked;
 
     /// <summary>
-    /// Fills empty text / picture fields from the card's children by name: a text with "title" in its
-    /// name, one with "desc", and an Image with "art", "image" or "picture" (never the card's own
-    /// background). Logs what it still can't find, once.
+    /// Fills empty fields from the card's children by name: a text with "title" in its name, one with
+    /// "desc", and one with "icon", "art", "image" or "picture"; the background is the card's own Image.
+    /// Logs what it still can't find, once.
     /// </summary>
     private void FindMissingReferences()
     {
@@ -108,24 +168,16 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         TextMeshProUGUI[] texts = GetComponentsInChildren<TextMeshProUGUI>(true);
         if (!titleText) titleText = FindByName(texts, "title");
         if (!descriptionText) descriptionText = FindByName(texts, "desc");
-
-        if (!art)
+        foreach (string part in new[] { "icon", "art", "image", "picture" })
         {
-            Image[] images = GetComponentsInChildren<Image>(true);
-            foreach (string part in new[] { "art", "image", "picture" })
-            {
-                foreach (Image image in images)
-                {
-                    if (image.gameObject == gameObject || image == frame) continue;
-                    if (image.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) < 0) continue;
-                    art = image;
-                    break;
-                }
-                if (art) break;
-            }
+            if (icon) break;
+            icon = FindByName(texts, part);
         }
 
-        string missing = (titleText ? "" : " Title Text") + (descriptionText ? "" : " Description Text") + (art ? "" : " Art");
+        if (!background) background = GetComponent<Image>();
+
+        string missing = (titleText ? "" : " Title Text") + (descriptionText ? "" : " Description Text") + (icon ? "" : " Icon") +
+                         (background || !crop ? "" : " Background");
         if (missing.Length > 0)
             h.Out($"CardView '{name}': not assigned and not found by name:{missing}. Drag them into the CardView on the card prefab.");
     }

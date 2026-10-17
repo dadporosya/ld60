@@ -355,6 +355,8 @@ public class DiceManager : MonoBehaviour
     public int Target { get; private set; }
     /// <summary>The risky goal: <see cref="Target"/> x <see cref="riskyGoalMultiplier"/>.</summary>
     public int RiskyTarget => Mathf.CeilToInt(Target * riskyGoalMultiplier);
+    /// <summary>The scoring table: each hand's bonus points.</summary>
+    public IReadOnlyList<CombinationScore> Combinations => combinations;
     public bool IsRolling => landingPending > 0;
     public IReadOnlyList<Dice> AllDice => dice;
     /// <summary>Dice in the running round: the turn's dice count, without the ones destroyed this round.</summary>
