@@ -10,6 +10,13 @@
       },
       "hash": "eec288e2a5cfd43743b70e9a8c397d5e5300e80a"
     },
+    "com.gameanalytics.sdk": {
+      "version": "https://github.com/GameAnalytics/GA-SDK-UNITY.git#8.3.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "1ed10f755fe9af06df9faa0b6f4b25bccd2b9911"
+    },
     "com.kyrylokuzyk.primetween": {
       "version": "file:com.kyrylokuzyk.primetween",
       "depth": 0,

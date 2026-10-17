@@ -275,6 +275,9 @@ public class DiceManager : MonoBehaviour
     [Tooltip("{0} = rerolls left.")]
     [SerializeField] private string rerollLabel = "Reroll ({0})";
     [SerializeField] private Button finishButton;
+    [Tooltip("What the Finish button always says - written into its own text. It can only be pressed once the " +
+             "turn's score reaches the target.")]
+    [SerializeField] private string finishLabel = "Finish";
     [Tooltip("{0} = rerolls left.")]
     [SerializeField] private TextMeshProUGUI rerollsText;
     [SerializeField] private string rerollsFormat = "Rerolls: {0}";
@@ -302,9 +305,14 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Counts the score up / down and shakes when it changes. Defaults to the CountingText on Score Text (added if missing).")]
     [SerializeField] private CountingText scoreCounter;
     [SerializeField] private TextMeshProUGUI combinationText;
-    [Tooltip("Shakes the combination text harder the stronger the hand (its points against the best hand in " +
-             "the scoring table). Defaults to the StrengthShake on Combination Text (added if missing).")]
-    [SerializeField] private StrengthShake combinationShake;
+    [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
+             "in the scoring table) by driving its Shake Strength. Defaults to the TextAnimation on Combination Text " +
+             "(added if missing); Shake is added to its animations when it has none.")]
+    [SerializeField] private TextAnimation combinationAnimation;
+    [Tooltip("TextAnimation Shake Strength for the weakest (x) and the best (y) hand. No hand: no shake.")]
+    [SerializeField] private Vector2 combinationShakeStrength = new Vector2(0.5f, 6f);
+    [Tooltip("Seconds the shake takes to reach a new hand's strength.")]
+    [SerializeField, Min(0f)] private float combinationShakeBlend = 0.15f;
     [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private string passedText = "They still care.";
     [SerializeField] private string failedText = "...";
@@ -367,6 +375,9 @@ public class DiceManager : MonoBehaviour
     private Tween targetPunchTween;
     private Vector3? targetTextScale;
 
+    // The Finish button's own text, which always shows finishLabel.
+    private TMP_Text finishButtonLabel;
+
     // The score on screen: the last one the dice made, kept while they are rolled again.
     private DiceScore shownScore;
 
@@ -392,19 +403,50 @@ public class DiceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// The combination text's shake: <see cref="combinationShake"/>, else the StrengthShake on
-    /// <see cref="combinationText"/> - added when it has none.
+    /// The combination text's letter animation: <see cref="combinationAnimation"/>, else the TextAnimation on
+    /// <see cref="combinationText"/> - added when it has none. Either way it shakes its whole text.
     /// </summary>
-    private StrengthShake CombinationShake
+    private TextAnimation CombinationAnimation
     {
         get
         {
-            if (combinationShake || !combinationText) return combinationShake;
+            if (combinationAnimation || !combinationText) return combinationAnimation;
 
-            combinationShake = combinationText.GetComponent<StrengthShake>();
-            if (!combinationShake) combinationShake = combinationText.gameObject.AddComponent<StrengthShake>();
-            return combinationShake;
+            combinationAnimation = combinationText.GetComponent<TextAnimation>();
+            if (!combinationAnimation)
+            {
+                combinationAnimation = combinationText.gameObject.AddComponent<TextAnimation>();
+                combinationAnimation.animationTarget = TextAnimation.AnimationTarget.WholeText;
+            }
+            if (!combinationAnimation.animations.Contains(TextAnimation.AnimationType.Shake))
+                combinationAnimation.animations.Add(TextAnimation.AnimationType.Shake);
+            if (combinationAnimation.animationTarget is TextAnimation.AnimationTarget.None or TextAnimation.AnimationTarget.Tags)
+                combinationAnimation.animationTarget = TextAnimation.AnimationTarget.Both;
+
+            combinationAnimation.shakeStrength = 0f;
+            return combinationAnimation;
         }
+    }
+
+    // The combination's shake strength right now and the tween easing it to a new hand's.
+    private Tween combinationShakeTween;
+    private float combinationShakeTarget = -1f;
+
+    /// <summary>Eases the combination text's Shake Strength to the one for a hand of <paramref name="strength"/> (0..1).</summary>
+    private void SetCombinationShake(float strength)
+    {
+        TextAnimation anim = CombinationAnimation;
+        if (!anim) return;
+
+        float target = strength > 0f ? Mathf.Lerp(combinationShakeStrength.x, combinationShakeStrength.y, strength) : 0f;
+        if (Mathf.Approximately(target, combinationShakeTarget)) return;
+        combinationShakeTarget = target;
+
+        combinationShakeTween.Stop();
+        if (combinationShakeBlend > 0f && isActiveAndEnabled)
+            combinationShakeTween = Tween.Custom(anim, anim.shakeStrength, target, combinationShakeBlend,
+                (a, v) => a.shakeStrength = v);
+        else anim.shakeStrength = target;
     }
 
     private bool CanLock => TurnActive && HasRolled && !IsRolling && !finishing && RerollsLeft > 0;
@@ -443,7 +485,14 @@ public class DiceManager : MonoBehaviour
                   "Remove it: the dice place and move themselves.");
 
         if (rollButton) rollButton.onClick.AddListener(Roll);
-        if (finishButton) finishButton.onClick.AddListener(Finish);
+        if (finishButton)
+        {
+            finishButton.onClick.AddListener(Finish);
+            finishButtonLabel = finishButton.GetComponentInChildren<TMP_Text>(true);
+            if (rerollsText && rerollsText.transform.IsChildOf(finishButton.transform))
+                h.Out($"DiceManager: Rerolls Text '{rerollsText.name}' is the Finish button's label - it keeps " +
+                      $"showing '{finishLabel}'. Point Rerolls Text at a text of its own.");
+        }
         if (tableRoot) tableRoot.SetActive(false);
         if (resultText) resultText.gameObject.SetActive(false);
     }
@@ -647,8 +696,13 @@ public class DiceManager : MonoBehaviour
         landingPending = 0;
         RerollsLeft = rerollsPerRound + ExtraRerolls(cards);
 
+        // A fresh round starts on random faces - they don't score until the first throw lands.
         foreach (Dice die in dice)
-            if (die) die.ResetDice();
+        {
+            if (!die) continue;
+            die.ResetDice();
+            die.ShowFace(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
+        }
 
         introRunning = true;
         UpdateUI();
@@ -1052,8 +1106,9 @@ public class DiceManager : MonoBehaviour
 
         if (rollButton) rollButton.interactable = idle && (!HasRolled || (RerollsLeft > 0 && anyUnlocked));
         if (rollButtonLabel) rollButtonLabel.text = HasRolled ? string.Format(rerollLabel, RerollsLeft) : firstRollLabel;
-        if (finishButton) finishButton.interactable = idle && HasRolled;
-        if (rerollsText) rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
+        // Never into the Finish button's own label: that one always says finishLabel.
+        if (rerollsText && rerollsText != finishButtonLabel) rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
+        if (finishButtonLabel) finishButtonLabel.text = finishLabel;
         if (riskyTargetText) riskyTargetText.text = string.Format(riskyTargetFormat, RiskyTarget, Target);
         if (roundText)
         {
@@ -1064,22 +1119,25 @@ public class DiceManager : MonoBehaviour
         // The round's score is what the dice on the table make right now - never added up over rolls. While
         // dice are in the air the last one stays up; once they land it counts from that to the new score
         // (10 -> 20, or down). On screen it sits on top of the rounds already banked this turn; the turn's
-        // first round starts empty and counts up from 0.
+        // first round starts at 0 and counts up from there.
         if (!TurnActive || !HasRolled) shownScore = null;
         else if (!IsRolling) shownScore = Evaluate(Values(), cards);
 
         UpdateTargetText();
 
+        // Finishing is only allowed once the turn's score reaches the target - or when there's no reroll left
+        // to reach it with (with Auto Finish off the round would otherwise be stuck).
+        if (finishButton) finishButton.interactable = idle && HasRolled && (TargetReached || RerollsLeft <= 0);
+
         CountingText counter = ScoreCounter;
         if (counter)
         {
-            if (shownScore == null && CurrentRound <= 1) counter.Clear();
+            if (shownScore == null && CurrentRound <= 1) counter.SetInstant(0);
             else counter.SetValue(TurnTotal(shownScore));
         }
 
         if (combinationText) combinationText.text = shownScore != null ? shownScore.combinationName : "";
-        StrengthShake combinationShaker = CombinationShake;
-        if (combinationShaker) combinationShaker.SetStrength(shownScore != null ? CombinationStrength(shownScore.combination) : 0f);
+        SetCombinationShake(shownScore != null ? CombinationStrength(shownScore.combination) : 0f);
 
         // Whether a die may be locked just changed (a roll started or landed): hovered dice follow.
         foreach (Dice die in dice)
@@ -1093,9 +1151,12 @@ public class DiceManager : MonoBehaviour
     /// The target text shows the target until the turn's total reaches it, then the risky goal - with a
     /// punch as it switches. Back to the target if a reroll drops the total under it.
     /// </summary>
+    /// <summary>The turn's total on screen has reached <see cref="Target"/> (always true without a target).</summary>
+    private bool TargetReached => Target <= 0 || ((shownScore != null || CurrentRound > 1) && TurnTotal(shownScore) >= Target);
+
     private void UpdateTargetText()
     {
-        bool reached = (shownScore != null || CurrentRound > 1) && Target > 0 && TurnTotal(shownScore) >= Target;
+        bool reached = Target > 0 && TargetReached;
         bool switched = reached && !targetShowsRisky;
         targetShowsRisky = reached;
 

@@ -253,6 +253,21 @@ public class DialogueManager : MonoBehaviour
     private string placeholderLabel = "/PlaceHolder";
     [SerializeField] private bool disableWindowOnStart = true;
 
+    [Tooltip("Make the dialogue window's box transparent wherever a screen hole is open, so it never covers what " +
+             "the hole points at. The text stays on top. Adds a ScreenHoleCutout to the window when it has none.")]
+    [SerializeField] private bool cutScreenHolesFromWindow = true;
+
+    /// <summary>Whether the dialogue window is cut away inside open screen holes.</summary>
+    public bool CutScreenHolesFromWindow
+    {
+        get => cutScreenHolesFromWindow;
+        set
+        {
+            cutScreenHolesFromWindow = value;
+            ApplyScreenHoleCutout();
+        }
+    }
+
     [SerializeField] private DialogueWindowAnimations windowAnimations;
 
     // ================================================================ Hold to skip
@@ -298,7 +313,27 @@ public class DialogueManager : MonoBehaviour
     private void Awake()
     {
         h.CreateStaticInstance(this, ref Instance);
+        ApplyScreenHoleCutout();
     }
+
+    /// <summary>Switches the window's <see cref="ScreenHoleCutout"/> to <see cref="cutScreenHolesFromWindow"/>.</summary>
+    private void ApplyScreenHoleCutout()
+    {
+        if (!dialogueWindow) return;
+
+        if (!dialogueWindow.TryGetComponent(out ScreenHoleCutout cutout))
+        {
+            if (!cutScreenHolesFromWindow) return;
+            cutout = dialogueWindow.AddComponent<ScreenHoleCutout>();
+        }
+        cutout.CutOutHoles = cutScreenHolesFromWindow;
+    }
+
+    private void OnValidate()
+    {
+        if (Application.isPlaying && Instance == this) ApplyScreenHoleCutout();
+    }
+
     private void Start()
     {
         if (!windowAnimations) windowAnimations = GetComponent<DialogueWindowAnimations>();
