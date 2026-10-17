@@ -237,6 +237,11 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI targetText;
     [Tooltip("{0} = target score, {1} = risky goal.")]
     [SerializeField] private string targetFormat = "Need {0}";
+    [Tooltip("Target Text once the score reaches the target: now it shows the risky goal. {0} = risky goal, " +
+             "{1} = target score. Back to Target Format if a reroll drops the score under the target.")]
+    [SerializeField] private string reachedTargetFormat = "Risky {0}";
+    [Tooltip("Scale punch on Target Text when it switches to the risky goal. 0: none.")]
+    [SerializeField, Min(0f)] private float targetSwitchPunch = 0.2f;
     [Tooltip("Optional: shows the risky goal.")]
     [SerializeField] private TextMeshProUGUI riskyTargetText;
     [Tooltip("{0} = risky goal, {1} = target score.")]
@@ -278,6 +283,11 @@ public class DiceManager : MonoBehaviour
     private Tween finishTween;
     private readonly List<Tween> popupTweens = new List<Tween>();
     private float nextPopupTime;
+
+    // The target text shows the risky goal (the score reached the target).
+    private bool targetShowsRisky;
+    private Tween targetPunchTween;
+    private Vector3? targetTextScale;
 
     // The score on screen: the last one the dice made, kept while they are rolled again.
     private DiceScore shownScore;
@@ -774,7 +784,6 @@ public class DiceManager : MonoBehaviour
         if (rollButtonLabel) rollButtonLabel.text = HasRolled ? string.Format(rerollLabel, RerollsLeft) : firstRollLabel;
         if (finishButton) finishButton.interactable = idle && HasRolled;
         if (rerollsText) rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
-        if (targetText) targetText.text = string.Format(targetFormat, Target, RiskyTarget);
         if (riskyTargetText) riskyTargetText.text = string.Format(riskyTargetFormat, RiskyTarget, Target);
 
         // The score is what the dice on the table make right now - never added up over rolls. While dice
@@ -782,6 +791,8 @@ public class DiceManager : MonoBehaviour
         // (10 -> 20, or down). A new round starts empty and counts up from 0.
         if (!RoundActive || !HasRolled) shownScore = null;
         else if (!IsRolling) shownScore = Evaluate(Values(), cards);
+
+        UpdateTargetText();
 
         CountingText counter = ScoreCounter;
         if (counter)
@@ -795,6 +806,28 @@ public class DiceManager : MonoBehaviour
         // Whether a die may be locked just changed (a roll started or landed): hovered dice follow.
         foreach (Dice die in dice)
             if (die) die.RefreshOutline();
+    }
+
+    /// <summary>
+    /// The target text shows the target until the score on the table reaches it, then the risky goal - with a
+    /// punch as it switches. Back to the target if a reroll drops the score under it.
+    /// </summary>
+    private void UpdateTargetText()
+    {
+        bool reached = shownScore != null && Target > 0 && shownScore.total >= Target;
+        bool switched = reached && !targetShowsRisky;
+        targetShowsRisky = reached;
+
+        if (!targetText) return;
+        targetText.text = string.Format(reached ? reachedTargetFormat : targetFormat,
+            reached ? RiskyTarget : Target, reached ? Target : RiskyTarget);
+
+        if (switched && targetSwitchPunch > 0f)
+        {
+            targetPunchTween.Stop();
+            targetText.transform.localScale = targetTextScale ??= targetText.transform.localScale;
+            targetPunchTween = Tween.PunchScale(targetText.transform, Vector3.one * targetSwitchPunch, 0.3f);
+        }
     }
 
     // ---------------------------------------------------------------------
