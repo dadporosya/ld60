@@ -758,8 +758,11 @@ public class DiceManager : MonoBehaviour
         else QueueFirstRoll();
     }
 
-    /// <summary>Resets the dice and rerolls for the turn's next round. The first throw waits for <see cref="QueueFirstRoll"/>.</summary>
-    private void PrepareRound()
+    /// <summary>
+    /// Resets the dice and rerolls for the turn's next round. The first throw waits for <see cref="QueueFirstRoll"/>.
+    /// With <paramref name="keepFaces"/> the dice keep the faces the last round left them on.
+    /// </summary>
+    private void PrepareRound(bool keepFaces = false)
     {
         CurrentRound++;
         HasRolled = false;
@@ -767,15 +770,15 @@ public class DiceManager : MonoBehaviour
         landingPending = 0;
         RerollsLeft = RerollsFor(cards);
 
-        // A fresh round starts on random faces - they don't score until the first throw lands. Dice
-        // destroyed last round are back.
+        // A turn's first round starts on random faces, later ones on the last round's - they don't score
+        // until the first throw lands. Dice destroyed last round are back.
         for (int i = 0; i < Mathf.Min(diceInTurn, dice.Count); i++)
         {
             Dice die = dice[i];
             if (!die) continue;
             die.Restore();
             die.ResetDice();
-            die.ShowFace(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
+            if (!keepFaces) die.ShowFace(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
         }
 
         introRunning = true;
@@ -1064,7 +1067,10 @@ public class DiceManager : MonoBehaviour
         else CompleteTurn();
     }
 
-    /// <summary>Banks the finished round's points and opens the turn's next round.</summary>
+    /// <summary>
+    /// Banks the finished round's points and opens the turn's next round: the dice keep their faces and are
+    /// thrown again straight away (<see cref="nextRoundDelay"/> was the pause).
+    /// </summary>
     private void NextRound()
     {
         if (!TurnActive) return;
@@ -1073,8 +1079,9 @@ public class DiceManager : MonoBehaviour
         BankedScore += roundScore;
         onRoundFinished?.Invoke(roundScore);
 
-        PrepareRound();
-        QueueFirstRoll();
+        PrepareRound(keepFaces: true);
+        introRunning = false;
+        Roll();
     }
 
     /// <summary>Drops the turn without a result (the song ended mid-turn).</summary>
