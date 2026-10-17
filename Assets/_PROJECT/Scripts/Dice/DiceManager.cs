@@ -220,8 +220,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField, Min(1f)] private float riskyGoalMultiplier = 2f;
 
     [Header("Tutorial")]
-    [Tooltip("Played over the table before the first round the player ever plays (remembered across sessions, see " +
-             "PlayHistory). The first throw waits for it. Empty: no tutorial.")]
+    [Tooltip("Played over the table before the first round of every run (each launch / StartGame). " +
+             "The first throw waits for it. Empty: no tutorial.")]
     [SerializeField] private DialogueContainer tutorialDialogue;
     [Tooltip("Optional speaker for the tutorial's nodes that don't name one.")]
     [SerializeField] private Talkable tutorialSpeaker;
@@ -316,6 +316,8 @@ public class DiceManager : MonoBehaviour
     private UnityAction tutorialEnded;
     private UnityAction tutorialFirstNode;
     private bool tutorialPinnedSkip;
+    // Set once the tutorial has been seen to the end in this run; cleared by ResetTutorial (StartGame).
+    private bool tutorialPlayedThisRun;
     private IReadOnlyList<CardInstance> cards = Array.Empty<CardInstance>();
     private Action<DiceRoundResult> roundCallback;
     private DiceRoundResult pendingResult;
@@ -623,7 +625,10 @@ public class DiceManager : MonoBehaviour
     // ---------------------------------------------------------------------
 
     private bool ShouldPlayTutorial =>
-        tutorialDialogue && (alwaysPlayTutorial || !PlayHistory.HasPlayedDialogue(tutorialDialogue.name));
+        tutorialDialogue && (alwaysPlayTutorial || !tutorialPlayedThisRun);
+
+    /// <summary>A new run: the next round plays the tutorial again.</summary>
+    public void ResetTutorial() => tutorialPlayedThisRun = false;
 
     /// <summary>Plays the tutorial over the table, then <paramref name="then"/> (if this round is still on).</summary>
     private void PlayTutorial(Action then)
@@ -654,6 +659,7 @@ public class DiceManager : MonoBehaviour
         tutorialEnded = () =>
         {
             StopTutorial();
+            tutorialPlayedThisRun = true;
             PlayHistory.MarkDialoguePlayed(tutorialDialogue.name);
             if (id == roundId && RoundActive) then();
         };

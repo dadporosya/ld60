@@ -720,7 +720,7 @@ MonoBehaviour:
   finishDelay: 1.5
   hideTableOnFinish: 1
   riskyGoalMultiplier: 2
-  tutorialDialogue: {fileID: 0}
+  tutorialDialogue: {fileID: 11400000, guid: 993b1b18e1955df48adff7cb82110f37, type: 2}
   tutorialSpeaker: {fileID: 0}
   showSkipDuringTutorial: 1
   alwaysPlayTutorial: 0
@@ -1111,7 +1111,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000030517578, y: 0}
+  m_AnchoredPosition: {x: -0.000061035156, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &244570389
@@ -1670,12 +1670,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueWindowAnimations
   dialogueManager: {fileID: 1562042182}
   pivotOnTopEdge: 1
-  xDuration: 0.18
-  yDuration: 0.18
-  ySliver: 0.1
+  xDuration: 0.12
+  yDuration: 0.12
+  ySliver: 0.06
   openEase: 27
   closeEase: 26
-  delayBeforeStart: 0.5
+  delayBeforeStart: 0.333
   openSfx: {fileID: 0}
   closeSfx: {fileID: 0}
   typingStartBounce: 1
@@ -3472,7 +3472,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TalkableWModelsController
   objects:
-  - {fileID: 0}
+  - {fileID: 2120501554}
+  - {fileID: 788155897}
   dialogues: []
   dialogueManager: {fileID: 0}
   disableObjectsOnStart: 1
@@ -5533,8 +5534,8 @@ Transform:
   - {fileID: 368942949}
   - {fileID: 1897105556}
   - {fileID: 2038899322}
-  - {fileID: 1154309076}
   - {fileID: 727883044}
+  - {fileID: 1154309076}
   m_Father: {fileID: 291783876}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1557864154

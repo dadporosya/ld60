@@ -1,0 +1,163 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c641f0240fccdbf4e8d5617e34811eb8, type: 3}
+  m_Name: 0. GameplayTutorialDialogue
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueContainerWithModels
+  speakerIds: []
+  speakerPrefabs: []
+  nodes:
+  - nodeId: 0
+    speakerId: 
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Select the dice to lock it
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 1
+    speakerId: 
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Locked dices would not be rerolled
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 2
+    speakerId: 
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Press S to close or open hint combinations
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 3
+    speakerId: 
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Here is shown how much points grant you current combination, and your target
+      number of points
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  defaultVoiceClips: []
+  objects:
+  - {fileID: 0}
+  - {fileID: 0}
+  nodeSettings:
+  - speakerObjectIndex: 0
+    objectSettings:
+    - enableObject: 1
+      modelId: 0
+      enableEyes: 0
+      talk: 1
+    - enableObject: 1
+      modelId: 1
+      enableEyes: 0
+      talk: 0
+  - speakerObjectIndex: 0
+    objectSettings:
+    - enableObject: 1
+      modelId: 0
+      enableEyes: 0
+      talk: 1
+    - enableObject: 1
+      modelId: 2
+      enableEyes: 0
+      talk: 0
+  - speakerObjectIndex: 0
+    objectSettings:
+    - enableObject: 1
+      modelId: 0
+      enableEyes: 0
+      talk: 1
+    - enableObject: 1
+      modelId: 3
+      enableEyes: 0
+      talk: 1
+  - speakerObjectIndex: 0
+    objectSettings:
+    - enableObject: 1
+      modelId: 0
+      enableEyes: 0
+      talk: 1
+    - enableObject: 1
+      modelId: 4
+      enableEyes: 0
+      talk: 0
