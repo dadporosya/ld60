@@ -32,6 +32,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
         public DialogueContainer dialogue;
         [Tooltip("Clicking plays this over the picture with the list still on screen; the pick goes through after it.")]
         public DialogueContainer pickDialogue;
+        [Tooltip("Not interactable, but drawn in the normal line color instead of the disabled one.")]
+        public bool keepColor;
     }
 
     public enum SpriteFit
@@ -72,11 +74,14 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
     [Header("List")]
     [Tooltip("Holds the clickable lines of a list showcase (e.g. a VerticalLayoutGroup over the phone's screen; as a " +
-             "child of the Showcase Image it moves and scales with the picture). Hidden in dialogue showcases.")]
+             "child of the Showcase Image it moves and scales with the picture). Hidden in dialogue showcases. " +
+             "Without a layout group of its own, a Vertical Layout Group is added that stacks the lines from the top.")]
     [SerializeField] private RectTransform listRoot;
     [Tooltip("A TextMeshProUGUI under List Root, copied once per line. Stays hidden itself.")]
     [SerializeField] private TextMeshProUGUI listLineTemplate;
-    [SerializeField] private Color lineHoverColor = new Color(1f, 0.95f, 0.75f, 1f);
+    [Tooltip("Gap between lines when the Vertical Layout Group is added for you.")]
+    [SerializeField, Min(0f)] private float lineSpacing = 12f;
+    [SerializeField] private Color lineHoverColor = new Color(0.55f, 0.04f, 0.04f, 1f);
     [Tooltip("Color of lines that can't be clicked.")]
     [SerializeField] private Color lineDisabledColor = new Color(1f, 1f, 1f, 0.4f);
     [Tooltip("Clicking the darkened screen around the picture closes the list.")]
@@ -117,9 +122,12 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
     // The list showcase.
     private readonly List<TextMeshProUGUI> listLines = new List<TextMeshProUGUI>();
+    private readonly List<ListLine> listData = new List<ListLine>();
     private CanvasGroup listGroup;
     private Color lineColor = Color.white;
     private bool listOpen;
+    // Off: only picking a line closes the list (clicking outside and the close button do nothing).
+    private bool listCancellable = true;
     private Talkable listSpeaker;
 
     /// <summary>True while a list showcase is waiting for a pick.</summary>
@@ -148,7 +156,9 @@ public class ShowcaseDialogueManager : MonoBehaviour
             {
                 ShowcaseClickTarget outside = fadeImage.GetComponent<ShowcaseClickTarget>();
                 if (!outside) outside = fadeImage.gameObject.AddComponent<ShowcaseClickTarget>();
-                outside.onClick = CloseList;
+                // The fade image may be the parent of the picture and the list: clicks on those bubble up to it.
+                outside.directHitsOnly = true;
+                outside.onClick = CancelList;
             }
         }
 
@@ -161,11 +171,24 @@ public class ShowcaseDialogueManager : MonoBehaviour
         {
             listGroup = listRoot.GetComponent<CanvasGroup>();
             if (!listGroup) listGroup = listRoot.gameObject.AddComponent<CanvasGroup>();
+            if (!listRoot.GetComponent<LayoutGroup>()) AddListLayout();
             if (!IsShowing) listRoot.gameObject.SetActive(false);
         }
-        if (listCloseButton) listCloseButton.onClick.AddListener(CloseList);
+        if (listCloseButton) listCloseButton.onClick.AddListener(CancelList);
 
         if (root && !IsShowing) root.SetActive(false);
+    }
+
+    /// <summary>Stacks the lines from the top of List Root, each keeping the template's size.</summary>
+    private void AddListLayout()
+    {
+        VerticalLayoutGroup layout = listRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.childAlignment = TextAnchor.UpperCenter;
+        layout.spacing = lineSpacing;
+        layout.childControlWidth = false;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
     }
 
     private void Update()
@@ -268,11 +291,12 @@ public class ShowcaseDialogueManager : MonoBehaviour
     /// <summary>
     /// Like <see cref="ShowList(Sprite, IReadOnlyList{ListLine}, Action{int}, Action, Talkable)"/>, with an animated
     /// picture (see <see cref="Show(IReadOnlyList{Sprite}, IReadOnlyList{float}, bool, DialogueContainer, Talkable, Action)"/>)
-    /// and <paramref name="introDialogue"/> played over it first: the list only appears once it's over.
+    /// and <paramref name="introDialogue"/> played over it first: the list only appears once it's over. Not
+    /// <paramref name="cancellable"/>: only picking a line closes the list.
     /// </summary>
     public bool ShowList(IReadOnlyList<Sprite> frames, IReadOnlyList<float> frameDurations, bool loop,
         DialogueContainer introDialogue, IReadOnlyList<ListLine> lines, Action<int> onPicked, Action onCancelled = null,
-        Talkable speaker = null)
+        Talkable speaker = null, bool cancellable = true)
     {
         Initialize();
 
@@ -291,6 +315,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
         finishedCallback = onCancelled;
         listSpeaker = speaker;
+        listCancellable = cancellable;
+        if (listCloseButton) listCloseButton.gameObject.SetActive(cancellable);
         BeginShow(frames, frameDurations, loop);
 
         if (!introDialogue || !Dialogues)
@@ -375,8 +401,9 @@ public class ShowcaseDialogueManager : MonoBehaviour
                 text.gameObject.SetActive(true);
                 text.text = line.text;
                 text.raycastTarget = true;
-                text.color = line.interactable ? lineColor : lineDisabledColor;
+                text.color = ColorOf(line);
                 listLines.Add(text);
+                listData.Add(line);
 
                 ShowcaseClickTarget target = text.GetComponent<ShowcaseClickTarget>();
                 if (!target) target = text.gameObject.AddComponent<ShowcaseClickTarget>();
@@ -389,6 +416,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
         listGroup.alpha = 0f;
         Tween.Alpha(listGroup, 1f, appearDuration, useUnscaledTime: true);
     }
+
+    private Color ColorOf(ListLine line) => line.interactable || line.keepColor ? lineColor : lineDisabledColor;
 
     private void HoverLine(TextMeshProUGUI text, ListLine line, bool hovered)
     {
@@ -404,6 +433,14 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
         if (line.dialogue)
         {
+            if (!listCancellable)
+            {
+                // Only a pick closes this list: it waits through the dialogue, then takes clicks again.
+                FreezeList();
+                StartDialogue(line.dialogue, listSpeaker, UnfreezeList);
+                return;
+            }
+
             // The picture stays up for the dialogue; the showcase closes after it, as cancelled.
             HideList();
             StartDialogue(line.dialogue, listSpeaker);
@@ -438,6 +475,12 @@ public class ShowcaseDialogueManager : MonoBehaviour
         Hide(animate: true);
     }
 
+    /// <summary>The player backing out (click outside, close button): ignored for a list that isn't cancellable.</summary>
+    private void CancelList()
+    {
+        if (listCancellable) CloseList();
+    }
+
     /// <summary>Stops taking clicks and fades the lines out; they're destroyed when the showcase is gone.</summary>
     private void HideList()
     {
@@ -455,12 +498,25 @@ public class ShowcaseDialogueManager : MonoBehaviour
             if (line) line.raycastTarget = false;
     }
 
+    /// <summary>Takes clicks again after <see cref="FreezeList"/>, every line back in its own color.</summary>
+    private void UnfreezeList()
+    {
+        listOpen = true;
+        for (int i = 0; i < listLines.Count; i++)
+        {
+            if (!listLines[i]) continue;
+            listLines[i].raycastTarget = true;
+            listLines[i].color = ColorOf(listData[i]);
+        }
+    }
+
     private void ClearList()
     {
         listOpen = false;
         foreach (TextMeshProUGUI line in listLines)
             if (line) Destroy(line.gameObject);
         listLines.Clear();
+        listData.Clear();
         if (listGroup) Tween.StopAll(listGroup);
     }
 
@@ -565,6 +621,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
         ClearList();
         if (listRoot) listRoot.gameObject.SetActive(false);
         listSpeaker = null;
+        listCancellable = true;
         afterDialogue = null;
         if (root) root.SetActive(false);
 

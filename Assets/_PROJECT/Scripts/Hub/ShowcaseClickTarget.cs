@@ -11,10 +11,14 @@ public class ShowcaseClickTarget : MonoBehaviour, IPointerClickHandler, IPointer
     public Action onClick;
     /// <summary>True on enter, false on exit.</summary>
     public Action<bool> onHover;
+    /// <summary>Only clicks on this object's own Graphic count, not ones bubbling up from its children.</summary>
+    public bool directHitsOnly;
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Left) onClick?.Invoke();
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        if (directHitsOnly && eventData.pointerCurrentRaycast.gameObject != gameObject) return;
+        onClick?.Invoke();
     }
 
     public void OnPointerEnter(PointerEventData eventData) => onHover?.Invoke(true);

@@ -12,6 +12,9 @@ public class Level
     public string name = "Level";
     [Tooltip("Can only be started from the phone once every other level is completed.")]
     public bool isFinal;
+    [Tooltip("Final levels: played over the phone's list when the level is picked before every other level is " +
+             "completed. The list stays up after it.")]
+    public DialogueContainer lockedDialogue;
     [Tooltip("Points the dice round must reach to pass.")]
     [Min(0)] public int pointsToPass = 20;
     [Tooltip("Played before the dice round when the level is picked from the phone. Optional.")]

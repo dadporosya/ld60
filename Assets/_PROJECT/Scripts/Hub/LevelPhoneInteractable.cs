@@ -12,8 +12,8 @@ using UnityEngine;
 /// <item>Picking a level plays its picked dialogue with the list still on screen, then starts the level
 /// (<see cref="FuneralGameManager.PlayLevel"/>).</item>
 /// </list>
-/// The final level, picked before every other level is completed, plays <see cref="finalLockedDialogue"/> instead of
-/// starting.
+/// A final level, picked before every other level is completed, plays its <see cref="Level.lockedDialogue"/> (else
+/// <see cref="finalLockedDialogue"/>) over the list instead of starting; the list stays up after it.
 /// </summary>
 public class LevelPhoneInteractable : ShowcaseInteractable
 {
@@ -31,7 +31,8 @@ public class LevelPhoneInteractable : ShowcaseInteractable
     [SerializeField] private DialogueContainer pickedDialogue;
     [Tooltip("Per level: played instead of Picked Dialogue.")]
     [SerializeField] private List<LevelDialogue> levelPickedDialogues = new List<LevelDialogue>();
-    [Tooltip("Played over the phone when the final level is picked before everything else is completed.")]
+    [Tooltip("Played over the phone when a final level is picked before everything else is completed - for final " +
+             "levels without a Locked Dialogue of their own (set in the LevelManager).")]
     [SerializeField] private DialogueContainer finalLockedDialogue;
 
     [Header("Line text")]
@@ -54,8 +55,11 @@ public class LevelPhoneInteractable : ShowcaseInteractable
         if (!showcase) return;
 
         DialogueContainer intro = CurrentDialogue;
+        List<ShowcaseDialogueManager.ListLine> lines = BuildLines(LevelManager.Instance);
         GetPicture(out List<Sprite> frames, out List<float> durations, out bool loop);
-        if (showcase.ShowList(frames, durations, loop, intro, BuildLines(LevelManager.Instance), PickLevel, speaker: Speaker))
+        // Only a pick closes the list - unless nothing can be picked, which would leave the player stuck.
+        bool cancellable = !lines.Exists(line => line.interactable);
+        if (showcase.ShowList(frames, durations, loop, intro, lines, PickLevel, speaker: Speaker, cancellable: cancellable))
             OnDialogueShown(intro);
     }
 
@@ -69,12 +73,15 @@ public class LevelPhoneInteractable : ShowcaseInteractable
             bool locked = !completed && levels.IsFinal(i) && !levels.FinalUnlocked;
 
             string format = completed ? completedFormat : locked ? lockedFinalFormat : levelFormat;
+            DialogueContainer lockedDialogue = level.lockedDialogue ? level.lockedDialogue : finalLockedDialogue;
             lines.Add(new ShowcaseDialogueManager.ListLine
             {
                 text = string.Format(format, level.name),
                 // A locked final level is still clickable: it says why it won't start.
-                interactable = !completed && (!locked || finalLockedDialogue),
-                dialogue = locked ? finalLockedDialogue : null,
+                interactable = !completed && (!locked || lockedDialogue),
+                dialogue = locked ? lockedDialogue : null,
+                // Locked isn't done: it reads like any other contact, even with nothing to say.
+                keepColor = locked,
                 pickDialogue = locked ? null : PickedDialogueFor(i),
             });
         }

@@ -437,25 +437,29 @@ MonoBehaviour:
   levels:
   - name: Mother
     isFinal: 0
+    lockedDialogue: {fileID: 0}
     pointsToPass: 10
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
   - name: Childhood friend
     isFinal: 0
+    lockedDialogue: {fileID: 0}
     pointsToPass: 20
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
   - name: Girlfriend
     isFinal: 0
+    lockedDialogue: {fileID: 0}
     pointsToPass: 30
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
   - name: Father
     isFinal: 1
-    pointsToPass: 30
+    lockedDialogue: {fileID: 0}
+    pointsToPass: 40
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
@@ -2220,9 +2224,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 460406610}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5a60f04b75c7d14b8c8a1c719d3c945, type: 3}
+  m_Script: {fileID: 11500000, guid: 5a0cc12dfd7ce7a4c9449bedf956bdcb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PhoneInteractable
+  m_EditorClassIdentifier: Assembly-CSharp::LevelPhoneInteractable
   interactable: 1
   alphaHitThreshold: 0
   singleUse: 0
@@ -2245,7 +2249,22 @@ MonoBehaviour:
   onInteract:
     m_PersistentCalls:
       m_Calls: []
-  nobodyLeftDialogue: {fileID: 0}
+  showcaseSprite: {fileID: 0}
+  showcaseFrames: []
+  framesPerSecond: 8
+  useUIAnimationFrames: 1
+  uiAnimation: {fileID: 0}
+  loopFrames: 1
+  speaker: {fileID: 0}
+  usableDuringDice: 1
+  dialogues:
+  - {fileID: 11400000, guid: b5ba1ea646802c5438c24a1f92eb7f2a, type: 2}
+  pickedDialogue: {fileID: 0}
+  levelPickedDialogues: []
+  finalLockedDialogue: {fileID: 0}
+  levelFormat: '{0}'
+  completedFormat: <s>{0}</s>
+  lockedFinalFormat: '{0}'
 --- !u!1 &476436739
 GameObject:
   m_ObjectHideFlags: 0
@@ -4113,7 +4132,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 18
+  m_fontSizeMin: 10.14
   m_fontSizeMax: 36
   m_fontStyle: 1
   m_HorizontalAlignment: 1
@@ -5753,6 +5772,7 @@ MonoBehaviour:
   defaultSpeaker: {fileID: 0}
   listRoot: {fileID: 727260640}
   listLineTemplate: {fileID: 1190769102}
+  lineSpacing: 12
   lineHoverColor: {r: 1, g: 0.95, b: 0.75, a: 1}
   lineDisabledColor: {r: 1, g: 1, b: 1, a: 0.4}
   clickOutsideClosesList: 1
