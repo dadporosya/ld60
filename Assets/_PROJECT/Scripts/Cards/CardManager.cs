@@ -82,8 +82,8 @@ public class CardManager : MonoBehaviour
     [SerializeField, Min(0.01f)] private float permanentCardScale = 0.6f;
     [Tooltip("Kept cards grow when hovered, so the player can read them.")]
     [SerializeField] private bool keptCardsHoverable = true;
-    [Tooltip("How much a hovered kept card grows (1.67 with Permanent Card Scale 0.6 = full card size).")]
-    [SerializeField, Min(1f)] private float keptHoverScale = 1.67f;
+    [Tooltip("How much a hovered kept card grows (1.67 with Permanent Card Scale 0.6 = full card size; 1.22 = a third of that growth).")]
+    [SerializeField, Min(1f)] private float keptHoverScale = 1.22f;
     [Tooltip("Gap between kept cards (UI units, no layout group only).")]
     [SerializeField, Min(0f)] private float permanentCardSpacing = 12f;
     [Tooltip("Seconds the chosen card flies from the menu into its place in the spot, when the spot is on " +

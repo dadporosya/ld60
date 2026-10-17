@@ -114,6 +114,7 @@ MonoBehaviour:
   - {fileID: 5268083465191489355}
   - {fileID: -4178950654380973269}
   - {fileID: 290995373692576675}
+  - {fileID: 1071826207402321917}
 --- !u!114 &290995373692576675
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -164,6 +165,22 @@ MonoBehaviour:
   dirtIntensity:
     m_OverrideState: 0
     m_Value: 0
+--- !u!114 &1071826207402321917
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e6276bb40355174d8ef50b1aa690158, type: 3}
+  m_Name: PosterizeVol
+  m_EditorClassIdentifier: VolFx::VolFx.PosterizeVol
+  active: 1
+  m_Count:
+    m_OverrideState: 1
+    m_Value: 48
 --- !u!114 &5265645544436989074
 MonoBehaviour:
   m_ObjectHideFlags: 3

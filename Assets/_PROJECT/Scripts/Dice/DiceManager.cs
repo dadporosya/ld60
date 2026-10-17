@@ -78,10 +78,14 @@ public class DicePopups
     [Tooltip("Seconds between popups that come at once (a landing that reaches a goal), so they don't pile up.")]
     [Min(0f)] public float interval = 0.25f;
 
-    [Header("Where (empty: Score Text / Combination Text / Target Text)")]
+    [Header("Where (empty: the middle of the dice parent)")]
     public Transform scoreAnchor;
     public Transform combinationAnchor;
     public Transform goalAnchor;
+    [Tooltip("Added to the anchor, in canvas units, so popups that come together don't stack on one spot.")]
+    public Vector2 scoreOffset = new Vector2(0f, 70f);
+    public Vector2 combinationOffset = Vector2.zero;
+    public Vector2 goalOffset = new Vector2(0f, -70f);
 
     [Header("Text")]
     [Tooltip("{0} = points gained.")]
@@ -618,7 +622,7 @@ public class DiceManager : MonoBehaviour
 
         PlaySfx(pendingResult.passed ? passedSfx : failedSfx);
         UpdateUI();
-        if (pendingResult.riskyPassed) Popup(popups.cardUpgradedText, GoalAnchor, popups.riskyGoalColor);
+        if (pendingResult.riskyPassed) Popup(popups.cardUpgradedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
 
         if (finishDelay > 0f) finishTween = Tween.Delay(this, finishDelay, manager => manager.CompleteRound());
         else CompleteRound();
@@ -834,9 +838,10 @@ public class DiceManager : MonoBehaviour
     // Popups
     // ---------------------------------------------------------------------
 
-    private Transform ScoreAnchor => popups.scoreAnchor ? popups.scoreAnchor : scoreText ? scoreText.transform : null;
-    private Transform CombinationAnchor => popups.combinationAnchor ? popups.combinationAnchor : combinationText ? combinationText.transform : null;
-    private Transform GoalAnchor => popups.goalAnchor ? popups.goalAnchor : targetText ? targetText.transform : null;
+    // Empty anchors pop up at the dice parent (its pivot - the middle with the default centred pivot).
+    private Transform ScoreAnchor => popups.scoreAnchor ? popups.scoreAnchor : Area;
+    private Transform CombinationAnchor => popups.combinationAnchor ? popups.combinationAnchor : Area;
+    private Transform GoalAnchor => popups.goalAnchor ? popups.goalAnchor : Area;
 
     /// <summary>
     /// After a landing: how much the score changed (+10 / -5), the hand the dice make, and a goal reached
@@ -850,19 +855,22 @@ public class DiceManager : MonoBehaviour
         int change = after.total - oldTotal;
         if (change != 0)
             Popup(string.Format(change > 0 ? popups.gainFormat : popups.lossFormat, Mathf.Abs(change)), ScoreAnchor,
-                change > 0 ? popups.gainColor : popups.lossColor);
+                popups.scoreOffset, change > 0 ? popups.gainColor : popups.lossColor);
 
         if (after.combination != PokerDiceCombination.Nothing)
-            Popup(after.combinationName, CombinationAnchor, popups.combinationColor);
+            Popup(after.combinationName, CombinationAnchor, popups.combinationOffset, popups.combinationColor);
 
         if (Target > 0 && oldTotal < Target && after.total >= Target)
-            Popup(popups.goalReachedText, GoalAnchor, popups.goalColor);
+            Popup(popups.goalReachedText, GoalAnchor, popups.goalOffset, popups.goalColor);
         if (RiskyTarget > 0 && oldTotal < RiskyTarget && after.total >= RiskyTarget)
-            Popup(popups.riskyGoalReachedText, GoalAnchor, popups.riskyGoalColor);
+            Popup(popups.riskyGoalReachedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
     }
 
-    /// <summary>Pops <paramref name="text"/> up at <paramref name="anchor"/>, <see cref="DicePopups.interval"/> after the previous popup.</summary>
-    private void Popup(string text, Transform anchor, Color color)
+    /// <summary>
+    /// Pops <paramref name="text"/> up at <paramref name="anchor"/> + <paramref name="offset"/> (canvas units),
+    /// <see cref="DicePopups.interval"/> after the previous popup.
+    /// </summary>
+    private void Popup(string text, Transform anchor, Vector2 offset, Color color)
     {
         if (!popups.enabled || string.IsNullOrEmpty(text)) return;
         if (!TextAlertManager.Instance)
@@ -877,14 +885,14 @@ public class DiceManager : MonoBehaviour
 
         if (delay <= 0f)
         {
-            TextAlertManager.Instance.CreateTextAlert(text, anchor, color);
+            TextAlertManager.Instance.CreateTextAlert(text, anchor, color, offset);
             return;
         }
 
         popupTweens.RemoveAll(tween => !tween.isAlive);
         popupTweens.Add(Tween.Delay(anchor, delay, a =>
         {
-            if (TextAlertManager.Instance) TextAlertManager.Instance.CreateTextAlert(text, a, color);
+            if (TextAlertManager.Instance) TextAlertManager.Instance.CreateTextAlert(text, a, color, offset);
         }));
     }
 
