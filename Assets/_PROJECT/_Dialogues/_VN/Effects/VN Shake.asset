@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c8dbf2fcbdc64041942dcfd644e0a9b, type: 3}
+  m_Name: VN Shake
+  m_EditorClassIdentifier: Assembly-CSharp::VisualNovelShakeEffect
+  target: 0
+  strength: {x: 40, y: 40}
+  duration: 0.4
+  frequency: 25
+  sustainedStrength: {x: 6, y: 6}
+  sustainedFrequency: 12
+  magnitude: 4
+  roughness: 8
+  fadeIn: 0.05
+  fadeOut: 0.4
+  sustainedMagnitude: 1

@@ -461,6 +461,7 @@ MonoBehaviour:
     lossDialogue: {fileID: 0}
   pointsByRound: 6f000000ba000000ff000000be010000
   onlyWinsComplete: 0
+  defaultEndDialogue: {fileID: 11400000, guid: b29eb017bb0441e88f72d87a4f7009fa, type: 2}
   debugKeys: 1
   onLevelStarted:
     m_PersistentCalls:

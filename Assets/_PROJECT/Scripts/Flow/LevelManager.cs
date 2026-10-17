@@ -56,6 +56,9 @@ public class LevelManager : MonoBehaviour
              "round was won. Off: playing it is enough.")]
     [SerializeField] private bool onlyWinsComplete = false;
 
+    [Tooltip("Played after a round when its level has no Win Dialogue / Loss Dialogue for the outcome. Optional.")]
+    [SerializeField] private VisualNovelDialogueContainer defaultEndDialogue;
+
     [Header("Debug")]
     [Tooltip("Debug only: the digit keys (top row or numpad) run a level's dice round straight away - " +
              "1 runs levels[0], 2 runs levels[1], ..., 9 runs levels[8], 0 runs levels[9]. Works from the hub " +
@@ -207,7 +210,7 @@ public class LevelManager : MonoBehaviour
 
     /// <summary>
     /// Records the current level's outcome, moves on to the next level, and returns the dialogue to play
-    /// for it (win or loss; may be null).
+    /// for it (win or loss, else <see cref="defaultEndDialogue"/>; may be null).
     /// </summary>
     public VisualNovelDialogueContainer CompleteLevel(bool passed)
     {
@@ -225,6 +228,7 @@ public class LevelManager : MonoBehaviour
         if (passed) onLevelWon?.Invoke(index);
         else onLevelLost?.Invoke(index);
 
-        return level?.DialogueFor(passed);
+        VisualNovelDialogueContainer dialogue = level?.DialogueFor(passed);
+        return dialogue ? dialogue : defaultEndDialogue;
     }
 }
