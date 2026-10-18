@@ -487,7 +487,7 @@ MonoBehaviour:
   - points: 100
     riskyPoints: 200
   - points: 200
-    riskyPoints: 300
+    riskyPoints: 333
   - points: 350
     riskyPoints: 550
   - points: 475
@@ -783,7 +783,7 @@ MonoBehaviour:
   rerollsPerRound: 3
   autoFirstRoll: 1
   firstRollDelay: 1
-  firstRollCombinationReduction: 0.831
+  firstRollCombinationReduction: 0.896
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
   roundScoreAlertDelay: 0.8
@@ -918,6 +918,8 @@ MonoBehaviour:
     roundStartExtraHold: 1.5
     riskyGoalScale: 1.15
     riskyGoalExtraHold: 1
+    bustScale: 2
+    bustExtraHold: 1.5
     gainColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
     lossColor: {r: 0.95, g: 0.4, b: 0.4, a: 1}
     combinationColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4804,10 +4806,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 2052019987}
-  - {fileID: 1901275428}
-  - {fileID: 244570388}
   - {fileID: 1743218968}
+  - {fileID: 1901275428}
+  - {fileID: 2052019987}
+  - {fileID: 244570388}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -5548,7 +5550,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -464.42996, y: 446.99997}
+  m_AnchoredPosition: {x: -464.42996, y: 447}
   m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364
@@ -5580,7 +5582,7 @@ MonoBehaviour:
   closeDuration: 0.35
   closeEase: 4
   useUnscaledTime: 1
-  toggleLabel: {fileID: 0}
+  toggleLabel: {fileID: 1737818430}
   showLabel: ({0}) show hint
   closeLabel: ({0}) close hint
   pulseScale: 1.06

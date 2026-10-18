@@ -20,6 +20,10 @@ using UnityEngine.UI;
 /// <para>With Auto Open on, every time the sheet is shown (its panel turned on as gameplay starts) it
 /// starts closed and slides open by itself a moment later.</para>
 ///
+/// <para>Two-sided (<see cref="sides"/>): the open sheet's front shows the combinations; the button or key
+/// doesn't close it but flips it over to the back with the rules (<see cref="rulesText"/>), and only from the
+/// back does it close. It always opens on the front.</para>
+///
 /// <para>With a Combinations Text it lists the dice combinations as sprite icons with their points, from the
 /// DiceManager's scoring table (<see cref="RefreshCombinations"/>) - written as the scene starts, even while
 /// the sheet is hidden, and again each time it is shown.</para>
@@ -27,11 +31,38 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform))]
 public class HintPaper : MonoBehaviour
 {
+    public enum Sides
+    {
+        /// <summary>Just the combinations: the button or key opens and closes it.</summary>
+        One,
+        /// <summary>Combinations on the front, rules on the back: open -> flip -> close.</summary>
+        Two,
+    }
+
     [SerializeField] private Button toggleButton;
     [Tooltip("Keyboard key that does the same as clicking the toggle button. None: no key.")]
     [SerializeField] private Key toggleKey = Key.S;
     [Tooltip("Used when Auto Open is off: whether the sheet starts open.")]
     [SerializeField] private bool startOpen = false;
+    [Tooltip("One: the button or key opens and closes the sheet. Two: open, the button or key flips it over to " +
+             "the rules on its back, and closes it from there.")]
+    [SerializeField] private Sides sides = Sides.Two;
+
+    [Header("Back side (Two sides)")]
+    [Tooltip("Shown on the front only, hidden on the back. Empty: the Combinations Text.")]
+    [SerializeField] private GameObject frontSide;
+    [Tooltip("Shown on the back only. Empty: a copy of the Combinations Text (same font, size and margins) " +
+             "with the Rules Text in it.")]
+    [SerializeField] private GameObject backSide;
+    [Tooltip("Written into the back side made from the Combinations Text (no Back Side set).")]
+    [SerializeField, TextArea(4, 12)] private string rulesText =
+        "Click on a die to lock it. Locked dice will not be rerolled. Each locked die grants 0.1 multiplier.\n\n" +
+        "You have an unlimited number of rerolls, until you are busted.\n\n" +
+        "If you reroll dice and the rerolled dice don't make any combination (or show a 1 or 3), you are busted " +
+        "and lose all your points.";
+    [Tooltip("Seconds the whole flip takes (turning edge-on, then back with the other side up).")]
+    [SerializeField, Min(0f)] private float flipDuration = 0.3f;
+    [SerializeField] private AudioClip flipSfx;
 
     [Header("Auto open")]
     [Tooltip("Each time the sheet is shown, start closed and slide open by itself.")]
@@ -69,8 +100,10 @@ public class HintPaper : MonoBehaviour
     [SerializeField] private TMP_Text toggleLabel;
     [Tooltip("Shown while closed. {0} is the toggle key.")]
     [SerializeField] private string showLabel = "({0}) show hint";
-    [Tooltip("Shown while open. {0} is the toggle key.")]
+    [Tooltip("Shown while open (two sides: while the back is up). {0} is the toggle key.")]
     [SerializeField] private string closeLabel = "({0}) close hint";
+    [Tooltip("Two sides: shown while the front is up. {0} is the toggle key.")]
+    [SerializeField] private string flipLabel = "({0}) rules";
 
     [Header("Button pulse")]
     [Tooltip("Scale the button grows to and back when clicked or the key is pressed. 1: no pulse.")]
@@ -116,6 +149,11 @@ public class HintPaper : MonoBehaviour
 
     public bool IsOpen { get; private set; }
 
+    /// <summary>Two sides: the back (rules) is up.</summary>
+    public bool ShowingBack { get; private set; }
+
+    private bool TwoSided => sides == Sides.Two && BackSide;
+
     private RectTransform rect;
     // Where the sheet sits in the scene: closed with an Open Target, open without.
     private Vector2 startPosition;
@@ -128,6 +166,9 @@ public class HintPaper : MonoBehaviour
     private float iconRestAngle;
     private Transform pulseTarget;
     private Vector3 pulseRestScale;
+    private Tween flipTween;
+    private float restScaleX = 1f;
+    private GameObject madeBackSide;
 
     private Vector2 OpenPosition => openTarget ? TargetPosition() : startPosition;
     private Vector2 ClosedPosition => openTarget ? startPosition : startPosition + Vector2.up * ClosedShift();
@@ -234,6 +275,7 @@ public class HintPaper : MonoBehaviour
         iconTween.Stop();
         autoOpenTween.Stop();
         pulseTween.Stop();
+        StopFlip();
         if (pulseTarget) pulseTarget.localScale = pulseRestScale;
         if (initialized) Snap(IsOpen);
     }
@@ -244,6 +286,8 @@ public class HintPaper : MonoBehaviour
         initialized = true;
 
         startPosition = rect.anchoredPosition;
+        restScaleX = rect.localScale.x;
+        ShowSide(false);
         if (openTarget && openTarget.IsChildOf(rect))
             h.Out($"HintPaper: Open Target '{openTarget.name}' is inside the sheet and moves with it. Put it outside.");
         Snap(startOpen);
@@ -270,7 +314,8 @@ public class HintPaper : MonoBehaviour
     private void OnToggleInput()
     {
         Pulse();
-        Toggle();
+        if (IsOpen && TwoSided && !ShowingBack) Flip();
+        else Toggle();
     }
 
     public void Toggle()
@@ -297,6 +342,9 @@ public class HintPaper : MonoBehaviour
 
         IsOpen = open;
         moveTween.Stop();
+        StopFlip();
+        // Off screen as it starts sliding in: whatever was up last time, it opens on the front.
+        if (open) ShowSide(false);
 
         if (!animate || duration <= 0f || !isActiveAndEnabled)
             Snap(open);
@@ -367,7 +415,91 @@ public class HintPaper : MonoBehaviour
     private void UpdateLabel(bool open)
     {
         if (!toggleLabel) return;
-        toggleLabel.text = string.Format(open ? closeLabel : showLabel, KeyName());
+        string label = !open ? showLabel : TwoSided && !ShowingBack ? flipLabel : closeLabel;
+        toggleLabel.text = string.Format(label, KeyName());
+    }
+
+    // ---------------------------------------------------------------------
+    // Two sides
+    // ---------------------------------------------------------------------
+
+    private GameObject FrontSide => frontSide ? frontSide : combinationsText ? combinationsText.gameObject : null;
+
+    private GameObject BackSide
+    {
+        get
+        {
+            if (backSide) return backSide;
+            if (!madeBackSide && sides == Sides.Two) madeBackSide = MakeBackSide();
+            return madeBackSide;
+        }
+    }
+
+    /// <summary>A copy of the Combinations Text, right after it, with the rules in it; null without one.</summary>
+    private GameObject MakeBackSide()
+    {
+        if (!combinationsText)
+        {
+            h.Out("HintPaper: Two sides needs a Back Side or a Combinations Text to make one from - it stays one-sided.");
+            return null;
+        }
+
+        TMP_Text rules = Instantiate(combinationsText, combinationsText.transform.parent);
+        rules.name = "Rules";
+        rules.transform.SetSiblingIndex(combinationsText.transform.GetSiblingIndex() + 1);
+        rules.text = rulesText;
+        rules.gameObject.SetActive(false);
+        return rules.gameObject;
+    }
+
+    /// <summary>Turns the sheet edge-on, swaps to the other side, and turns it face-up again.</summary>
+    private void Flip()
+    {
+        StopFlip();
+        bool back = !ShowingBack;
+        if (flipSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(flipSfx);
+
+        if (flipDuration <= 0f || !isActiveAndEnabled)
+        {
+            ShowSide(back);
+            return;
+        }
+
+        float half = flipDuration * 0.5f;
+        flipTween = Tween.Custom(this, restScaleX, 0f, half, (paper, x) => paper.SetScaleX(x), Ease.InSine,
+                useUnscaledTime: useUnscaledTime)
+            .OnComplete(this, paper => paper.FinishFlip(back, half));
+    }
+
+    private void FinishFlip(bool back, float half)
+    {
+        ShowSide(back);
+        flipTween = Tween.Custom(this, 0f, restScaleX, half, (paper, x) => paper.SetScaleX(x), Ease.OutSine,
+            useUnscaledTime: useUnscaledTime);
+    }
+
+    private void StopFlip()
+    {
+        flipTween.Stop();
+        if (initialized) SetScaleX(restScaleX);
+    }
+
+    private void SetScaleX(float x)
+    {
+        Vector3 scale = rect.localScale;
+        scale.x = x;
+        rect.localScale = scale;
+    }
+
+    /// <summary>Puts the back (<paramref name="back"/>) or the front up.</summary>
+    private void ShowSide(bool back)
+    {
+        GameObject front = FrontSide;
+        GameObject rear = sides == Sides.Two ? BackSide : backSide;
+        ShowingBack = back && TwoSided;
+        if (front) front.SetActive(!ShowingBack);
+        if (rear) rear.SetActive(ShowingBack);
+        UpdateLabel(IsOpen);
     }
 
     private string KeyName()
