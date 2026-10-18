@@ -217,6 +217,8 @@ public class DiceManager : MonoBehaviour
     public DiceOutlineStyle hoverOutline = new DiceOutlineStyle();
 
     [Header("Audio")]
+    [Tooltip("Every dice sound plays at a random pitch in this range (x = min, y = max). 1 to 1: no randomization.")]
+    [SerializeField] private Vector2 sfxPitchRange = new Vector2(0.94f, 1.06f);
     [SerializeField] private AudioClip rollSfx;
     [SerializeField] private AudioClip landSfx;
     [SerializeField] private AudioClip lockSfx;
@@ -341,10 +343,9 @@ public class DiceManager : MonoBehaviour
              "are under the target. Round Score Text keeps its own colour.")]
     [SerializeField, FormerlySerializedAs("roundBelowTargetColor")]
     private Color scoreBelowTargetColor = new Color(1f, 0.35f, 0.35f, 1f);
+    [Tooltip("The hand the dice make. Empty while they make none that counts (Nothing, or only hands turned off " +
+             "in the scoring table).")]
     [SerializeField] private TextMeshProUGUI combinationText;
-    [Tooltip("Combination Text's colour while the dice make no proper combination - only Nothing, or hands " +
-             "turned off in the scoring table.")]
-    [SerializeField] private Color noCombinationColor = new Color(1f, 0.35f, 0.35f, 1f);
     [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
              "in the scoring table) by driving its Shake Strength. Defaults to the TextAnimation on Combination Text " +
              "(added if missing); Shake is added to its animations when it has none.")]
@@ -456,8 +457,6 @@ public class DiceManager : MonoBehaviour
     private CountingText roundScoreCounter;
     // Score Text's own colour, from the scene: back to it once the target is reached.
     private Color? scoreColor;
-    // Combination Text's own colour, from the scene: back to it once the dice make a proper combination.
-    private Color? combinationColor;
 
     private static CountingText CounterOn(TextMeshProUGUI text, string format, ref CountingText counter)
     {
@@ -1449,11 +1448,9 @@ public class DiceManager : MonoBehaviour
 
         if (combinationText)
         {
-            // Red while the dice make no hand that counts: a disabled hand falls back to Nothing.
-            combinationColor ??= combinationText.color;
+            // No hand that counts (a disabled hand falls back to Nothing): the text stays empty.
             bool proper = shownScore != null && shownScore.combination != PokerDiceCombination.Nothing;
-            combinationText.color = shownScore == null || proper ? combinationColor.Value : noCombinationColor;
-            combinationText.text = shownScore != null ? shownScore.combinationName : "";
+            combinationText.text = proper ? shownScore.combinationName : "";
         }
         SetCombinationShake(shownScore != null ? CombinationStrength(shownScore.combination) : 0f);
 
@@ -1558,7 +1555,7 @@ public class DiceManager : MonoBehaviour
         }));
     }
 
-    private static void CreatePopup(string text, Transform anchor, Vector2 offset, Color color, float scale, float extraHold,
+    private void CreatePopup(string text, Transform anchor, Vector2 offset, Color color, float scale, float extraHold,
         AudioClip sfx)
     {
         AlertDamageText alert = TextAlertManager.Instance.CreateTextAlert(text, anchor, color, offset);
@@ -1576,8 +1573,9 @@ public class DiceManager : MonoBehaviour
         nextPopupTime = 0f;
     }
 
-    private static void PlaySfx(AudioClip clip)
+    /// <summary>Plays <paramref name="clip"/> at a random pitch from <see cref="sfxPitchRange"/>, so repeats don't sound identical.</summary>
+    private void PlaySfx(AudioClip clip)
     {
-        if (clip && SFXManager.Instance) SFXManager.Instance.PlayClip(clip);
+        if (clip && SFXManager.Instance) SFXManager.Instance.PlayClip(clip, randomPitchRange: sfxPitchRange);
     }
 }

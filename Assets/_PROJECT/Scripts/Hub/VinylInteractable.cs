@@ -3,44 +3,54 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// The vinyl: shown up close like any showcase object, with a dialogue picked by how much of the song has played
-/// (<see cref="SongTimer.Progress"/>): the entry with the highest <see cref="ProgressDialogue.fromProgress"/> the
-/// song has already reached.
+/// The vinyl: shown up close like any showcase object, with a dialogue picked by how many levels have been
+/// passed this game (<see cref="LevelManager"/>): <see cref="dialogues"/>[0] before any, [1] after one, ... -
+/// the last entry once they run out.
 /// </summary>
 public class VinylInteractable : ShowcaseInteractableBase
 {
-    [Serializable]
-    public class ProgressDialogue
+    public enum LevelCount
     {
-        [Tooltip("Used once the song's progress (0 = start, 1 = end) has reached this.")]
-        [Range(0f, 1f)] public float fromProgress;
+        /// <summary>Levels played, won or lost.</summary>
+        Played,
+        /// <summary>Levels won only.</summary>
+        Won,
+    }
+
+    [Serializable]
+    public class LevelDialogue
+    {
         public DialogueContainer dialogue;
     }
 
     [Header("Vinyl")]
-    [Tooltip("Defaults to SongTimer.Instance.")]
-    [SerializeField] private SongTimer song;
-    [SerializeField] private List<ProgressDialogue> dialogues = new List<ProgressDialogue>
+    [Tooltip("Defaults to LevelManager.Instance.")]
+    [SerializeField] private LevelManager levels;
+    [Tooltip("Which levels count: every one played (won or lost), or only the ones won.")]
+    [SerializeField] private LevelCount count = LevelCount.Played;
+    [Tooltip("By levels passed: [0] before any, [1] after one, [2] after two, ... Past the end of the list: the " +
+             "last entry. An empty entry: the closest one before it.")]
+    [SerializeField] private List<LevelDialogue> dialogues = new List<LevelDialogue>
     {
-        new ProgressDialogue { fromProgress = 0f },    // less than a quarter played
-        new ProgressDialogue { fromProgress = 0.25f },
-        new ProgressDialogue { fromProgress = 0.5f },
-        new ProgressDialogue { fromProgress = 0.75f },
+        new LevelDialogue(), // no level passed yet
+        new LevelDialogue(), // one
+        new LevelDialogue(), // two
+        new LevelDialogue(), // three or more
     };
 
-    private SongTimer Song => song ? song : song = SongTimer.Instance;
+    private LevelManager Levels => levels ? levels : levels = LevelManager.Instance;
+
+    /// <summary>Levels passed so far, as <see cref="count"/> counts them.</summary>
+    public int LevelsPassed => !Levels ? 0 : count == LevelCount.Won ? Levels.LevelsWon : Levels.RoundsPlayed;
 
     protected override DialogueContainer CurrentDialogue
     {
         get
         {
-            float progress = Song ? Song.Progress : 0f;
-            ProgressDialogue best = null;
-            foreach (ProgressDialogue entry in dialogues)
-                if (entry.dialogue && entry.fromProgress <= progress && (best == null || entry.fromProgress >= best.fromProgress))
-                    best = entry;
-
-            return best?.dialogue;
+            // The entry for the count, else the nearest filled one before it.
+            for (int i = Mathf.Min(LevelsPassed, dialogues.Count - 1); i >= 0; i--)
+                if (dialogues[i] != null && dialogues[i].dialogue) return dialogues[i].dialogue;
+            return null;
         }
     }
 }

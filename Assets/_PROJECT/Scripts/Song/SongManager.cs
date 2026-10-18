@@ -1,64 +1,7 @@
-using System;
 using System.Collections.Generic;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
-
-/// <summary>A low-pass filter on the music alone (SFX stay clear).</summary>
-[Serializable]
-public class BgmLowPass
-{
-    [Tooltip("Off: the music plays unfiltered.")]
-    public bool enabled = false;
-    [Tooltip("Hz. Everything above it is cut - lower sounds more muffled. 22000: fully open.")]
-    [Range(GlobalLowPass.MinCutoff, GlobalLowPass.OpenCutoff)] public float cutoff = 5000f;
-    [Tooltip("Boost right at the cutoff. 1: none.")]
-    [Range(1f, 10f)] public float resonanceQ = 1f;
-}
-
-/// <summary>A high-pass filter on the music alone (SFX stay clear).</summary>
-[Serializable]
-public class BgmHighPass
-{
-    [Tooltip("Off: the music plays unfiltered.")]
-    public bool enabled = false;
-    [Tooltip("Hz. Everything below it is cut - higher sounds thinner, like a small speaker. 10: fully open.")]
-    [Range(GlobalLowPass.MinCutoff, GlobalLowPass.OpenCutoff)] public float cutoff = 500f;
-    [Tooltip("Boost right at the cutoff. 1: none.")]
-    [Range(1f, 10f)] public float resonanceQ = 1f;
-}
-
-/// <summary>A reverb on the music alone (SFX stay dry). Levels are in millibels (-10000: silent, 0: full).</summary>
-[Serializable]
-public class BgmReverb
-{
-    [Tooltip("Off: the music plays dry.")]
-    public bool enabled = false;
-    [Tooltip("A ready-made room. User: the settings below.")]
-    public AudioReverbPreset preset = AudioReverbPreset.User;
-
-    [Header("User preset")]
-    [Tooltip("The unprocessed music's level.")]
-    [Range(-10000f, 0f)] public float dryLevel = 0f;
-    [Tooltip("The room effect's overall level.")]
-    [Range(-10000f, 0f)] public float room = -1000f;
-    [Tooltip("The room effect at high frequencies - lower: a darker room.")]
-    [Range(-10000f, 0f)] public float roomHF = -100f;
-    [Tooltip("Seconds the reverb tail takes to die out.")]
-    [Range(0.1f, 20f)] public float decayTime = 1.49f;
-    [Tooltip("High frequencies' decay against the low ones' - under 1: highs die out first.")]
-    [Range(0.1f, 2f)] public float decayHFRatio = 0.83f;
-    [Tooltip("The early reflections' level.")]
-    [Range(-10000f, 1000f)] public float reflectionsLevel = -2602f;
-    [Tooltip("The late reverb's level - how wet it sounds.")]
-    [Range(-10000f, 2000f)] public float reverbLevel = 200f;
-    [Tooltip("Seconds between the early reflections and the late reverb.")]
-    [Range(0f, 0.1f)] public float reverbDelay = 0.011f;
-    [Tooltip("Echo density of the tail, %.")]
-    [Range(0f, 100f)] public float diffusion = 100f;
-    [Tooltip("Modal density of the tail, %.")]
-    [Range(0f, 100f)] public float density = 100f;
-}
 
 /// <summary>
 /// Picks Funeral Song's background music and hands it to the <see cref="BGMManager"/>: the start track once the
@@ -90,9 +33,9 @@ public class SongManager : MonoBehaviour
     [Tooltip("The music's overall volume, on top of the BGMManager's volume and fades (and dialogues' music volume).")]
     [Range(0f, 1f)] public float volume = 1f;
     [Tooltip("Put on every music source, so it carries over crossfades and track changes. Editable in play mode.")]
-    public BgmLowPass lowPass = new BgmLowPass();
-    public BgmHighPass highPass = new BgmHighPass();
-    public BgmReverb reverb = new BgmReverb();
+    public LowPassSettings lowPass = new LowPassSettings();
+    public HighPassSettings highPass = new HighPassSettings();
+    public ReverbSettings reverb = new ReverbSettings();
 
     /// <summary>The track that just started.</summary>
     public UnityEvent<BGMObject> onBgmChanged = new UnityEvent<BGMObject>();
@@ -143,46 +86,9 @@ public class SongManager : MonoBehaviour
         if (!gain && volume < 1f) gain = go.AddComponent<BgmGainFilter>();
         if (gain) gain.gain = Mathf.Clamp01(volume);
 
-        AudioHighPassFilter hpf = go.GetComponent<AudioHighPassFilter>();
-        if (!hpf && highPass.enabled) hpf = go.AddComponent<AudioHighPassFilter>();
-        if (hpf)
-        {
-            hpf.enabled = highPass.enabled;
-            hpf.cutoffFrequency = Mathf.Clamp(highPass.cutoff, GlobalLowPass.MinCutoff, GlobalLowPass.OpenCutoff);
-            hpf.highpassResonanceQ = Mathf.Max(1f, highPass.resonanceQ);
-        }
-
-        AudioLowPassFilter lpf = go.GetComponent<AudioLowPassFilter>();
-        if (!lpf && lowPass.enabled) lpf = go.AddComponent<AudioLowPassFilter>();
-        if (lpf)
-        {
-            lpf.enabled = lowPass.enabled;
-            lpf.cutoffFrequency = Mathf.Clamp(lowPass.cutoff, GlobalLowPass.MinCutoff, GlobalLowPass.OpenCutoff);
-            lpf.lowpassResonanceQ = Mathf.Max(1f, lowPass.resonanceQ);
-        }
-
-        AudioReverbFilter rf = go.GetComponent<AudioReverbFilter>();
-        if (!rf && reverb.enabled) rf = go.AddComponent<AudioReverbFilter>();
-        if (!rf) return;
-
-        rf.enabled = reverb.enabled;
-        if (reverb.preset != AudioReverbPreset.User)
-        {
-            rf.reverbPreset = reverb.preset;
-            return;
-        }
-
-        // Setting any of these switches the filter to the User preset.
-        rf.dryLevel = reverb.dryLevel;
-        rf.room = reverb.room;
-        rf.roomHF = reverb.roomHF;
-        rf.decayTime = reverb.decayTime;
-        rf.decayHFRatio = reverb.decayHFRatio;
-        rf.reflectionsLevel = reverb.reflectionsLevel;
-        rf.reverbLevel = reverb.reverbLevel;
-        rf.reverbDelay = reverb.reverbDelay;
-        rf.diffusion = reverb.diffusion;
-        rf.density = reverb.density;
+        highPass.ApplyTo(go);
+        lowPass.ApplyTo(go);
+        reverb.ApplyTo(go);
     }
 
     /// <summary>Puts the effects back on the music after their fields were changed from code.</summary>

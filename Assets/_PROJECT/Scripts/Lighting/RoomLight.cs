@@ -68,6 +68,18 @@ public class RoomLight : RoomLightLayer
     [SerializeField] private List<AudioClip> strikeClicks = new List<AudioClip>();
     [SerializeField, Range(0f, 1f)] private float clickVolume = 0.5f;
 
+    [Header("Flicker sound (optional, any style)")]
+    [Tooltip("One of these plays (through SFXManager) each time the flicker drops the light under Flicker Sound " +
+             "Threshold: a stutter, a chatter step, the tube cutting out. Lights following another's flicker stay " +
+             "quiet, so a lamp and its pool don't double up.")]
+    [SerializeField] private List<AudioClip> flickerClips = new List<AudioClip>();
+    [SerializeField, Range(0f, 1f)] private float flickerVolume = 0.5f;
+    [SerializeField] private Vector2 flickerPitch = new Vector2(0.9f, 1.1f);
+    [Tooltip("Flicker brightness (1 = steady) the light must drop under for the sound to play.")]
+    [SerializeField, Range(0.05f, 1f)] private float flickerSoundThreshold = 0.6f;
+    [Tooltip("Seconds at least between two flicker sounds, so fast chatter doesn't machine-gun.")]
+    [SerializeField, Min(0f)] private float flickerSoundInterval = 0.08f;
+
     private float seed;
     private float onAmount = 1f;
     private Tween onTween;
@@ -85,6 +97,10 @@ public class RoomLight : RoomLightLayer
     private float stepValue;
     private int flashesLeft;
     private bool flashLit;
+
+    // Flicker sound: the light was under the threshold last frame, and when the last sound played.
+    private bool flickerDipped;
+    private float lastFlickerSound = float.NegativeInfinity;
 
     /// <summary>Current flicker brightness (0..1+), for lights that follow this one.</summary>
     public float FlickerMultiplier { get; private set; } = 1f;
@@ -181,6 +197,7 @@ public class RoomLight : RoomLightLayer
                 FlickerStyle.Broken => humValue * BrokenFlicker(t),
                 _ => humValue,
             };
+            UpdateFlickerSound(t);
         }
 
         float brightness = FlickerMultiplier * onAmount;
@@ -353,6 +370,21 @@ public class RoomLight : RoomLightLayer
 
     private float RandomOutDuration() =>
         Random.Range(outDuration.x, outDuration.y) * Mathf.Lerp(0.6f, 1.4f, brokenness);
+
+    /// <summary>Plays a flicker clip as the flicker drops the light under <see cref="flickerSoundThreshold"/>.</summary>
+    private void UpdateFlickerSound(float t)
+    {
+        // Hum alone never dips this far; the light being switched off (SetOn) isn't a flicker.
+        bool dipped = FlickerMultiplier < flickerSoundThreshold;
+        bool dropped = dipped && !flickerDipped;
+        flickerDipped = dipped;
+
+        if (!dropped || !IsOn || flickerClips.Count == 0 || !SFXManager.Instance) return;
+        if (t - lastFlickerSound < flickerSoundInterval) return;
+
+        lastFlickerSound = t;
+        SFXManager.Instance.PlayRandomClipIndependently(flickerClips, flickerVolume, randomPitchRange: flickerPitch);
+    }
 
     private void PlayClick()
     {

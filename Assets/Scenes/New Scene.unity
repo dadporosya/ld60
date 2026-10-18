@@ -708,16 +708,17 @@ MonoBehaviour:
     width: {x: 4, y: 4}
     fadeDuration: 0.1
     onlyWhenLockable: 1
-  rollSfx: {fileID: 0}
-  landSfx: {fileID: 0}
-  lockSfx: {fileID: 0}
-  unlockSfx: {fileID: 0}
+  sfxPitchRange: {x: 0.98, y: 1.02}
+  rollSfx: {fileID: 8300000, guid: 0dee433ca9ac0d5459e2ef1577f4253e, type: 3}
+  landSfx: {fileID: 8300000, guid: 9de58750eb52127408e569c699007d56, type: 3}
+  lockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
+  unlockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
   flipSfx: {fileID: 0}
   destroySfx: {fileID: 0}
   passedSfx: {fileID: 0}
   failedSfx: {fileID: 0}
-  goodAlertSfx: {fileID: 0}
-  badAlertSfx: {fileID: 0}
+  goodAlertSfx: {fileID: 8300000, guid: 0eb3c9fd738f448478ce2537ca927556, type: 3}
+  badAlertSfx: {fileID: 8300000, guid: b7139ac7780ce934eb5baa1244611319, type: 3}
   roundsPerTurn: 3
   rerollsPerRound: 3
   autoFirstRoll: 1
@@ -795,7 +796,6 @@ MonoBehaviour:
   roundScoreFormat: '{0}'
   scoreBelowTargetColor: {r: 1, g: 0.35, b: 0.35, a: 1}
   combinationText: {fileID: 548950539}
-  noCombinationColor: {r: 1, g: 0.35, b: 0.35, a: 1}
   combinationAnimation: {fileID: 0}
   combinationShakeStrength: {x: 0.5, y: 6}
   combinationShakeBlend: 0.15
@@ -1557,7 +1557,6 @@ Transform:
   - {fileID: 393189331}
   - {fileID: 294091952}
   - {fileID: 1308269649}
-  - {fileID: 1897436000}
   m_Father: {fileID: 2040892597}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &294091951
@@ -2387,6 +2386,11 @@ MonoBehaviour:
   buzzVolume: 0.3
   strikeClicks: []
   clickVolume: 0.5
+  flickerClips: []
+  flickerVolume: 0.5
+  flickerPitch: {x: 0.9, y: 1.1}
+  flickerSoundThreshold: 0.6
+  flickerSoundInterval: 0.08
 --- !u!114 &404093165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2945,6 +2949,11 @@ MonoBehaviour:
   buzzVolume: 0.3
   strikeClicks: []
   clickVolume: 0.5
+  flickerClips: []
+  flickerVolume: 0.5
+  flickerPitch: {x: 0.9, y: 1.1}
+  flickerSoundThreshold: 0.6
+  flickerSoundInterval: 0.08
 --- !u!114 &515364395
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3187,7 +3196,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 182.25
+  m_fontSize: 182.7
   m_fontSizeBase: 116.3
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3499,6 +3508,11 @@ MonoBehaviour:
   buzzVolume: 0.3
   strikeClicks: []
   clickVolume: 0.5
+  flickerClips: []
+  flickerVolume: 0.5
+  flickerPitch: {x: 0.9, y: 1.1}
+  flickerSoundThreshold: 0.6
+  flickerSoundInterval: 0.08
 --- !u!114 &665120234
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3565,6 +3579,8 @@ Transform:
   m_Children:
   - {fileID: 484049835}
   - {fileID: 1465976792}
+  - {fileID: 1032475056}
+  - {fileID: 1897436000}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &692205417
@@ -3641,6 +3657,11 @@ MonoBehaviour:
   buzzVolume: 0.3
   strikeClicks: []
   clickVolume: 0.5
+  flickerClips: []
+  flickerVolume: 0.5
+  flickerPitch: {x: 0.9, y: 1.1}
+  flickerSoundThreshold: 0.6
+  flickerSoundInterval: 0.08
 --- !u!114 &692205420
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4101,6 +4122,11 @@ MonoBehaviour:
   buzzVolume: 0.3
   strikeClicks: []
   clickVolume: 0.5
+  flickerClips: []
+  flickerVolume: 0.5
+  flickerPitch: {x: 0.9, y: 1.1}
+  flickerSoundThreshold: 0.6
+  flickerSoundInterval: 0.08
 --- !u!114 &778689435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4257,9 +4283,9 @@ MonoBehaviour:
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
   - {fileID: 244570388}
+  - {fileID: 1901275428}
   - {fileID: 1743218968}
   - {fileID: 2052019987}
-  - {fileID: 1901275428}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -4614,6 +4640,11 @@ MonoBehaviour:
   buzzVolume: 0.3
   strikeClicks: []
   clickVolume: 0.5
+  flickerClips: []
+  flickerVolume: 0.5
+  flickerPitch: {x: 0.9, y: 1.1}
+  flickerSoundThreshold: 0.6
+  flickerSoundInterval: 0.08
 --- !u!114 &832595629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4884,6 +4915,80 @@ MonoBehaviour:
   onDialogueEnd:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &1032475055
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1032475056}
+  - component: {fileID: 1032475057}
+  m_Layer: 0
+  m_Name: Ambient
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1032475056
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032475055}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 669681184}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1032475057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032475055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcf162726ffd2b843ae68e53e8df0f95, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AmbientNoise
+  clip: {fileID: 8300000, guid: 8cd01f8f3bfa6b242b62263a3096d49e, type: 3}
+  volume: 0.454
+  pitch: 1
+  pan: -0.41
+  lowPass:
+    enabled: 1
+    cutoff: 7078
+    resonanceQ: 1
+  highPass:
+    enabled: 0
+    cutoff: 500
+    resonanceQ: 1
+  reverb:
+    enabled: 0
+    preset: 27
+    dryLevel: 0
+    room: -1000
+    roomHF: -100
+    decayTime: 1.49
+    decayHFRatio: 0.83
+    reflectionsLevel: -2602
+    reverbLevel: 200
+    reverbDelay: 0.011
+    diffusion: 100
+    density: 100
+  playOnStart: 1
+  fadeIn: 2
+  randomStartTime: 1
+  useSfxMixerGroup: 1
+  source: {fileID: 0}
 --- !u!1 &1046197362
 GameObject:
   m_ObjectHideFlags: 0
@@ -6766,7 +6871,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 360.85
+  m_fontSize: 361.75
   m_fontSizeBase: 116.3
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -7673,12 +7778,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1897435999}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 291783876}
+  m_Father: {fileID: 669681184}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1897436001
 MonoBehaviour:
@@ -7694,14 +7799,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SongManager
   bgmManager: {fileID: 0}
   startBgm: {fileID: 11400000, guid: f44f2fe91cf479b48b90dcbdc20d1339, type: 2}
-  startFade: 0
+  startFade: 10.44
   bgmByRound:
   - {fileID: 11400000, guid: 1db27578fd47b834d9acedb4b300ceed, type: 2}
   - {fileID: 11400000, guid: 8f85c59f560774241b9a54e7090a11c3, type: 2}
   - {fileID: 11400000, guid: 746fa92aca8b9f748af24facb689fb60, type: 2}
   - {fileID: 11400000, guid: 0802dbf4764d13a4b93d837601567caf, type: 2}
   levelFade: 1.5
-  volume: 0.6617892
+  volume: 0.607
   lowPass:
     enabled: 1
     cutoff: 9984
@@ -8044,6 +8149,11 @@ MonoBehaviour:
   buzzVolume: 0.3
   strikeClicks: []
   clickVolume: 0.5
+  flickerClips: []
+  flickerVolume: 0.5
+  flickerPitch: {x: 0.9, y: 1.1}
+  flickerSoundThreshold: 0.6
+  flickerSoundInterval: 0.08
 --- !u!114 &2007749325
 MonoBehaviour:
   m_ObjectHideFlags: 0
