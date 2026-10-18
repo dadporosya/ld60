@@ -40,6 +40,8 @@ public partial class CardManager : MonoBehaviour
     [Tooltip("Offer permanent cards the player already has, however many copies of them the deck holds (CardData.count). " +
              "Off: a card is offered until the player owns all its copies.")]
     [SerializeField] private bool allowOwnedPermanentCards = false;
+    [Tooltip("A card offered once isn't offered again until every other card has been (a new game resets it).")]
+    [SerializeField] private bool noRepeatsAcrossChoices = true;
     [Tooltip("Permanent cards the player starts with (optional).")]
     [SerializeField] private List<CardData> startingCards = new List<CardData>();
 
@@ -143,6 +145,8 @@ public partial class CardManager : MonoBehaviour
     private readonly List<CardInstance> permanentCards = new List<CardInstance>();
     private readonly List<CardView> permanentViews = new List<CardView>();
     private readonly List<CardView> offered = new List<CardView>();
+    // Cards offered since the deck last ran out (noRepeatsAcrossChoices): not offered again until it does.
+    private readonly HashSet<CardData> shownCards = new HashSet<CardData>();
     // A permanent card just chosen: its view in the spot, hidden until the chosen card has flown there.
     private CardView pendingKept;
     private Action<CardInstance> onChosen;
@@ -582,6 +586,7 @@ public partial class CardManager : MonoBehaviour
     public void ClearPermanentCards()
     {
         UpgradeNextChoice = false;
+        shownCards.Clear();
         permanentCards.Clear();
         pendingKept = null;
         foreach (CardView view in permanentViews)
@@ -604,7 +609,8 @@ public partial class CardManager : MonoBehaviour
 
     /// <summary>
     /// <paramref name="count"/> different cards, each drawn with a chance by its copies left in the deck
-    /// (<see cref="CardData.count"/>, less the ones the player keeps unless owned cards may come again).
+    /// (<see cref="CardData.count"/>, less the ones the player keeps unless owned cards may come again). With
+    /// <see cref="noRepeatsAcrossChoices"/> the cards of earlier choices sit out until the deck runs out.
     /// </summary>
     private List<CardData> PickOffer(int count)
     {
@@ -623,19 +629,46 @@ public partial class CardManager : MonoBehaviour
         List<CardData> offer = new List<CardData>();
         while (offer.Count < count && pool.Count > 0)
         {
-            int total = 0;
-            foreach (int c in copies) total += c;
-
-            int roll = UnityEngine.Random.Range(0, total);
-            int i = 0;
-            while (roll >= copies[i]) roll -= copies[i++];
+            int i = DrawIndex(pool, copies);
+            if (i < 0)
+            {
+                // Every card left has been offered: the deck starts over - without this choice's cards, so the
+                // next choice doesn't bring them straight back.
+                shownCards.Clear();
+                foreach (CardData data in offer) shownCards.Add(data);
+                continue;
+            }
 
             offer.Add(pool[i]);
+            shownCards.Add(pool[i]);
             pool.RemoveAt(i);
             copies.RemoveAt(i);
         }
         return offer;
     }
+
+    /// <summary>
+    /// A card of <paramref name="pool"/> drawn with a chance by its <paramref name="copies"/>, skipping the ones
+    /// already offered (<see cref="noRepeatsAcrossChoices"/>). -1 when every card left has been offered.
+    /// </summary>
+    private int DrawIndex(List<CardData> pool, List<int> copies)
+    {
+        int total = 0;
+        for (int i = 0; i < pool.Count; i++)
+            if (CanDraw(pool[i])) total += copies[i];
+        if (total <= 0) return -1;
+
+        int roll = UnityEngine.Random.Range(0, total);
+        for (int i = 0; i < pool.Count; i++)
+        {
+            if (!CanDraw(pool[i])) continue;
+            if (roll < copies[i]) return i;
+            roll -= copies[i];
+        }
+        return -1;
+    }
+
+    private bool CanDraw(CardData data) => !noRepeatsAcrossChoices || !shownCards.Contains(data);
 
     /// <summary>
     /// A random title from <paramref name="titles"/> not drawn yet this choice (<paramref name="pool"/> holds the

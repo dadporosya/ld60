@@ -45,7 +45,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: '[Placeholder] Level end dialogue goes here.'
+    text: '[Placeholder] Level end dialogue goes here'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}

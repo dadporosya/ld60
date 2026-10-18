@@ -186,6 +186,8 @@ public class DiceOutcomeSpotlight
     public TextMeshProUGUI text;
     [Tooltip("Seconds after the turn's result before the outcome frame appears.")]
     [Min(0f)] public float delay = 0.4f;
+    [Tooltip("Seconds added to Delay when the level is cleared (PASSED / HOPE).")]
+    [Min(0f)] public float passedExtraDelay = 1f;
     [Tooltip("Seconds the outcome frame stays up before the title frame (or, without one, the turn hands back).")]
     [Min(0f)] public float hold = 1.2f;
     [Tooltip("Seconds the frame fades out over once it's hidden (the black has covered the screen). 0: off at once.")]
@@ -601,6 +603,9 @@ public class DiceManager : MonoBehaviour
     // The dice of the throw in the air, and whether they bust without a combination once down.
     private readonly List<Dice> thrown = new List<Dice>();
     private bool thrownCanBust;
+    // The throw made no combination, but turning a thrown cyan die to 1 would save it: the bust waits for the
+    // player - turning it saves the round, rolling or finishing instead busts.
+    private bool bustPending;
     // Dice on the table this turn (the first ones of the list); the rest are hidden.
     private int diceInTurn;
 
@@ -619,6 +624,8 @@ public class DiceManager : MonoBehaviour
     private IReadOnlyList<CardInstance> cards = Array.Empty<CardInstance>();
     // Mult gained this round by destroying dice (Destroy Face cards); added to every hand's mult.
     private float roundMult;
+    // Cyan dice already turned to 1 this round: each turns once per round.
+    private readonly HashSet<Dice> cyanTurned = new HashSet<Dice>();
     // Rerolls earned by cards in a finished round, for the next one - carried into the next turn too.
     private int carriedRerolls;
     private Tween comboPunchTween;
@@ -718,7 +725,7 @@ public class DiceManager : MonoBehaviour
         else anim.shakeStrength = target;
     }
 
-    private bool CanLock => TurnActive && HasRolled && !IsRolling && !finishing && HasRerollsLeft;
+    private bool CanLock => TurnActive && HasRolled && !IsRolling && !finishing && !bustPending && HasRerollsLeft;
 
     private bool HasRerollsLeft => unlimitedRerolls || RerollsLeft > 0;
 
@@ -1189,9 +1196,11 @@ public class DiceManager : MonoBehaviour
         HasRolled = false;
         finishing = false;
         landingPending = 0;
+        bustPending = false;
         RerollsLeft = RerollsFor(cards) + carriedRerolls;
         carriedRerolls = 0;
         roundMult = 0f;
+        cyanTurned.Clear();
 
         // A turn's first round: the table has only just opened, so the dice are tidied at once - unlocked, upright,
         // the destroyed ones back. Later rounds leave them exactly as the last round did (place, face, tilt, lock):
@@ -1332,6 +1341,11 @@ public class DiceManager : MonoBehaviour
     public void Roll()
     {
         if (!TurnActive || finishing || IsRolling || introRunning) return;
+        if (bustPending)
+        {
+            Bust();
+            return;
+        }
 
         bool firstThrow = !HasRolled;
         if (firstThrow) ReleaseDice();
@@ -1355,7 +1369,7 @@ public class DiceManager : MonoBehaviour
             die.Seal();
             if (sealedDieMult > 0f)
                 Popup(string.Format(popups.sealedMultFormat, CardEffect.FormatMult(sealedDieMult)), die.transform,
-                    popups.sealedOffset, popups.gainColor);
+                    popups.sealedOffset, hoverOutline.sealedColor);
         }
 
         HasRolled = true;
@@ -1505,7 +1519,8 @@ public class DiceManager : MonoBehaviour
     /// <summary>The owned card a right click on <paramref name="die"/> would use right now, or null.</summary>
     public CardInstance DieActionFor(Dice die)
     {
-        if (!CanAct || !InPlay(die) || die.IsSealed) return null;
+        // A pending bust can only be saved by a cyan die: a card can't rethrow or change the dice meanwhile.
+        if (!CanAct || bustPending || !InPlay(die) || die.IsSealed) return null;
 
         foreach (CardInstance card in cards)
         {
@@ -1520,9 +1535,12 @@ public class DiceManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>A cyan die not showing 1, while the dice can be acted on: a right click turns it to 1.</summary>
+    /// <summary>
+    /// A cyan die not showing 1 and not yet turned this round, while the dice can be acted on: a right click turns
+    /// it to 1.
+    /// </summary>
     private bool CanTurnToOne(Dice die) =>
-        CanAct && InPlay(die) && !die.IsSealed && die.Kind == DiceKind.Cyan && die.Value != 1;
+        CanAct && InPlay(die) && !die.IsSealed && die.Kind == DiceKind.Cyan && die.Value != 1 && !cyanTurned.Contains(die);
 
     /// <summary>True when right clicking <paramref name="die"/> would use a card on it (or turn a cyan die to 1).</summary>
     public bool HasDieAction(Dice die) => DieActionFor(die) != null || CanTurnToOne(die);
@@ -1538,10 +1556,23 @@ public class DiceManager : MonoBehaviour
         {
             if (!CanTurnToOne(die)) return;
             DiceScore old = shownScore;
+            cyanTurned.Add(die);
             die.Flip(1);
             PlaySfx(flipSfx);
+            if (bustPending)
+            {
+                if (!MakesHand(ValuesOf(thrown), savesFromBust: true))
+                {
+                    // Still nothing: another cyan die may yet save it.
+                    if (!CyanCanSaveThrow()) Bust();
+                    else UpdateUI();
+                    return;
+                }
+                bustPending = false;
+            }
             UpdateUI();
             ShowRollPopups(old, shownScore);
+            if (autoFinishWhenOutOfRerolls && !HasRerollsLeft && !AnyDieAction()) Finish();
             return;
         }
 
@@ -1597,6 +1628,11 @@ public class DiceManager : MonoBehaviour
     public void Finish()
     {
         if (!TurnActive || !HasRolled || IsRolling || finishing) return;
+        if (bustPending)
+        {
+            Bust();
+            return;
+        }
         finishing = true;
 
         int[] values = Values();
@@ -1660,7 +1696,8 @@ public class DiceManager : MonoBehaviour
         UpdateUI();
         if (pendingResult.riskyPassed) Popup(popups.cardUpgradedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
 
-        if (spotlight.text) AfterDelay(spotlight.delay, manager => manager.SpotlightOutcome());
+        float spotlightDelay = spotlight.delay + (pendingResult.passed ? spotlight.passedExtraDelay : 0f);
+        if (spotlight.text) AfterDelay(spotlightDelay, manager => manager.SpotlightOutcome());
         else AfterDelay(finishDelay, manager => manager.CompleteTurn());
     }
 
@@ -1803,6 +1840,7 @@ public class DiceManager : MonoBehaviour
         foreach (Dice die in dice)
             if (die) die.StopRoll();
         landingPending = 0;
+        bustPending = false;
         introRunning = false;
         finishing = true;
 
@@ -1855,6 +1893,7 @@ public class DiceManager : MonoBehaviour
         TurnActive = false;
         finishing = false;
         landingPending = 0;
+        bustPending = false;
         turnCallback = null;
         pendingResult = null;
         roundResults.Clear();
@@ -1871,6 +1910,14 @@ public class DiceManager : MonoBehaviour
 
         if (thrownCanBust && !MakesHand(ValuesOf(thrown), savesFromBust: true))
         {
+            // A cyan die could still turn it around: the player gets the chance before it busts.
+            if (CyanCanSaveThrow())
+            {
+                bustPending = true;
+                UpdateUI();
+                onRolled?.Invoke();
+                return;
+            }
             Bust();
             return;
         }
@@ -1890,6 +1937,7 @@ public class DiceManager : MonoBehaviour
     /// </summary>
     private void Bust()
     {
+        bustPending = false;
         finishing = true;
 
         int[] values = Values();
@@ -1909,6 +1957,20 @@ public class DiceManager : MonoBehaviour
         onRolled?.Invoke();
 
         AfterDelay(roundScoreAlertDelay, manager => manager.RoundScored());
+    }
+
+    /// <summary>Whether turning one of the thrown cyan dice to 1 would make the throw a hand that doesn't bust.</summary>
+    private bool CyanCanSaveThrow()
+    {
+        foreach (Dice die in thrown)
+        {
+            if (!CanTurnToOne(die)) continue;
+            List<int> values = new List<int>();
+            foreach (Dice other in thrown)
+                if (InPlay(other)) values.Add(other == die ? 1 : other.Value);
+            if (MakesHand(values, savesFromBust: true)) return true;
+        }
+        return false;
     }
 
     private static int[] ValuesOf(List<Dice> some)

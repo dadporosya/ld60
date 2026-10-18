@@ -19,7 +19,7 @@ public enum DiceKind
     Pink = 3,
     [Tooltip("Lands on the face most of the other dice show (the highest of a tie).")]
     Green = 4,
-    [Tooltip("Right click to turn it to 1, whenever the dice are down.")]
+    [Tooltip("Right click to turn it to 1, once per round, whenever the dice are down.")]
     Cyan = 5,
     [Tooltip("Lands on a face no other die shows.")]
     Red = 6,
@@ -114,7 +114,7 @@ public class DiceKindOffer
         new DiceKindOffer(DiceKind.Yellow, "Yellow Die", "Always rolls even.", new Color(1f, 0.88f, 0.3f, 1f), "even"),
         new DiceKindOffer(DiceKind.Pink, "Pink Die", "Never rolls 1, 2 or 3.", new Color(1f, 0.55f, 0.8f, 1f), "6"),
         new DiceKindOffer(DiceKind.Green, "Green Die", "Rolls the value most of your dice show.", new Color(0.4f, 0.9f, 0.4f, 1f), "x"),
-        new DiceKindOffer(DiceKind.Cyan, "Cyan Die", "Right click to turn it to 1, any time.", new Color(0.35f, 0.95f, 0.95f, 1f), "1"),
+        new DiceKindOffer(DiceKind.Cyan, "Cyan Die", "Right click to turn it to 1, once per round.", new Color(0.35f, 0.95f, 0.95f, 1f), "1"),
         new DiceKindOffer(DiceKind.Red, "Red Die", "Always rolls a value no other die shows.", new Color(1f, 0.35f, 0.35f, 1f), "y"),
     };
 }

@@ -483,7 +483,16 @@ MonoBehaviour:
     badCardTitles: []
     neutralCardTitles: []
     hopefulCardTitles: []
-  pointsByRound: 64000000c80000002c01000090010000
+  roundGoals:
+  - points: 100
+    riskyPoints: 200
+  - points: 200
+    riskyPoints: 300
+  - points: 300
+    riskyPoints: 450
+  - points: 400
+    riskyPoints: 670
+  pointsByRound: 
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
   playerTalkable: {fileID: 2120501552}
@@ -883,6 +892,7 @@ MonoBehaviour:
     scoreOffset: {x: 0, y: 70}
     combinationOffset: {x: 0, y: 0}
     goalOffset: {x: 0, y: -70}
+    sealedOffset: {x: 0, y: 70}
     gainFormat: +{0}
     lossFormat: -{0}
     goalReachedText: Goal reached!
@@ -891,6 +901,7 @@ MonoBehaviour:
     bustText: Bust!
     rerollsGainedFormat: +{0} reroll
     multGainedFormat: +{0} mult
+    sealedMultFormat: +{0} mult
     roundScoreFormat: 'Round Score: {0}'
     roundStartFormat: Round {0}
     roundScoreScale: 1.6
@@ -8877,7 +8888,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0af3101b02754847a4040893a26f32c4, type: 2}
   - {fileID: 11400000, guid: b500047f19e84cd39520a4197a2b207d, type: 2}
   - {fileID: 11400000, guid: 92a51201d3124ebbab2666d4e75d5ddb, type: 2}
-  - {fileID: 11400000, guid: 95e7a6d7970b4acd92e4ff96f12b80ad, type: 2}
   - {fileID: 11400000, guid: 53e7507cb72249eaa5f735ce160563c9, type: 2}
   - {fileID: 11400000, guid: 425ae5416ce9473e866507971e649793, type: 2}
   - {fileID: 11400000, guid: 9f236161d674491799c7456c266985e7, type: 2}
@@ -8975,7 +8985,7 @@ MonoBehaviour:
   - enabled: 1
     kind: 5
     title: Cyan Die
-    description: Right click to turn it to 1, any time.
+    description: Right click to turn it to 1, once per round.
     tint: {r: 0.35, g: 0.95, b: 0.95, a: 1}
     iconSprite: 1
     weight: 1
@@ -9634,6 +9644,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IntroCutscene
   runOnStart: 0
   customDestroy: 0
+  showWarning: 1
+  warningText: This game raise heavy topics. Take care
+  warningDuration: 6
+  warningSkipLockout: 0.5
+  warningFadeOut: 0.5
+  warningSortingOrder: 1000
+  warningFont: {fileID: 0}
+  warningFontSize: 48
+  warningColor: {r: 1, g: 1, b: 1, a: 1}
   dialogue: {fileID: 11400000, guid: 08252676bbf69b94e90a1dca397e6bea, type: 2}
   fadeInDuration: 0
   blackHoldDuration: 1.04
