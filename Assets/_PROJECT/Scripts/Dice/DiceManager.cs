@@ -104,14 +104,14 @@ public class DicePopups
     public string multGainedFormat = "+{0} mult";
     [Tooltip("A round scored (last reroll landed or Finish pressed), shown before the next round starts. " +
              "{0} = the round's score, {1} = mult, {2} = points. Empty: none.")]
-    public string roundScoreFormat = "Combo Score: {0}";
+    public string roundScoreFormat = "Round Score: {0}";
     [Tooltip("The turn's next round starting. {0} = the round, {1} = rounds per turn. Empty: none.")]
     public string roundStartFormat = "Round {0}";
 
     [Header("Round Popups")]
-    [Tooltip("Size of the Combo Score popup, relative to the other popups.")]
+    [Tooltip("Size of the Round Score popup, relative to the other popups.")]
     [Min(0f)] public float roundScoreScale = 1.2f;
-    [Tooltip("Seconds the Combo Score popup stays up before fading, on top of the usual hold.")]
+    [Tooltip("Seconds the Round Score popup stays up before fading, on top of the usual hold.")]
     [Min(0f)] public float roundScoreExtraHold = 0.5f;
 
     [Header("Risky Goal Popup")]
@@ -279,11 +279,13 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private bool autoFinishWhenOutOfRerolls = true;
     [Tooltip("Seconds the result stays on the table before the turn hands back.")]
     [SerializeField, Min(0f)] private float finishDelay = 1.5f;
-    [Tooltip("Seconds after a round is scored (the last reroll landed or Finish was pressed) before the Combo Score " +
+    [Tooltip("Seconds after a round is scored (the last reroll landed or Finish was pressed) before the Round Score " +
              "popup shows. The next round - or, after the last one, the turn's result - follows it.")]
-    [SerializeField, Min(0f)] private float roundScoreAlertDelay = 0.4f;
-    [Tooltip("Seconds after the Combo Score popup before the turn's next round starts.")]
-    [SerializeField, Min(0f)] private float nextRoundDelay = 1f;
+    [SerializeField, Min(0f)] private float roundScoreAlertDelay = 0.8f;
+    [Tooltip("Seconds after the Round Score popup before the turn's next round starts (its Round popup shows).")]
+    [SerializeField, Min(0f)] private float nextRoundDelay = 1.2f;
+    [Tooltip("Seconds after the next round's Round popup before its dice are thrown.")]
+    [SerializeField, Min(0f)] private float nextRoundRollDelay = 1f;
     [Tooltip("Hide the table root when the turn ends.")]
     [SerializeField] private bool hideTableOnFinish = true;
     [Tooltip("The risky goal is the target times this. Reaching it upgrades the next cards offered.")]
@@ -1207,7 +1209,7 @@ public class DiceManager : MonoBehaviour
 
     /// <summary>
     /// Banks the finished round's points and opens the turn's next round: the dice keep their faces and are
-    /// thrown again straight away (<see cref="nextRoundDelay"/> was the pause).
+    /// thrown again after <see cref="nextRoundRollDelay"/>, once its Round popup has shown.
     /// </summary>
     private void NextRound()
     {
@@ -1217,10 +1219,17 @@ public class DiceManager : MonoBehaviour
         BankedScore += roundScore;
         onRoundFinished?.Invoke(roundScore);
 
+        // The intro keeps the Roll / Finish buttons off until the dice are thrown.
         PrepareRound(keepFaces: true);
-        introRunning = false;
         Popup(string.Format(popups.roundStartFormat, CurrentRound, RoundsInTurn), CombinationAnchor,
             popups.combinationOffset, popups.roundStartColor);
+        AfterDelay(nextRoundRollDelay, manager => manager.ThrowNextRound());
+    }
+
+    private void ThrowNextRound()
+    {
+        if (!TurnActive) return;
+        introRunning = false;
         Roll();
     }
 
@@ -1693,11 +1702,11 @@ public class DiceManager : MonoBehaviour
     private void CreatePopup(string text, Transform anchor, Vector2 offset, Color color, float scale, float extraHold,
         AudioClip sfx)
     {
-        AlertDamageText alert = TextAlertManager.Instance.CreateTextAlert(text, anchor, color, offset);
+        // The scale goes in with it, so the alerts already up make room for its real size.
+        AlertDamageText alert = TextAlertManager.Instance.CreateTextAlert(text, anchor, color, offset, scale);
         if (!alert) return;
         PlaySfx(sfx);
         // Before the alert's Start, which reads the hold to schedule its fade.
-        alert.transform.localScale *= scale;
         alert.holdDuration += extraHold;
     }
 

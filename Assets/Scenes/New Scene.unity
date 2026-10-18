@@ -726,8 +726,8 @@ MonoBehaviour:
   firstRollCombinationReduction: 0.617
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
-  roundScoreAlertDelay: 0.4
-  nextRoundDelay: 1
+  roundScoreAlertDelay: 0.8
+  nextRoundDelay: 1.2
   hideTableOnFinish: 1
   riskyGoalMultiplier: 1.5
   tutorialDialogue: {fileID: 11400000, guid: 993b1b18e1955df48adff7cb82110f37, type: 2}
@@ -832,7 +832,7 @@ MonoBehaviour:
     cardUpgradedText: Card upgraded!
     rerollsGainedFormat: +{0} reroll
     multGainedFormat: +{0} mult
-    roundScoreFormat: 'Combo Score: {0}'
+    roundScoreFormat: 'Round Score: {0}'
     roundStartFormat: Round {0}
     roundScoreScale: 1.2
     roundScoreExtraHold: 0.5
