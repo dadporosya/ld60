@@ -166,12 +166,15 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
         if (IsSealed && !IsRemoved)
         {
+            if (outline) outline.effectDistance = style.sealedWidth;
             ShowOutline(true, style.sealedColor);
             return;
         }
 
         bool show = hovered && !IsRemoved && style.enabled &&
                     (!style.onlyWhenLockable || manager.CanLockNow || manager.HasDieAction(this));
+        // Keep the sealed width while it fades out; only a newly shown hover outline goes back to the hover width.
+        if (show && outline) outline.effectDistance = style.width;
         ShowOutline(show, style.color);
     }
 

@@ -70,6 +70,8 @@ public class DiceOutlineStyle
     [Tooltip("Always shown on a sealed die - one locked before the last roll, which can't be touched any more this " +
              "round. Shown even with the hover outline off.")]
     public Color sealedColor = new Color(0.95f, 0.2f, 0.2f, 1f);
+    [Tooltip("Outline thickness (UI units) of a sealed die.")]
+    public Vector2 sealedWidth = new Vector2(8f, 8f);
 }
 
 /// <summary>
@@ -409,6 +411,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private bool addDiceSum = true;
     [Tooltip("A round whose dice make no hand (Nothing) scores 0 - no dice sum, no card bonuses.")]
     [SerializeField] private bool noPointsWithoutCombination = false;
+    [Tooltip("+mult for every sealed die (locked before a roll, so locked for the rest of the round).")]
+    [SerializeField, Min(0f)] private float sealedDieMult = 0.1f;
     [Tooltip("Each hand's bonus. Defaults from Balance/dice_balance.py (POINTS), which also works out " +
              "LevelManager's targets from it.")]
     [SerializeField] private List<CombinationScore> combinations = new List<CombinationScore>
@@ -569,6 +573,18 @@ public class DiceManager : MonoBehaviour
     }
 
     private static bool InPlay(Dice die) => die && die.gameObject.activeSelf && !die.IsRemoved;
+
+    /// <summary>Mult added to every hand this round: <see cref="roundMult"/> + <see cref="sealedDieMult"/> per sealed die.</summary>
+    private float ExtraMult
+    {
+        get
+        {
+            int sealedCount = 0;
+            foreach (Dice die in dice)
+                if (InPlay(die) && die.IsSealed) sealedCount++;
+            return roundMult + sealedCount * sealedDieMult;
+        }
+    }
 
     private bool finishing;
     private int landingPending;
@@ -1937,7 +1953,7 @@ public class DiceManager : MonoBehaviour
     /// <summary>
     /// The best score <paramref name="values"/> can make: every hand they contain is scored with the cards'
     /// bonuses and the highest total wins. A score is points x mult. Points start at the hand's points (+ the dice
-    /// sum), mult at 1 + <paramref name="extraMult"/> (gained this round, e.g. by destroying dice). Then, over all
+    /// sum), mult at 1 + <paramref name="extraMult"/> (gained this round, e.g. by destroying dice or sealing them). Then, over all
     /// cards that count: + points, x points, + mult, x mult. With <see cref="noPointsWithoutCombination"/>, dice
     /// that make no hand score 0.
     /// </summary>
@@ -2016,7 +2032,7 @@ public class DiceManager : MonoBehaviour
     /// </summary>
     private DiceScore RoundScore(IReadOnlyList<int> values)
     {
-        DiceScore score = Evaluate(values, cards, roundMult);
+        DiceScore score = Evaluate(values, cards, ExtraMult);
         CombinationScore entry = ScoreFor(score.combination);
         if (entry == null || entry.countsAsCombination) return score;
 
@@ -2111,7 +2127,7 @@ public class DiceManager : MonoBehaviour
         // A scored round shows what it banked: a hand that doesn't count drops to 0 as the round ends.
         if (!TurnActive || !HasRolled) shownScore = null;
         else if (finishing && roundResults.Count >= CurrentRound) shownScore = roundResults[roundResults.Count - 1].score;
-        else if (!IsRolling) shownScore = Evaluate(Values(), cards, roundMult);
+        else if (!IsRolling) shownScore = Evaluate(Values(), cards, ExtraMult);
 
         UpdateTargetText();
 
