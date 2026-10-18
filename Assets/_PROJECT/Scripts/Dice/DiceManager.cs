@@ -285,7 +285,7 @@ public class DiceTurnResult
 /// further Roll (as many as the player likes with <see cref="unlimitedRerolls"/>, else up to
 /// <see cref="rerollsPerRound"/> plus card bonuses) rethrows the unlocked ones. A roll seals the dice locked for it:
 /// they stay locked for the rest of the round (red outline). A reroll whose rolled dice make no combination by
-/// themselves busts: the round scores 0 and ends at once - unless they show a 1 (Single One). <see cref="Finish"/> - or running out of rerolls - scores
+/// themselves busts: the round scores 0 and ends at once - unless they show a 1 or a 3 (One or Three). <see cref="Finish"/> - or running out of rerolls - scores
 /// the best poker hand the dice make, cards included, and banks it. After the last round the banked points are
 /// checked against the target.</para>
 ///
@@ -356,7 +356,7 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Reroll as often as the player likes, until Finish (or a bust). Off: Rerolls Per Round (plus cards) only.")]
     [SerializeField] private bool unlimitedRerolls = true;
     [Tooltip("A reroll whose rolled dice (the locked ones left out) make no combination busts: the round scores 0 " +
-             "and ends at once. Rolling a 1 (Single One, when enabled) saves it.")]
+             "and ends at once. Rolling a 1 or a 3 (One or Three, when enabled) saves it.")]
     [SerializeField] private bool bustWithoutCombination = true;
     [Tooltip("The round's first throw (every die) can bust too.")]
     [SerializeField] private bool bustOnFirstThrow = false;
@@ -412,7 +412,7 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private List<CombinationScore> combinations = new List<CombinationScore>
     {
         new CombinationScore(PokerDiceCombination.Nothing, "Nothing", 0),
-        new CombinationScore(PokerDiceCombination.SingleOne, "Single One", 0),
+        new CombinationScore(PokerDiceCombination.SafeFace, "One or Three", 0),
         new CombinationScore(PokerDiceCombination.OnePair, "Pair", 10),
         new CombinationScore(PokerDiceCombination.TwoPair, "Two Pair", 20),
         new CombinationScore(PokerDiceCombination.ThreeOfAKind, "Three of a Kind", 30),
@@ -1430,7 +1430,7 @@ public class DiceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Whether <paramref name="values"/> make any hand that counts as a combination. <see cref="PokerDiceCombination.SingleOne"/>
+    /// Whether <paramref name="values"/> make any hand that counts as a combination. <see cref="PokerDiceCombination.SafeFace"/>
     /// only counts with <paramref name="savesFromBust"/> (it keeps a reroll from busting, but isn't a combination
     /// for the first throw's odds).
     /// </summary>
@@ -1438,7 +1438,7 @@ public class DiceManager : MonoBehaviour
     {
         foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values, StraightGapsFor(cards)))
         {
-            if (hand == PokerDiceCombination.SingleOne)
+            if (hand == PokerDiceCombination.SafeFace)
             {
                 if (savesFromBust && ScoreFor(hand) != null) return true;
             }
@@ -1978,8 +1978,8 @@ public class DiceManager : MonoBehaviour
 
             int points = Mathf.RoundToInt((entry.points + (addDiceSum ? diceSum : 0) + addedPoints) * pointsFactor);
             float mult = (1f + extraMult + addedMult) * multFactor;
-            // Single One only saves from a bust: without a combination there are no points to make.
-            if (noPointsWithoutCombination && hand == PokerDiceCombination.SingleOne) points = 0;
+            // One or Three only saves from a bust: without a combination there are no points to make.
+            if (noPointsWithoutCombination && hand == PokerDiceCombination.SafeFace) points = 0;
             int total = Mathf.RoundToInt(points * mult);
 
             if (best != null && (total < best.total ||

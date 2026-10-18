@@ -50,6 +50,8 @@ public enum CardEffectType
     FlipFace = 13,
     [Tooltip("Straights may skip Amount missing faces: 1 2 4 5 6 is a large straight, 1 2 4 5 a small one.")]
     GapStraight = 14,
+    [Tooltip("When more dice are Parity (odd / even) than not.")]
+    MostParity = 15,
 }
 
 /// <summary>
@@ -116,7 +118,7 @@ public class CardEffect
 
     /// <summary>Cards that change the score, through their <see cref="operation"/>.</summary>
     public bool IsScoring => type is CardEffectType.Always or CardEffectType.Combination or CardEffectType.FaceValue
-        or CardEffectType.Pattern or CardEffectType.Parity or CardEffectType.AllParity;
+        or CardEffectType.Pattern or CardEffectType.Parity or CardEffectType.AllParity or CardEffectType.MostParity;
 
     /// <summary>Mult / multiplier cards: their number is <see cref="multiplier"/>, not an amount.</summary>
     public bool UsesMultiplier => IsScoring && operation != ScoreOperation.AddPoints;
@@ -149,6 +151,11 @@ public class CardEffect
                 foreach (int v in values)
                     if (!IsOfParity(v)) return 0;
                 return 1;
+            case CardEffectType.MostParity:
+                int matching = 0;
+                foreach (int v in values)
+                    if (IsOfParity(v)) matching++;
+                return matching * 2 > values.Count ? 1 : 0;
             default: return 0;
         }
     }
@@ -226,6 +233,7 @@ public class CardEffect
             case CardEffectType.Pattern: return $"{pattern}: {operationText}";
             case CardEffectType.Parity: return $"{operationText} for each {Parity} die";
             case CardEffectType.AllParity: return $"{operationText} if every die is {Parity}";
+            case CardEffectType.MostParity: return $"{operationText} if more dice are {Parity} than {OtherParity}";
             default: return "";
         }
     }
@@ -271,6 +279,7 @@ public class CardEffect
     }
 
     private string Parity => parity == DiceParity.Odd ? "odd" : "even";
+    private string OtherParity => parity == DiceParity.Odd ? "even" : "odd";
 
     public static string Nicify(PokerDiceCombination combination) =>
         Regex.Replace(combination.ToString(), "(\\B[A-Z])", " $1");

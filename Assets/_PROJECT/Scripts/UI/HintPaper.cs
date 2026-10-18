@@ -93,11 +93,11 @@ public class HintPaper : MonoBehaviour
     [SerializeField] private string combinationLine = "{0} - {1}";
     [Tooltip("Put between a combination's dice icons. Empty: the icons touch (spacing then comes from the sprite asset's glyph advance).")]
     [SerializeField] private string iconGap = "";
-    [Tooltip("Leave out combinations worth no points (Nothing). Single One is always listed - it saves a reroll from busting.")]
+    [Tooltip("Leave out combinations worth no points (Nothing). One or Three is always listed - it saves a reroll from busting.")]
     [SerializeField] private bool skipZeroPoints = true;
-    [Tooltip("Single One's line: it is worth no points, it only saves a reroll from busting. Same placeholders as " +
+    [Tooltip("One or Three's line: it is worth no points, it only saves a reroll from busting. Same placeholders as " +
              "Combination Line. Empty: Combination Line.")]
-    [SerializeField] private string singleOneLine = "{0} - no bust";
+    [SerializeField] private string safeFaceLine = "{0} - no bust";
 
     [Header("Audio")]
     [SerializeField] private AudioClip openSfx;
@@ -190,12 +190,12 @@ public class HintPaper : MonoBehaviour
         foreach (CombinationScore entry in dice.Combinations)
         {
             if (entry == null || !entry.enabled) continue;
-            bool singleOne = entry.combination == PokerDiceCombination.SingleOne;
-            if (skipZeroPoints && entry.points == 0 && !singleOne) continue;
+            bool safeFace = entry.combination == PokerDiceCombination.SafeFace;
+            if (skipZeroPoints && entry.points == 0 && !safeFace) continue;
             string icons = DiceIcons.Combination(entry.combination, iconGap ?? "");
             if (icons.Length == 0) continue;
 
-            string line = singleOne && !string.IsNullOrEmpty(singleOneLine) ? singleOneLine : combinationLine;
+            string line = safeFace && !string.IsNullOrEmpty(safeFaceLine) ? safeFaceLine : combinationLine;
             if (text.Length > 0) text.Append('\n');
             text.AppendFormat(line, icons, entry.points, entry.displayName);
         }

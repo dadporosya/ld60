@@ -1,0 +1,172 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dcec694305a5204ab6568f1443d2ad1, type: 3}
+  m_Name: GoodEndingCall
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueContainer
+  speakerIds:
+  - 1
+  - 2
+  speakerPrefabs:
+  - {fileID: 0}
+  - {fileID: 0}
+  nodes:
+  - nodeId: 0
+    speakerId: 2
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Hello?
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 1
+    speakerId: 1
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Hi, dad...
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 2
+    speakerId: 2
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: You again
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 3
+    speakerId: 1
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Dad, I...
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 4
+    speakerId: 1
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: I...
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 5
+    speakerId: 1
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: I love you, Dad
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  defaultVoiceClips: []

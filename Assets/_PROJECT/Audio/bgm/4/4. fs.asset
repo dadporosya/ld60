@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 4. fs
   m_EditorClassIdentifier: Assembly-CSharp::BGMObject
   playTypeOverride: 0
-  full: {fileID: 0}
-  intro: {fileID: 8300000, guid: fc488e18379b67c4baff627d42448dcd, type: 3}
-  loop: {fileID: 8300000, guid: e6a61e862404b7e4bbe03f7009c8be4a, type: 3}
+  full: {fileID: 8300000, guid: e6a61e862404b7e4bbe03f7009c8be4a, type: 3}
+  intro: {fileID: 8300000, guid: e6a61e862404b7e4bbe03f7009c8be4a, type: 3}
+  loop: {fileID: 0}
   outro: {fileID: 0}

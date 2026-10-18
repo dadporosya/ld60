@@ -474,7 +474,7 @@ MonoBehaviour:
   - name: Father
     spotlightTitle: 
     isFinal: 1
-    lockedDialogue: {fileID: 0}
+    lockedDialogue: {fileID: 11400000, guid: bc0802cdf0d911c4c8ce5ccaca01e2a3, type: 2}
     startDialogue: {fileID: 0}
     speakerTalkable: {fileID: 1251089179}
     badDialogue: {fileID: 11400000, guid: 04c6ff0519d746f48f75bcbb656782fe, type: 2}
@@ -765,7 +765,7 @@ MonoBehaviour:
   rerollsPerRound: 3
   autoFirstRoll: 1
   firstRollDelay: 1
-  firstRollCombinationReduction: 1
+  firstRollCombinationReduction: 0
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
   roundScoreAlertDelay: 0.8
@@ -789,7 +789,7 @@ MonoBehaviour:
   - enabled: 1
     countsAsCombination: 1
     combination: 10
-    displayName: Single One
+    displayName: One or Three
     points: 0
   - enabled: 0
     countsAsCombination: 0
@@ -900,6 +900,13 @@ MonoBehaviour:
     riskyGoalColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
     roundScoreColor: {r: 1, g: 0.9, b: 0.45, a: 1}
     roundStartColor: {r: 1, g: 1, b: 1, a: 1}
+  showDieInfo: 1
+  dieInfoDelay: 0.6
+  dieInfoPrefab: {fileID: 0}
+  dieInfoParent: {fileID: 0}
+  dieInfoOffset: {x: 0, y: 220}
+  dieInfoScale: 0.6
+  dieInfoFadeDuration: 0.15
   spotlight:
     root: {fileID: 118505316}
     text: {fileID: 1531122480}
@@ -1778,11 +1785,13 @@ MonoBehaviour:
   introCutscene: {fileID: 0}
   startSongAfterIntro: 1
   goodEndingDialogue: {fileID: 0}
+  goodEndingCutscene: {fileID: 1150178273}
   badEndingDialogue: {fileID: 0}
-  deathCutscene: {fileID: 0}
+  deathCutscene: {fileID: 689042684}
   songFadeOnGoodEnding: 3
   goodEndingAfterFinalLevel: 1
   deathAfterFinalLevel: 1
+  goodEndingNeedsAllHopeful: 1
   fadeAroundRoundEnd: 1
   roundEndCoverDuration: 0.6
   tableHideDelay: 0.3
@@ -2075,8 +2084,9 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1148301526}
-  - {fileID: 689042683}
   - {fileID: 2072675786}
+  - {fileID: 689042683}
+  - {fileID: 1150178272}
   m_Father: {fileID: 291783876}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &354913509
@@ -3667,7 +3677,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 1, g: 0.7028302, b: 0.9855354, a: 1}
+  textColor: {r: 1, g: 0.5330188, b: 0.97542214, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 0c97bc262fec732419d4722dd9223c02, type: 3}
   dialogueManager: {fileID: 0}
@@ -4005,6 +4015,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeathCutscene
   runOnStart: 0
   customDestroy: 0
+  bgm: {fileID: 11400000, guid: 0802dbf4764d13a4b93d837601567caf, type: 2}
+  bgmStart: 2
+  bgmFade: 1.5
+  bgmOnce: 1
+  openOnBlack: 1
+  openingFadeDuration: 1.5
+  openingFadeEase: 1
+  openingHold: 2
+  openingReveal: 1.5
+  openingRevealEase: 1
   vnDialogue: {fileID: 11400000, guid: 2e616d7fe376bc34396be7d593eafb38, type: 2}
   blackFadeDuration: 5.4
   blackFadeEase: 1
@@ -4670,7 +4690,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 0.97402066, g: 1, b: 0.740566, a: 1}
+  textColor: {r: 0.70261914, g: 0.504717, b: 1, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: ca675fb2edd582d438372811fff5b040, type: 3}
   dialogueManager: {fileID: 0}
@@ -4741,9 +4761,9 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 244570388}
-  - {fileID: 2052019987}
   - {fileID: 1901275428}
+  - {fileID: 2052019987}
+  - {fileID: 244570388}
   - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
@@ -5357,7 +5377,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 0.759434, g: 1, b: 0.7732798, a: 1}
+  textColor: {r: 0.495283, g: 1, b: 0.5201051, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: ad377b28be75a9f4c9a04b83fe6a2a06, type: 3}
   dialogueManager: {fileID: 0}
@@ -5530,6 +5550,7 @@ MonoBehaviour:
   combinationLine: '{0} - {1}'
   iconGap: 
   skipZeroPoints: 1
+  safeFaceLine: '{0} - no bust'
   openSfx: {fileID: 0}
   closeSfx: {fileID: 0}
   onOpened:
@@ -5856,7 +5877,81 @@ MonoBehaviour:
   currentCutScene: {fileID: 2072675787}
   currentCutScenePath: 
   defaultLabel: Cutscenes/
-  runOnStart: 1
+  runOnStart: 0
+--- !u!1 &1150178271
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1150178272}
+  - component: {fileID: 1150178273}
+  m_Layer: 0
+  m_Name: GoodEndingCutscene
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1150178272
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1150178271}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 353301000}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1150178273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1150178271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 781177d13e40b964eb8750d282ecedb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoodEndingCutscene
+  runOnStart: 0
+  customDestroy: 0
+  bgm: {fileID: 11400000, guid: 0802dbf4764d13a4b93d837601567caf, type: 2}
+  bgmFade: 1.5
+  bgmOnce: 1
+  openOnBlack: 1
+  openingFadeDuration: 1.5
+  openingFadeEase: 1
+  openingHold: 2
+  openingReveal: 1.5
+  openingRevealEase: 1
+  vnDialogue: {fileID: 11400000, guid: 3636be73ad68dac42a19c56e9372eb9a, type: 2}
+  blackFadeDuration: 6.15
+  blackFadeEase: 1
+  blackSoundsFadeOut: 2
+  blackHold: 4
+  ringClip: {fileID: 8300000, guid: 0ef97fee35ac1d840aa45b695b54ea51, type: 3}
+  ringVolume: 1
+  ringHold: 3.33
+  ringFadeOut: 0.25
+  callDialogue: {fileID: 11400000, guid: db95be2c052374749b6d59bcb353db26, type: 2}
+  playerTalkable: {fileID: 2120501554}
+  playerSpeakerId: 1
+  fatherTalkable: {fileID: 1251089181}
+  fatherSpeakerId: 2
+  hangUpSfx: {fileID: 0}
+  hangUpVolume: 1
+  endHold: 3
+  endFadeOut: 3
+  quitAtEnd: 1
 --- !u!1 &1150933096
 GameObject:
   m_ObjectHideFlags: 0
@@ -6473,7 +6568,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 0.7688679, g: 0.78129053, b: 1, a: 1}
+  textColor: {r: 0.4292453, g: 0.45826676, b: 1, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 1d44c77ca969e0c4fb99255422c6ac67, type: 3}
   dialogueManager: {fileID: 0}

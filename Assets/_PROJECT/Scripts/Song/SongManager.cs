@@ -274,6 +274,29 @@ public class SongManager : MonoBehaviour
         onBgmChanged?.Invoke(bgm);
     }
 
+    /// <summary>
+    /// Crossfades into <paramref name="bgm"/> and plays it through once, then falls silent. Unlike <see cref="Play"/>
+    /// it doesn't become the BGMManager's default.
+    /// </summary>
+    public void PlayOnce(BGMObject bgm, float fade)
+    {
+        if (!bgm)
+        {
+            h.Out("SongManager: no track to play.");
+            return;
+        }
+
+        if (!Bgm)
+        {
+            h.Out($"SongManager: no BGMManager to play {bgm.name}.");
+            return;
+        }
+
+        Current = bgm;
+        Bgm.PlayBGMOnce(bgm, fade, becomeDefault: false, returnToDefault: false);
+        onBgmChanged?.Invoke(bgm);
+    }
+
     /// <summary>Fades the music out over <paramref name="fade"/> seconds.</summary>
     public void Stop(float fade = 0f)
     {

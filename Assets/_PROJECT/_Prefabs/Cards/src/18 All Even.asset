@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a41d21fc66d36464987736c980b2be7e, type: 3}
   m_Name: 18 All Even
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  goodTitle: "All Even"
-  badTitle: "All Even"
-  description: "The result is multiplied by {0} if all dice are even"
+  goodTitle: "Mostly Even"
+  badTitle: "Mostly Even"
+  description: "The result is multiplied by {0} if there are more even dice than odd"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0
   effect:
-    type: 9
+    type: 15
     operation: 2
     amount: 0
     multiplier: 2

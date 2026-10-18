@@ -15,16 +15,19 @@ public enum PokerDiceCombination
     /// <summary>Two different faces three times each, e.g. 2 2 2 5 5 5 (needs 6 dice). Six of a kind counts too.</summary>
     TwoThreeOfAKind,
     /// <summary>
-    /// A single 1 among the dice. Worth no points, but a reroll whose rolled dice show a 1 doesn't bust - the
-    /// round's points are safe. Ranks just above <see cref="Nothing"/>.
+    /// A 1 or a 3 among the dice (<see cref="PokerDiceEvaluator.SafeFaces"/>). Worth no points, but a reroll whose
+    /// rolled dice show one doesn't bust - the round's points are safe. Ranks just above <see cref="Nothing"/>.
     /// </summary>
-    SingleOne,
+    SafeFace,
 }
 
 /// <summary>Which poker dice hands a set of dice values contains.</summary>
 public static class PokerDiceEvaluator
 {
     public const int Faces = 6;
+
+    /// <summary>The faces that make <see cref="PokerDiceCombination.SafeFace"/>: any one of them saves a reroll from busting.</summary>
+    public static readonly int[] SafeFaces = { 1, 3 };
 
     /// <summary>
     /// Every hand <paramref name="values"/> (1..6) contains - a full house also counts as a pair and
@@ -61,18 +64,23 @@ public static class PokerDiceEvaluator
         if (max >= 4) result.Add(PokerDiceCombination.FourOfAKind);
         if (max >= 5) result.Add(PokerDiceCombination.FiveOfAKind);
         if (triples >= 2 || max >= 6) result.Add(PokerDiceCombination.TwoThreeOfAKind);
-        if (counts[1] >= 1) result.Add(PokerDiceCombination.SingleOne);
+        foreach (int face in SafeFaces)
+            if (counts[face] >= 1)
+            {
+                result.Add(PokerDiceCombination.SafeFace);
+                break;
+            }
         return result;
     }
 
     /// <summary>
-    /// How hands order when they score the same: higher wins. The enum order, but <see cref="PokerDiceCombination.SingleOne"/>
+    /// How hands order when they score the same: higher wins. The enum order, but <see cref="PokerDiceCombination.SafeFace"/>
     /// (appended last) sits just above <see cref="PokerDiceCombination.Nothing"/>.
     /// </summary>
     public static int Rank(PokerDiceCombination hand) => hand switch
     {
         PokerDiceCombination.Nothing => 0,
-        PokerDiceCombination.SingleOne => 1,
+        PokerDiceCombination.SafeFace => 1,
         _ => (int)hand + 1,
     };
 

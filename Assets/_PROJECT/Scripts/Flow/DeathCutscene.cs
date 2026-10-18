@@ -9,8 +9,10 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
-/// The hero's death, in four steps:
+/// The hero's death, in five steps:
 /// <list type="number">
+/// <item>The opening black (<see cref="openOnBlack"/>): the screen fades to black, holds, then the black fades away
+/// as the visual novel dialogue starts.</item>
 /// <item>The visual novel dialogue (<see cref="vnDialogue"/>), cutting off whatever dialogue was playing.</item>
 /// <item>The <see cref="FadeImageController"/> covers the screen with black, every other sound (music, ambients,
 /// whatever still plays) fades out, and <see cref="darkAmbient"/> loops in. After <see cref="deathSfxDelay"/>
@@ -22,8 +24,8 @@ using UnityEngine.UI;
 /// playing its own dialogue. Whichever was picked, the game closes after it.</item>
 /// </list>
 ///
-/// <para>Optionally the music crossfades into <see cref="bgm"/>, either as the cutscene starts or after the shot
-/// (<see cref="bgmStart"/>).</para>
+/// <para>Optionally the music crossfades into <see cref="bgm"/>: with the opening black, as the visual novel
+/// dialogue starts, or after the shot (<see cref="bgmStart"/>) - looping, or just once (<see cref="bgmOnce"/>).</para>
 ///
 /// <para>Put it on its OWN GameObject (or a prefab): <see cref="CutSceneBase.Run"/> clones the whole GameObject
 /// it sits on. <see cref="FuneralGameManager.BadEnding"/> plays it through <see cref="Play"/>; with
@@ -51,14 +53,32 @@ public class DeathCutscene : CutSceneBase
         OnStart,
         /// <summary>With the new ambient, after the shot; it fades out with the ambients before the game closes.</summary>
         AfterShot,
+        /// <summary>As the opening black fades in (falls back to OnStart without one); it fades out with the black like any music.</summary>
+        OnOpeningBlack,
     }
 
     [Header("Music")]
     [Tooltip("Crossfaded to during the cutscene (see Bgm Start). Empty: no new music.")]
     [SerializeField] private BGMObject bgm;
-    [SerializeField] private BgmStart bgmStart = BgmStart.OnStart;
+    [SerializeField] private BgmStart bgmStart = BgmStart.OnOpeningBlack;
     [Tooltip("Seconds the new music crossfades in over.")]
     [SerializeField, Min(0f)] private float bgmFade = 1.5f;
+    [Tooltip("The new music plays through once, then falls silent. Off: it loops.")]
+    [SerializeField] private bool bgmOnce = true;
+
+    [Header("0. Opening black")]
+    [Tooltip("The cutscene opens by fading to black and holding it before the visual novel dialogue. " +
+             "Off: the dialogue cuts straight in.")]
+    [SerializeField] private bool openOnBlack = true;
+    [Tooltip("Seconds the screen fades to black over as the cutscene starts.")]
+    [SerializeField, Min(0f)] private float openingFadeDuration = 1.5f;
+    [SerializeField] private Ease openingFadeEase = Ease.Linear;
+    [Tooltip("Seconds the black holds before the visual novel dialogue starts.")]
+    [SerializeField, Min(0f)] private float openingHold = 2f;
+    [Tooltip("Seconds the black fades away over as the visual novel dialogue starts. " +
+             "Negative: it stays, and the dialogue plays over the black.")]
+    [SerializeField] private float openingReveal = 1.5f;
+    [SerializeField] private Ease openingRevealEase = Ease.Linear;
 
     [Header("1. Visual novel dialogue")]
     [SerializeField] private VisualNovelDialogueContainer vnDialogue;
@@ -145,8 +165,11 @@ public class DeathCutscene : CutSceneBase
     private ChoiceFork choiceFork;
     private int forkPick = -1;
 
-    /// <summary>Whether it opens with a visual novel dialogue (step 1), or goes straight to the black.</summary>
-    public bool HasDialogue => vnDialogue;
+    /// <summary>
+    /// Whether it wants the screen black from the start: it opens on the black (step 0), or has no visual novel
+    /// dialogue and goes straight to the black step.
+    /// </summary>
+    public bool OpensOnBlack => openOnBlack || !vnDialogue;
 
     /// <summary>Runs the cutscene. It never hands control back: it ends by reloading the scene or closing the game.</summary>
     public void Play() => RunInstance();
@@ -155,6 +178,7 @@ public class DeathCutscene : CutSceneBase
     {
         base.Init();
         cutsceneSteps.Clear();
+        cutsceneSteps.Add(OpeningStep());
         cutsceneSteps.Add(DialogueStep());
         cutsceneSteps.Add(BlackStep());
         cutsceneSteps.Add(AfterShotStep());
@@ -165,9 +189,24 @@ public class DeathCutscene : CutSceneBase
     // Steps
     // ---------------------------------------------------------------------
 
+    private IEnumerator OpeningStep()
+    {
+        if (!openOnBlack) yield break;
+
+        // The new music comes in under the fade, not after it.
+        if (bgmStart == BgmStart.OnOpeningBlack) PlayBgm();
+
+        FadeImageController fade = FadeImageController.Instance;
+        if (!fade) h.Out("DeathCutscene: no FadeImageController, the screen doesn't go black.");
+        else if (openingFadeDuration <= 0f) fade.SetAlpha(1f);
+        else yield return fade.FadeIn(openingFadeDuration, openingFadeEase, useUnscaledTime: true).ToYieldInstruction();
+
+        if (openingHold > 0f) yield return new WaitForSecondsRealtime(openingHold);
+    }
+
     private IEnumerator DialogueStep()
     {
-        if (bgmStart == BgmStart.OnStart) PlayBgm();
+        if (bgmStart == BgmStart.OnStart || (bgmStart == BgmStart.OnOpeningBlack && !openOnBlack)) PlayBgm();
 
         HubDialogueRunner runner = HubDialogueRunner.Instance;
         if (!runner || !vnDialogue) yield break;
@@ -175,6 +214,14 @@ public class DeathCutscene : CutSceneBase
         bool done = false;
         // Cuts off whatever is playing; the stage stays up so the black covers it, rather than the hub flashing in between.
         runner.InterruptAndPlay(vnDialogue, () => done = true, hideStage: false);
+
+        // The stage is set up under the opening black by now: let it show.
+        FadeImageController fade = FadeImageController.Instance;
+        if (openOnBlack && fade && openingReveal >= 0f)
+        {
+            if (openingReveal == 0f) fade.SetAlpha(0f);
+            else fade.Fadeout(openingReveal, openingRevealEase, useUnscaledTime: true);
+        }
 
         while (!done && runner.IsPlaying) yield return null;
         if (!done) h.Out("DeathCutscene: the visual novel dialogue was cut off, the cutscene goes on.");
@@ -369,13 +416,24 @@ public class DeathCutscene : CutSceneBase
         }
     }
 
-    /// <summary>Crossfades the music into <see cref="bgm"/> (through the <see cref="SongManager"/> when there is one).</summary>
+    /// <summary>
+    /// Crossfades the music into <see cref="bgm"/> (through the <see cref="SongManager"/> when there is one), once
+    /// or looping (<see cref="bgmOnce"/>).
+    /// </summary>
     private void PlayBgm()
     {
         if (!bgm) return;
 
-        if (SongManager.Instance) SongManager.Instance.Play(bgm, bgmFade);
-        else if (BGMManager.Instance) BGMManager.Instance.PlayBGMAsNewDefault(bgm, bgmFade);
+        if (SongManager.Instance)
+        {
+            if (bgmOnce) SongManager.Instance.PlayOnce(bgm, bgmFade);
+            else SongManager.Instance.Play(bgm, bgmFade);
+        }
+        else if (BGMManager.Instance)
+        {
+            if (bgmOnce) BGMManager.Instance.PlayBGMOnce(bgm, bgmFade, becomeDefault: false, returnToDefault: false);
+            else BGMManager.Instance.PlayBGMAsNewDefault(bgm, bgmFade);
+        }
         else h.Out($"DeathCutscene: no SongManager / BGMManager to play {bgm.name}.");
     }
 

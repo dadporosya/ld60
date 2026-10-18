@@ -12,12 +12,13 @@ using UnityEngine.Events;
 /// level's win or loss dialogue -> card pick (Hope or
 /// Hate) -> back to the hub (between the round and the pick the screen fades to black and back, see
 /// <see cref="fadeAroundRoundEnd"/>), the name struck off the list. Once everyone has been called: the good
-/// ending (calling dad). Both endings close the game. After each level's win / loss dialogue the music
+/// ending (calling dad) when every level reached its risky goal, else the bad one (<see cref="GoodEndingEarned"/>).
+/// Both endings close the game. After each level's win / loss dialogue the music
 /// switches to the track for how many rounds have been played (<see cref="SongManager.PlayAfterRound"/>).</para>
 ///
 /// <para>Alternatively the phone shows the level list (<see cref="LevelPhoneInteractable"/>): a picked level
 /// goes start dialogue -> dice -> win / loss dialogue -> card pick -> hub (<see cref="PlayLevel"/>); finishing
-/// the final level plays the good ending.</para>
+/// the final level plays the good ending when every level reached its risky goal (Hopeful), else the bad one.</para>
 /// </summary>
 public class FuneralGameManager : MonoBehaviour
 {
@@ -53,22 +54,31 @@ public class FuneralGameManager : MonoBehaviour
     [SerializeField] private IntroCutscene introCutscene;
     [Tooltip("Start the SongManager's start music once the intro is over (otherwise something else calls StartSong).")]
     [SerializeField] private bool startSongAfterIntro = true;
-    [Tooltip("Everyone has been called: the hero calls his father. \"I love you, dad.\"")]
+    [Tooltip("Everyone has been called: the hero calls his father. \"I love you, dad.\" " +
+             "Unused when a Good Ending Cutscene is set.")]
     [SerializeField] private VisualNovelDialogueContainer goodEndingDialogue;
+    [Tooltip("Played by GoodEnding instead of the Good Ending Dialogue: its dialogue, the black, the ringing and " +
+             "the call with dad. Optional.")]
+    [SerializeField] private GoodEndingCutscene goodEndingCutscene;
     [Tooltip("The gun, his eyes, black, the shot - and \"You understand that it's not the only way out, right?\" " +
              "Nothing plays it by itself any more: call BadEnding. Unused when a Death Cutscene is set.")]
     [SerializeField] private VisualNovelDialogueContainer badEndingDialogue;
     [Tooltip("Played by BadEnding instead of the Bad Ending Dialogue: its dialogue, the black and the shot, then " +
              "the restart / quit fork. Optional.")]
     [SerializeField] private DeathCutscene deathCutscene;
-    [Tooltip("Seconds the music fades out over when the good ending starts. Negative: it keeps playing.")]
+    [Tooltip("Seconds the music fades out over when the good ending starts. Negative: it keeps playing. " +
+             "Unused when a Good Ending Cutscene is set (it brings in its own music).")]
     [SerializeField] private float songFadeOnGoodEnding = 3f;
     [Tooltip("Finishing the final level (picked from the phone's level list) plays the good ending. " +
              "Unused while Death After Final Level is on.")]
     [SerializeField] private bool goodEndingAfterFinalLevel = true;
     [Tooltip("After the final level's round there is no card pick: once its outcome dialogue fades to black, " +
-             "the bad ending (the Death Cutscene) plays.")]
+             "the ending plays - the good one when it's earned (Good Ending Needs All Hopeful), else the bad one " +
+             "(the Death Cutscene).")]
     [SerializeField] private bool deathAfterFinalLevel = true;
+    [Tooltip("The good ending only plays when every level, the final one too, reached its risky goal (Hopeful); " +
+             "otherwise the bad ending plays in its place. Off: finishing is enough.")]
+    [SerializeField] private bool goodEndingNeedsAllHopeful = true;
 
     [Header("Round end")]
     [Tooltip("After a dice round the FadeImageController covers the screen: black -> win / loss dialogue -> " +
@@ -177,6 +187,7 @@ public class FuneralGameManager : MonoBehaviour
         h.CreateStaticInstance(this, ref Instance, setDontDestroy: false);
         // Unassigned: the one in the scene - found now, before playing it makes clones of it.
         Resolve(ref deathCutscene, null);
+        Resolve(ref goodEndingCutscene, null);
     }
 
     private void Start()
@@ -396,8 +407,8 @@ public class FuneralGameManager : MonoBehaviour
         // The level decides what plays after the round, and moves on to the next one.
         VisualNovelDialogueContainer outcome = Levels ? Levels.CompleteLevel(passed, risky) : null;
         CardMood mood = passed ? CardMood.Hope : CardMood.Hate;
-        // The final level ends in the death cutscene instead of a card pick.
-        bool deathAfter = deathAfterFinalLevel && Levels && Levels.IsFinal(Levels.LastPlayedIndex);
+        // The final level ends in the ending (good or bad) instead of a card pick.
+        bool endingAfter = deathAfterFinalLevel && Levels && Levels.IsFinal(Levels.LastPlayedIndex);
         int id = ++roundEndId;
         roundEndFading = true;
         bool hasOutcome = outcome && outcome.nodes != null && outcome.nodes.Count > 0;
@@ -420,7 +431,7 @@ public class FuneralGameManager : MonoBehaviour
             // No dialogue (none assigned, or an empty one): straight from the black to the card pick.
             if (!hasOutcome)
             {
-                if (deathAfter) DeathAfterCall(contact, passed);
+                if (endingAfter) EndingAfterCall(contact, passed);
                 else OfferCardRevealed(contact, passed, mood, id);
                 return;
             }
@@ -441,7 +452,7 @@ public class FuneralGameManager : MonoBehaviour
                     RoundEndFade(true, dialogueCoverDuration, id, () =>
                     {
                         Dialogues.HideStage();
-                        if (deathAfter) DeathAfterCall(contact, passed);
+                        if (endingAfter) EndingAfterCall(contact, passed);
                         else OfferCardRevealed(contact, passed, mood, id);
                     });
                 }, hideStage: false);
@@ -468,16 +479,38 @@ public class FuneralGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// The final level's outcome call is over and the screen is black: no card pick, the death cutscene plays.
-    /// The black fades away into its dialogue - or, when it has none, stays for its black step.
+    /// The final level's outcome call is over and the screen is black: no card pick, the ending plays - the good
+    /// one when earned (<see cref="GoodEndingEarned"/>), else the death cutscene. The black fades away into its
+    /// dialogue - or, when its cutscene opens on the black (or has no dialogue), stays for it.
     /// </summary>
-    private void DeathAfterCall(ContactData contact, bool passed)
+    private void EndingAfterCall(ContactData contact, bool passed)
     {
         onCallEnded?.Invoke(contact, passed);
         phoneLevel = -1;
         debugRound = false;
-        if (deathCutscene && !deathCutscene.HasDialogue) roundEndFading = false;
+
+        if (GoodEndingEarned)
+        {
+            if (goodEndingCutscene && goodEndingCutscene.OpensOnBlack) roundEndFading = false;
+            GoodEnding();
+            return;
+        }
+
+        if (deathCutscene && deathCutscene.OpensOnBlack) roundEndFading = false;
         BadEnding();
+    }
+
+    /// <summary>
+    /// Whether the game has earned the good ending: every level reached its risky goal (Hopeful), or
+    /// <see cref="goodEndingNeedsAllHopeful"/> is off.
+    /// </summary>
+    public bool GoodEndingEarned => !goodEndingNeedsAllHopeful || (Levels && Levels.AllHopeful);
+
+    /// <summary>The game is over: the good ending when it's earned, else the bad one.</summary>
+    private void FinalEnding()
+    {
+        if (GoodEndingEarned) GoodEnding();
+        else BadEnding();
     }
 
     /// <summary>
@@ -581,29 +614,36 @@ public class FuneralGameManager : MonoBehaviour
         {
             bool final = Levels && Levels.IsFinal(phoneLevel);
             phoneLevel = -1;
-            if (final && goodEndingAfterFinalLevel) GoodEnding();
+            if (final && goodEndingAfterFinalLevel) FinalEnding();
             else SetPhase(Phase.Hub);
             return;
         }
 
         if (HasUncalledContacts) SetPhase(Phase.Hub);
-        else GoodEnding();
+        else FinalEnding();
     }
 
     // ---------------------------------------------------------------------
     // Endings
     // ---------------------------------------------------------------------
 
-    /// <summary>Everyone was called in time: the hero calls his father.</summary>
+    /// <summary>The game was won with every level Hopeful (<see cref="GoodEndingEarned"/>): the hero calls his father.</summary>
     public void GoodEnding()
     {
         if (CurrentPhase == Phase.Ending) return;
         SetPhase(Phase.Ending);
 
-        if (Songs && songFadeOnGoodEnding >= 0f) Songs.Stop(songFadeOnGoodEnding);
+        // Clears a round end's black, unless the cutscene opens on it (see EndingAfterCall).
+        CancelRoundEnd();
+        if (DialPanel) DialPanel.Hide();
+
+        // The cutscene crossfades into its own music.
+        if (!goodEndingCutscene && Songs && songFadeOnGoodEnding >= 0f) Songs.Stop(songFadeOnGoodEnding);
 
         onGoodEnding?.Invoke();
-        Dialogues.InterruptAndPlay(goodEndingDialogue, QuitGame);
+        // The cutscene cuts off whatever dialogue is playing itself, and closes the game on its own.
+        if (goodEndingCutscene) goodEndingCutscene.Play();
+        else Dialogues.InterruptAndPlay(goodEndingDialogue, QuitGame);
     }
 
     /// <summary>Cuts off whatever is happening and plays the bad ending.</summary>

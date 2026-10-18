@@ -216,10 +216,24 @@ public class LevelManager : MonoBehaviour
     public bool AllLevelsPlayed => CurrentIndex >= levels.Count;
 
     private readonly HashSet<int> completed = new HashSet<int>();
+    // How each played level's round went, by level index (a replayed level keeps its latest).
+    private readonly Dictionary<int, LevelOutcome> outcomes = new Dictionary<int, LevelOutcome>();
 
     public bool IsCompleted(int index) => completed.Contains(index);
 
     public bool IsFinal(int index) => index >= 0 && index < levels.Count && levels[index].isFinal;
+
+    /// <summary>True once every level in the list, the final one too, has been played and reached its risky goal (Hopeful).</summary>
+    public bool AllHopeful
+    {
+        get
+        {
+            if (levels.Count == 0) return false;
+            for (int i = 0; i < levels.Count; i++)
+                if (!outcomes.TryGetValue(i, out LevelOutcome outcome) || outcome != LevelOutcome.Hopeful) return false;
+            return true;
+        }
+    }
 
     /// <summary>True once every level that isn't final is completed.</summary>
     public bool FinalUnlocked
@@ -302,6 +316,7 @@ public class LevelManager : MonoBehaviour
         LastPlayedPassed = false;
         LastOutcome = LevelOutcome.Bad;
         completed.Clear();
+        outcomes.Clear();
     }
 
     /// <summary>Call as the current level's round starts.</summary>
@@ -331,6 +346,7 @@ public class LevelManager : MonoBehaviour
         LastPlayedIndex = index;
         LastPlayedPassed = passed;
         LastOutcome = Level.OutcomeFor(passed, risky);
+        if (index >= 0) outcomes[index] = LastOutcome;
         CurrentIndex++;
 
         if (passed) onLevelWon?.Invoke(index);

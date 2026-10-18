@@ -46,7 +46,7 @@ public static class DiceIcons
             case PokerDiceCombination.FourOfAKind: return Join(gap, X, X, X, X);
             case PokerDiceCombination.FiveOfAKind: return Join(gap, X, X, X, X, X);
             case PokerDiceCombination.TwoThreeOfAKind: return Join(gap, X, X, X, Y, Y, Y);
-            case PokerDiceCombination.SingleOne: return Face(1);
+            case PokerDiceCombination.SafeFace: return string.Join(" / ", FaceIcons(PokerDiceEvaluator.SafeFaces));
             default: return "";
         }
     }
@@ -92,6 +92,7 @@ public static class DiceIcons
 
             case CardEffectType.Parity:
             case CardEffectType.AllParity:
+            case CardEffectType.MostParity:
                 return Parity(effect.parity);
 
             case CardEffectType.GapStraight:
@@ -137,7 +138,7 @@ public static class DiceIcons
                     if (c >= '1' && c - '0' <= PokerDiceEvaluator.Faces) faces[c - '0'] = true;
                 break;
         }
-        bool parity = effect.type is CardEffectType.Parity or CardEffectType.AllParity;
+        bool parity = effect.type is CardEffectType.Parity or CardEffectType.AllParity or CardEffectType.MostParity;
 
         return DiceWords.Replace(text, match =>
         {

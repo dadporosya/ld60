@@ -20,7 +20,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: "Select a die to lock it"
+    text: Click on a die to lock it
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -45,7 +45,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: "Locked dice won't be rerolled"
+    text: Locked dices won't be rerolled any more
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -70,7 +70,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: "Press S to open or close the combination hints"
+    text: You can roll dices any number of times
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -95,7 +95,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: "Here you can see how many points your current combination gives you, and your target number of points"
+    text: "But if your rerolled dices doesn\u2019t give you any combination "
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -120,7 +120,32 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: "If you don't get any combination, you will lose all your points at the end of the round"
+    text: You will be busted, and loose all your points
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 0, g: 0, b: 0, a: 0}
+    autoSkip: 0
+    autoSkipDelay: 0
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 5
+    speakerId: 
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: You will get points for the your final combination
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -162,7 +187,27 @@ MonoBehaviour:
       enableEyes: 0
       talk: 1
     - enableObject: 1
+      modelId: 1
+      enableEyes: 0
+      talk: 0
+  - speakerObjectIndex: 0
+    objectSettings:
+    - enableObject: 1
+      modelId: 0
+      enableEyes: 0
+      talk: 1
+    - enableObject: 1
       modelId: 2
+      enableEyes: 0
+      talk: 1
+  - speakerObjectIndex: 0
+    objectSettings:
+    - enableObject: 1
+      modelId: 0
+      enableEyes: 0
+      talk: 1
+    - enableObject: 1
+      modelId: 3
       enableEyes: 0
       talk: 0
   - speakerObjectIndex: 0
@@ -174,16 +219,6 @@ MonoBehaviour:
     - enableObject: 1
       modelId: 3
       enableEyes: 0
-      talk: 1
-  - speakerObjectIndex: 0
-    objectSettings:
-    - enableObject: 1
-      modelId: 0
-      enableEyes: 0
-      talk: 1
-    - enableObject: 1
-      modelId: 4
-      enableEyes: 0
       talk: 0
   - speakerObjectIndex: 0
     objectSettings:
@@ -191,7 +226,7 @@ MonoBehaviour:
       modelId: 0
       enableEyes: 0
       talk: 1
-    - enableObject: 0
+    - enableObject: 1
       modelId: 4
       enableEyes: 0
       talk: 0
