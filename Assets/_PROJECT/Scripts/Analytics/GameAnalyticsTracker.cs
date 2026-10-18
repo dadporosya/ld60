@@ -13,7 +13,13 @@ using UnityEngine.SceneManagement;
 /// one (score: levels won). Each dice round is <c>Run:&lt;level name&gt;</c>, completed or failed with the dice
 /// total as score; a round cut off by the song running out fails.</para>
 ///
-/// <para><b>Design events</b> (value in brackets):
+/// <para><b>Level outcomes and endings</b> - one per player per level / run, so the event counts (or unique
+/// users) on the dashboard say how many players finished each level and how:
+/// <c>Level:&lt;level&gt;:Bad|Neutral|Hopeful|SongEnded</c> [dice total] - lost, passed, passed with the risky
+/// goal, or cut off by the song running out (the death that follows);
+/// <c>Ending:Good</c> [song seconds], <c>Ending:Death</c> [levels won].</para>
+///
+/// <para><b>Other design events</b> (value in brackets):
 /// <c>Song:Started</c>,
 /// <c>Hub:Interact:&lt;object&gt;</c> [song seconds],
 /// <c>Phone:Opened</c> [song seconds],
@@ -25,8 +31,6 @@ using UnityEngine.SceneManagement;
 /// <c>Dice:Rolls:&lt;level&gt;</c> [rolls this turn],
 /// <c>Dice:RiskyGoal:&lt;level&gt;</c> [total],
 /// <c>Card:Chosen:Hope|Hate:&lt;card&gt;</c>,
-/// <c>Ending:Good</c> [song seconds],
-/// <c>Ending:Bad</c> [levels won],
 /// <c>Game:Quit:&lt;phase&gt;</c> [song seconds] - closed before an ending.</para>
 ///
 /// <para>The SDK only sends from builds; in the editor it logs the calls when Info Log Editor is on in its
@@ -166,6 +170,9 @@ public class GameAnalyticsTracker : MonoBehaviour
         string level = LevelName(index);
         GameAnalytics.NewProgressionEvent(won ? GAProgressionStatus.Complete : GAProgressionStatus.Fail,
             "Run", level, lastDiceTotal);
+        // LevelManager records the outcome before it raises onLevelWon / onLevelLost.
+        LevelOutcome outcome = levels ? levels.LastOutcome : won ? LevelOutcome.Neutral : LevelOutcome.Bad;
+        Design($"Level:{level}:{outcome}", lastDiceTotal);
         if (activeLevel == level) activeLevel = null;
     }
 
@@ -215,11 +222,13 @@ public class GameAnalyticsTracker : MonoBehaviour
         // The song cut a round off: that level is lost too.
         if (activeLevel != null)
         {
-            GameAnalytics.NewProgressionEvent(GAProgressionStatus.Fail, "Run", activeLevel, dice ? dice.BankedScore : 0);
+            int banked = dice ? dice.BankedScore : 0;
+            GameAnalytics.NewProgressionEvent(GAProgressionStatus.Fail, "Run", activeLevel, banked);
+            Design($"Level:{activeLevel}:SongEnded", banked);
             activeLevel = null;
         }
 
-        Design("Ending:Bad", LevelsWon);
+        Design("Ending:Death", LevelsWon);
         EndRun(GAProgressionStatus.Fail);
     }
 
