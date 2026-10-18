@@ -1,10 +1,13 @@
 using System;
 using System.Collections;
 using PrimeTween;
+using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 /// <summary>
-/// The game's opening: the intro visual novel dialogue, then the <see cref="FadeImageController"/> covers
+/// The game's opening: a content warning on black (<see cref="showWarning"/>), the intro visual novel dialogue, then the <see cref="FadeImageController"/> covers
 /// the stage with black and fades away again, revealing the hub.
 ///
 /// <para>Put it on its OWN GameObject (or a prefab): <see cref="CutSceneBase.Run"/> clones the whole
@@ -16,6 +19,23 @@ using UnityEngine;
 /// </summary>
 public class IntroCutscene : CutSceneBase
 {
+    [Header("Warning")]
+    [Tooltip("The cutscene opens on a black frame with the warning text before the dialogue.")]
+    [SerializeField] private bool showWarning = true;
+    [SerializeField, TextArea] private string warningText = "This game raise heavy topics. Take care";
+    [Tooltip("Seconds the warning stays up, unless a key / click skips it.")]
+    [SerializeField, Min(0f)] private float warningDuration = 6f;
+    [Tooltip("Seconds after the warning comes up before a key / click can skip it (so a stray press doesn't).")]
+    [SerializeField, Min(0f)] private float warningSkipLockout = 0.5f;
+    [Tooltip("Seconds the warning fades away over, as the dialogue starts under it.")]
+    [SerializeField, Min(0f)] private float warningFadeOut = 0.5f;
+    [Tooltip("Sorting order of the warning's runtime canvas. Keep it above everything else.")]
+    [SerializeField] private int warningSortingOrder = 1000;
+    [Tooltip("Empty: TextMeshPro's default font.")]
+    [SerializeField] private TMP_FontAsset warningFont;
+    [SerializeField, Min(1f)] private float warningFontSize = 48f;
+    [SerializeField] private Color warningColor = Color.white;
+
     [Header("Dialogue")]
     [SerializeField] private VisualNovelDialogueContainer dialogue;
 
@@ -44,8 +64,96 @@ public class IntroCutscene : CutSceneBase
     {
         base.Init();
         cutsceneSteps.Clear();
+        cutsceneSteps.Add(WarningStep());
         cutsceneSteps.Add(DialogueStep());
         cutsceneSteps.Add(FadeStep());
+    }
+
+    private IEnumerator WarningStep()
+    {
+        if (!showWarning) yield break;
+
+        CanvasGroup warning = MakeWarning();
+
+        float elapsed = 0f;
+        while (elapsed < warningDuration)
+        {
+            if (elapsed >= warningSkipLockout && AnyPressThisFrame())
+            {
+                // Let the press pass, so it doesn't also advance the dialogue that starts next.
+                yield return null;
+                break;
+            }
+            yield return null;
+            elapsed += Time.unscaledDeltaTime;
+        }
+
+        // The dialogue starts under the warning while it fades away (it goes with the cutscene if cut off).
+        GameObject warningObject = warning.gameObject;
+        if (warningFadeOut <= 0f)
+        {
+            Destroy(warningObject);
+            yield break;
+        }
+        Tween.Alpha(warning, 0f, warningFadeOut, Ease.Linear, useUnscaledTime: true)
+            .OnComplete(warningObject, Destroy);
+    }
+
+    private static bool AnyPressThisFrame()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.anyKey.wasPressedThisFrame) return true;
+
+        Mouse mouse = Mouse.current;
+        if (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame ||
+                              mouse.middleButton.wasPressedThisFrame)) return true;
+
+        Gamepad gamepad = Gamepad.current;
+        return gamepad != null && (gamepad.buttonSouth.wasPressedThisFrame || gamepad.startButton.wasPressedThisFrame);
+    }
+
+    /// <summary>A screen-space overlay canvas on this cutscene: full-screen black, the warning text centred on it.</summary>
+    private CanvasGroup MakeWarning()
+    {
+        GameObject go = new GameObject("Warning Canvas", typeof(RectTransform), typeof(Canvas),
+            typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup));
+        go.transform.SetParent(transform, false);
+
+        Canvas canvas = go.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = warningSortingOrder;
+
+        CanvasScaler scaler = go.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        // Blocks clicks into whatever is behind it, too.
+        GameObject black = new GameObject("Black", typeof(RectTransform), typeof(Image));
+        black.transform.SetParent(go.transform, false);
+        Stretch((RectTransform)black.transform, Vector2.zero);
+        black.GetComponent<Image>().color = Color.black;
+
+        GameObject textObject = new GameObject("Text", typeof(RectTransform));
+        textObject.transform.SetParent(go.transform, false);
+        Stretch((RectTransform)textObject.transform, new Vector2(-200f, -200f));
+        TextMeshProUGUI text = textObject.AddComponent<TextMeshProUGUI>();
+        if (warningFont) text.font = warningFont;
+        text.fontSize = warningFontSize;
+        text.color = warningColor;
+        text.alignment = TextAlignmentOptions.Center;
+        text.raycastTarget = false;
+        text.text = warningText;
+
+        return go.GetComponent<CanvasGroup>();
+    }
+
+    private static void Stretch(RectTransform rect, Vector2 sizeDelta)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = sizeDelta;
     }
 
     private IEnumerator DialogueStep()

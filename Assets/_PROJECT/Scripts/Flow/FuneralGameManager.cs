@@ -356,6 +356,7 @@ public class FuneralGameManager : MonoBehaviour
         else Levels.BeginLevel();
 
         int pointsToPass = Levels ? Levels.PointsToPass : 0;
+        int riskyPointsToPass = Levels ? Levels.RiskyPointsToPass : 0;
         string title = Levels ? Levels.Current?.SpotlightTitle : null;
         // Showcases stay clickable during the round; its outcome dialogue waits for one still open.
         // The table stays up until the round end's black has covered it (see EndCall).
@@ -365,7 +366,7 @@ public class FuneralGameManager : MonoBehaviour
             if (result.riskyPassed && Cards) Cards.UpgradeNextChoice = true;
             bool passed = Levels ? Levels.Passes(result.total) : result.passed;
             AfterShowcase(() => EndCall(contact, passed, passed && result.riskyPassed));
-        }, title, keepTableUp: true);
+        }, title, keepTableUp: true, riskyTarget: riskyPointsToPass);
     }
 
     /// <summary>Runs <paramref name="action"/> now, or once the open showcase (and its dialogue) is gone.</summary>

@@ -78,10 +78,21 @@ public enum LevelOutcome
     Hopeful,
 }
 
+/// <summary>What one round needs: the points to pass, and the risky goal.</summary>
+[Serializable]
+public struct RoundGoal
+{
+    [Tooltip("Points the round needs to pass (the default goal).")]
+    [Min(0)] public int points;
+    [Tooltip("Points the risky goal needs (reaching it upgrades the next cards). 0: the points x the DiceManager's " +
+             "Risky Goal Multiplier.")]
+    [Min(0)] public int riskyPoints;
+}
+
 /// <summary>
 /// The goals of the game: a list of <see cref="Level"/>s, one per dice round, played in order, with which dialogue
 /// plays after a win or a loss. Once the list runs out, the last level repeats. How many points a round needs comes
-/// from a separate list, by how many rounds have been played (<see cref="pointsByRound"/>): the first round played
+/// from a separate list, by how many rounds have been played (<see cref="roundGoals"/>): the first round played
 /// needs the first entry, whichever level it is. Access via <c>LevelManager.Instance</c>.
 ///
 /// <para>Levels can also be picked in any order from the phone (<see cref="LevelPhoneInteractable"/>):
@@ -98,9 +109,19 @@ public class LevelManager : MonoBehaviour
         new Level { name = "Level 3", isFinal = true },
     };
 
-    [Tooltip("Points the dice round needs to pass, by how many rounds have been played this game: [0] for the first " +
-             "round, [1] for the second, ... - whichever level is picked. The last one repeats for later rounds.")]
-    [SerializeField] private List<int> pointsByRound = new List<int> { 173, 293, 381, 586 };
+    [Tooltip("Points the dice round needs - to pass, and for the risky goal - by how many rounds have been played this " +
+             "game: [0] for the first round, [1] for the second, ... - whichever level is picked. The last one repeats " +
+             "for later rounds.")]
+    [SerializeField] private List<RoundGoal> roundGoals = new List<RoundGoal>
+    {
+        new RoundGoal { points = 173 },
+        new RoundGoal { points = 293 },
+        new RoundGoal { points = 381 },
+        new RoundGoal { points = 586 },
+    };
+
+    // The old points-only list: moved into roundGoals (as their points) on load, then emptied.
+    [SerializeField, HideInInspector] private List<int> pointsByRound = new List<int>();
 
     [Tooltip("A level only counts as completed (struck off the phone, towards unlocking the final level) when its " +
              "round was won. Off: playing it is enough.")]
@@ -223,8 +244,14 @@ public class LevelManager : MonoBehaviour
     /// <summary>The level the next (or running) round plays; the last one once the list has run out.</summary>
     public Level Current => levels.Count > 0 ? levels[Mathf.Min(CurrentIndex, levels.Count - 1)] : null;
 
-    /// <summary>Points the next (or running) round needs: <see cref="pointsByRound"/>[<see cref="RoundsPlayed"/>], the last entry once they run out.</summary>
-    public int PointsToPass => pointsByRound.Count > 0 ? Mathf.Max(0, pointsByRound[Mathf.Min(RoundsPlayed, pointsByRound.Count - 1)]) : 0;
+    /// <summary>The next (or running) round's goals: <see cref="roundGoals"/>[<see cref="RoundsPlayed"/>], the last entry once they run out.</summary>
+    public RoundGoal CurrentGoal => roundGoals.Count > 0 ? roundGoals[Mathf.Min(RoundsPlayed, roundGoals.Count - 1)] : default;
+
+    /// <summary>Points the next (or running) round needs to pass.</summary>
+    public int PointsToPass => Mathf.Max(0, CurrentGoal.points);
+
+    /// <summary>Points the next (or running) round's risky goal needs; 0: the DiceManager's multiplier decides.</summary>
+    public int RiskyPointsToPass => Mathf.Max(0, CurrentGoal.riskyPoints);
 
     /// <summary>True once every level in the list has been played.</summary>
     public bool AllLevelsPlayed => CurrentIndex >= levels.Count;
@@ -268,7 +295,8 @@ public class LevelManager : MonoBehaviour
     {
         h.CreateStaticInstance(this, ref Instance, setDontDestroy: false);
         if (levels.Count == 0) h.Out("LevelManager: no levels set up.");
-        if (pointsByRound.Count == 0) h.Out("LevelManager: Points By Round is empty, rounds need 0 points.");
+        MigratePointsByRound();
+        if (roundGoals.Count == 0) h.Out("LevelManager: Round Goals is empty, rounds need 0 points.");
     }
 
     private void Update()
@@ -333,10 +361,22 @@ public class LevelManager : MonoBehaviour
         outcomes.Clear();
     }
 
+    private void OnValidate() => MigratePointsByRound();
+
+    private void MigratePointsByRound()
+    {
+        if (pointsByRound == null || pointsByRound.Count == 0) return;
+
+        roundGoals.Clear();
+        foreach (int points in pointsByRound) roundGoals.Add(new RoundGoal { points = points });
+        pointsByRound.Clear();
+    }
+
     /// <summary>Call as the current level's round starts.</summary>
     public void BeginLevel()
     {
-        h.Out($"LevelManager: {Current?.name ?? "no level"} (round {RoundsPlayed + 1}) - {PointsToPass} points to pass.");
+        h.Out($"LevelManager: {Current?.name ?? "no level"} (round {RoundsPlayed + 1}) - {PointsToPass} points to pass" +
+              (RiskyPointsToPass > 0 ? $", {RiskyPointsToPass} for the risky goal." : "."));
         onLevelStarted?.Invoke(CurrentIndex);
     }
 

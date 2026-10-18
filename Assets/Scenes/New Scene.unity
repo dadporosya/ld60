@@ -483,7 +483,7 @@ MonoBehaviour:
     badCardTitles: []
     neutralCardTitles: []
     hopefulCardTitles: []
-  pointsByRound: ad000000250100007d0100004a020000
+  pointsByRound: 64000000c80000002c01000090010000
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
   playerTalkable: {fileID: 2120501552}
@@ -747,6 +747,7 @@ MonoBehaviour:
     fadeDuration: 0.1
     onlyWhenLockable: 1
     sealedColor: {r: 0.95, g: 0.2, b: 0.2, a: 1}
+    sealedWidth: {x: 8, y: 8}
   sfxPitchRange: {x: 0.98, y: 1.02}
   rollSfx: {fileID: 8300000, guid: 0dee433ca9ac0d5459e2ef1577f4253e, type: 3}
   landSfx: {fileID: 8300000, guid: 9de58750eb52127408e569c699007d56, type: 3}
@@ -767,7 +768,7 @@ MonoBehaviour:
   rerollsPerRound: 3
   autoFirstRoll: 1
   firstRollDelay: 1
-  firstRollCombinationReduction: 0
+  firstRollCombinationReduction: 0.831
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
   roundScoreAlertDelay: 0.8
@@ -782,6 +783,7 @@ MonoBehaviour:
   alwaysPlayTutorial: 0
   addDiceSum: 1
   noPointsWithoutCombination: 0
+  sealedDieMult: 0.1
   combinations:
   - enabled: 1
     countsAsCombination: 1
@@ -5507,7 +5509,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -464.42996, y: 447}
+  m_AnchoredPosition: {x: -464.42996, y: 446.99997}
   m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364

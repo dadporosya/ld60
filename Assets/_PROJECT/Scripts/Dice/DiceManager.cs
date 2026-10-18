@@ -93,6 +93,8 @@ public class DicePopups
     public Vector2 scoreOffset = new Vector2(0f, 70f);
     public Vector2 combinationOffset = Vector2.zero;
     public Vector2 goalOffset = new Vector2(0f, -70f);
+    [Tooltip("Added to a die's position for the popup of it being sealed (locked for the rest of the round).")]
+    public Vector2 sealedOffset = new Vector2(0f, 70f);
 
     [Header("Text")]
     [Tooltip("{0} = points gained.")]
@@ -109,6 +111,9 @@ public class DicePopups
     public string rerollsGainedFormat = "+{0} reroll";
     [Tooltip("A die destroyed for mult (a card's right click). {0} = mult gained.")]
     public string multGainedFormat = "+{0} mult";
+    [Tooltip("A die sealed (locked before a roll, so locked for the rest of the round), shown near it. " +
+             "{0} = mult gained. Empty: none.")]
+    public string sealedMultFormat = "+{0} mult";
     [Tooltip("A round scored (last reroll landed or Finish pressed), shown before the next round starts. " +
              "{0} = the round's score, {1} = mult, {2} = points. Empty: none.")]
     public string roundScoreFormat = "Round Score: {0}";
@@ -387,7 +392,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField, Min(0f)] private float nextRoundRollDelay = 1f;
     [Tooltip("Hide the table root when the turn ends.")]
     [SerializeField] private bool hideTableOnFinish = true;
-    [Tooltip("The risky goal is the target times this. Reaching it upgrades the next cards offered.")]
+    [Tooltip("The risky goal is the target times this, unless the round sets its own (LevelManager Round Goals). " +
+             "Reaching it upgrades the next cards offered.")]
     [SerializeField, Min(1f)] private float riskyGoalMultiplier = 1.5f;
 
     [Header("Tutorial")]
@@ -554,8 +560,12 @@ public class DiceManager : MonoBehaviour
     public bool HasRolled { get; private set; }
     public int RerollsLeft { get; private set; }
     public int Target { get; private set; }
-    /// <summary>The risky goal: <see cref="Target"/> x <see cref="riskyGoalMultiplier"/>.</summary>
-    public int RiskyTarget => Mathf.CeilToInt(Target * riskyGoalMultiplier);
+    /// <summary>
+    /// The risky goal: the one <see cref="StartTurn"/> was given, else <see cref="Target"/> x <see cref="riskyGoalMultiplier"/>.
+    /// </summary>
+    public int RiskyTarget => riskyTargetOverride > 0 ? riskyTargetOverride : Mathf.CeilToInt(Target * riskyGoalMultiplier);
+    // The running turn's own risky goal (StartTurn); 0: the multiplier.
+    private int riskyTargetOverride;
     /// <summary>The scoring table: each hand's bonus points.</summary>
     public IReadOnlyList<CombinationScore> Combinations => combinations;
     public bool IsRolling => landingPending > 0;
@@ -1131,9 +1141,10 @@ public class DiceManager : MonoBehaviour
     /// with <paramref name="ownedCards"/>' bonuses. <paramref name="onFinished"/> gets the result once the
     /// last round's has been shown. <paramref name="spotlightTitle"/>: the spotlight's title frame (empty: none).
     /// <paramref name="keepTableUp"/>: the table stays up after the turn, until <see cref="HideTable"/>.
+    /// <paramref name="riskyTarget"/>: the risky goal; 0: <paramref name="target"/> x <see cref="riskyGoalMultiplier"/>.
     /// </summary>
     public void StartTurn(int target, IReadOnlyList<CardInstance> ownedCards, Action<DiceTurnResult> onFinished,
-        string spotlightTitle = null, bool keepTableUp = false)
+        string spotlightTitle = null, bool keepTableUp = false, int riskyTarget = 0)
     {
         Initialize();
 
@@ -1145,6 +1156,7 @@ public class DiceManager : MonoBehaviour
 
         TurnActive = true;
         Target = target;
+        riskyTargetOverride = Mathf.Max(0, riskyTarget);
         cards = ownedCards ?? Array.Empty<CardInstance>();
         turnCallback = onFinished;
         turnSpotlightTitle = spotlightTitle;
@@ -1338,7 +1350,13 @@ public class DiceManager : MonoBehaviour
 
         // The dice locked for this roll stay locked for the rest of the round.
         foreach (Dice die in DiceInPlay)
-            if (die.IsLocked) die.Seal();
+        {
+            if (!die.IsLocked || die.IsSealed) continue;
+            die.Seal();
+            if (sealedDieMult > 0f)
+                Popup(string.Format(popups.sealedMultFormat, CardEffect.FormatMult(sealedDieMult)), die.transform,
+                    popups.sealedOffset, popups.gainColor);
+        }
 
         HasRolled = true;
         Throw(toRoll, firstThrow, canBust: bustWithoutCombination && (!firstThrow || bustOnFirstThrow));
@@ -1600,13 +1618,15 @@ public class DiceManager : MonoBehaviour
             CombinationAnchor, popups.combinationOffset, popups.roundScoreColor, popups.roundScoreScale,
             popups.roundScoreExtraHold);
 
+        int total = BankedScore + score.total;
+        ShowGoalPopups(BankedScore, total);
+
         if (!IsLastRound)
         {
             AfterDelay(nextRoundDelay, manager => manager.NextRound());
             return;
         }
 
-        int total = BankedScore + score.total;
         EndTurn(total, total >= Target, RiskyTarget > 0 && total >= RiskyTarget);
     }
 
@@ -2147,7 +2167,7 @@ public class DiceManager : MonoBehaviour
             }
             else
             {
-                int accumulated = BankedScore + (finishing ? shownScore?.total ?? 0 : 0);
+                int accumulated = AccumulatedScore;
                 if (CurrentRound <= 1 && !HasRolled) counter.SetInstant(0);
                 else counter.SetValue(accumulated);
 
@@ -2208,12 +2228,18 @@ public class DiceManager : MonoBehaviour
     private int TurnTotal(DiceScore roundScore) => BankedScore + (roundScore?.total ?? 0);
 
     /// <summary>
-    /// The target text shows the target until the turn's total reaches it, then the risky goal - with a
-    /// punch as it switches. Back to the target if a reroll drops the total under it.
+    /// The points the turn has banked: the finished rounds, plus the round being finished. The running round's
+    /// dice don't count until it is finished.
     /// </summary>
-    /// <summary>The turn's total on screen has reached <see cref="Target"/> (always true without a target).</summary>
-    private bool TargetReached => Target <= 0 || ((shownScore != null || CurrentRound > 1) && TurnTotal(shownScore) >= Target);
+    private int AccumulatedScore => BankedScore + (finishing ? shownScore?.total ?? 0 : 0);
 
+    /// <summary>The banked points (<see cref="AccumulatedScore"/>) have reached <see cref="Target"/> (always true without a target).</summary>
+    private bool TargetReached => Target <= 0 || AccumulatedScore >= Target;
+
+    /// <summary>
+    /// The target text shows the target until the banked points reach it, then the risky goal - with a
+    /// punch as it switches.
+    /// </summary>
     private void UpdateTargetText()
     {
         bool reached = Target > 0 && TargetReached;
@@ -2242,23 +2268,28 @@ public class DiceManager : MonoBehaviour
     private Transform GoalAnchor => popups.goalAnchor ? popups.goalAnchor : Area;
 
     /// <summary>
-    /// After a landing: how much the score changed (+10 / -5), the hand the dice make, and a goal reached
-    /// (the turn's total climbing past the target or the risky goal).
+    /// After a landing: how much the score changed (+10 / -5) and the hand the dice make. Goals are only
+    /// reached by banked points (<see cref="ShowGoalPopups"/>).
     /// </summary>
     private void ShowRollPopups(DiceScore before, DiceScore after)
     {
         if (!popups.enabled || after == null) return;
 
-        int oldTotal = TurnTotal(before);
-        int newTotal = TurnTotal(after);
-        int change = newTotal - oldTotal;
+        int change = TurnTotal(after) - TurnTotal(before);
         if (change != 0)
             Popup(string.Format(change > 0 ? popups.gainFormat : popups.lossFormat, Mathf.Abs(change)), ScoreAnchor,
                 popups.scoreOffset, change > 0 ? popups.gainColor : popups.lossColor, bad: change < 0);
 
         if (after.combination != PokerDiceCombination.Nothing)
             Popup(after.combinationName, CombinationAnchor, popups.combinationOffset, popups.combinationColor);
+    }
 
+    /// <summary>
+    /// A finished round banked its points: a goal reached when the banked total climbs from
+    /// <paramref name="oldTotal"/> past the target or the risky goal.
+    /// </summary>
+    private void ShowGoalPopups(int oldTotal, int newTotal)
+    {
         if (Target > 0 && oldTotal < Target && newTotal >= Target)
             Popup(popups.goalReachedText, GoalAnchor, popups.goalOffset, popups.goalColor);
         if (RiskyTarget > 0 && oldTotal < RiskyTarget && newTotal >= RiskyTarget)
