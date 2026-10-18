@@ -19,12 +19,15 @@ from itertools import combinations_with_replacement
 FACES = 6
 DICE_COUNTS = (5, 6, 7)
 MAX_REROLLS = 5
-# The game's table (New Scene's DiceManager: 5 dice, 3 rerolls, 3 rounds a level, dice sum added).
-GAME_DICE, GAME_REROLLS, GAME_ROUNDS = 5, 3, 3
+# The game's table (New Scene's DiceManager: 6 dice, 3 rerolls, 3 rounds a level, dice sum added).
+GAME_DICE, GAME_REROLLS, GAME_ROUNDS = 6, 3, 3
 # What LevelManager.pointsByRound was tuned for before (5 dice, 4 rerolls, 1 round, PREV_POINTS), and those
 # targets. The new targets keep each one's pass chance.
 PREV_DICE, PREV_REROLLS, PREV_ROUNDS = 5, 4, 1
 PREV_TARGETS = [30, 47, 60, 105]
+# A target out of reach without cards before (the final level) gets this pass chance instead: the one its
+# 446 had on 5 dice.
+OUT_OF_REACH_PASS = 0.0482
 HANDS = ["Nothing", "OnePair", "TwoPair", "ThreeOfAKind", "SmallStraight", "LargeStraight",
          "FullHouse", "FourOfAKind", "FiveOfAKind"]
 
@@ -254,14 +257,11 @@ def main():
     p_prev = Table(PREV_DICE).level_pass_chances(PREV_POINTS, PREV_REROLLS, PREV_ROUNDS)
     p_new = table.level_pass_chances(POINTS, GAME_REROLLS, GAME_ROUNDS)
     target_rows = []
-    for n, t in enumerate(PREV_TARGETS):
+    for t in PREV_TARGETS:
         before = p_prev[t] if t < len(p_prev) else 0.0
-        if before > 0 or n == 0:
-            # the highest new target that is at least as easy as the old one
-            new = max(i for i, p in enumerate(p_new) if p >= before - 1e-9)
-        else:
-            # Out of reach without cards before: keep its ratio to the target before it.
-            new = round(target_rows[-1]["new_target"] * t / PREV_TARGETS[n - 1])
+        # the highest new target that is at least as easy as the old one
+        goal = before if before > 0 else OUT_OF_REACH_PASS
+        new = max(i for i, p in enumerate(p_new) if p >= goal - 1e-9)
         print(f"  prev {t:3} ({100 * before:6.2f}%) -> new {new:3} ({100 * p_new[new]:6.2f}%)")
         target_rows.append({"prev_target": t, "prev_pass_%": round(100 * before, 2),
                             "new_target": new, "new_pass_%": round(100 * p_new[new], 2)})

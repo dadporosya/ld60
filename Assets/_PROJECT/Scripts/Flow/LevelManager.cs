@@ -50,7 +50,7 @@ public class LevelManager : MonoBehaviour
 
     [Tooltip("Points the dice round needs to pass, by how many rounds have been played this game: [0] for the first " +
              "round, [1] for the second, ... - whichever level is picked. The last one repeats for later rounds.")]
-    [SerializeField] private List<int> pointsByRound = new List<int> { 111, 186, 255, 446 };
+    [SerializeField] private List<int> pointsByRound = new List<int> { 173, 293, 381, 586 };
 
     [Tooltip("A level only counts as completed (struck off the phone, towards unlocking the final level) when its " +
              "round was won. Off: playing it is enough.")]

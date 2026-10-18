@@ -459,7 +459,7 @@ MonoBehaviour:
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
-  pointsByRound: 6f000000ba000000ff000000be010000
+  pointsByRound: ad000000250100007d0100004a020000
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
   debugKeys: 1
@@ -593,7 +593,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab24cc559df6f734bac0d318f65d876b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DiceManager
-  startDiceCount: 5
+  startDiceCount: 6
   dicePrefab: {fileID: 7014600982508732748, guid: 0915b7b7e3e821e44a54fa1b4ccbfb7e, type: 3}
   diceParent: {fileID: 1073361887}
   diceSpacing: 8
@@ -4038,16 +4038,13 @@ MonoBehaviour:
   loopFrames: 1
   speaker: {fileID: 0}
   usableDuringDice: 1
-  song: {fileID: 0}
+  levels: {fileID: 0}
+  count: 0
   dialogues:
-  - fromProgress: 0
-    dialogue: {fileID: 11400000, guid: d6a754062960d3d4caed469b214a8905, type: 2}
-  - fromProgress: 0.25
-    dialogue: {fileID: 0}
-  - fromProgress: 0.5
-    dialogue: {fileID: 0}
-  - fromProgress: 0.75
-    dialogue: {fileID: 0}
+  - dialogue: {fileID: 11400000, guid: d6a754062960d3d4caed469b214a8905, type: 2}
+  - dialogue: {fileID: 0}
+  - dialogue: {fileID: 0}
+  - dialogue: {fileID: 0}
 --- !u!1 &778689432
 GameObject:
   m_ObjectHideFlags: 0
@@ -4283,9 +4280,9 @@ MonoBehaviour:
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
   - {fileID: 244570388}
+  - {fileID: 2052019987}
   - {fileID: 1901275428}
   - {fileID: 1743218968}
-  - {fileID: 2052019987}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -7955,7 +7952,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 03f1ce308c2c4a3aa578d8c51a0db947, type: 2}
   - {fileID: 11400000, guid: 8aa99602762f40c281bccbcd6a8e4d31, type: 2}
   cardPrefab: {fileID: 8211534820775114999, guid: 18ecd4166aa7d224ba714c034fe6bcc3, type: 3}
-  defaultChoiceCount: 2
+  defaultChoiceCount: 3
   allowOwnedPermanentCards: 1
   startingCards: []
   upgradeBonus: 0.5
@@ -7973,10 +7970,10 @@ MonoBehaviour:
   cardFadeDuration: 0.25
   burnScale: 1.3
   permanentCardsSpot: {fileID: 230680847}
-  permanentCardScale: 0.6
+  permanentCardScale: 0.52
   keptCardsHoverable: 1
-  keptHoverScale: 1.67
-  permanentCardSpacing: 12
+  keptHoverScale: 1.27
+  permanentCardSpacing: 8
   flyDuration: 0.5
   flyEase: 7
   permanentAppearDuration: 0.3

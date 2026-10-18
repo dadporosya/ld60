@@ -193,7 +193,7 @@ public class DiceManager : MonoBehaviour
     [Header("Dice")]
     [Tooltip("How many dice the table has. Spawned from Dice Prefab at scene start; dice already in the " +
              "list below count towards it. Extra Dice cards spawn more for the turns they're owned in.")]
-    [SerializeField, Min(1)] private int startDiceCount = 5;
+    [SerializeField, Min(1)] private int startDiceCount = 6;
     [Tooltip("Spawned to make up Start Dice Count. A prefab asset, or a template die in the scene (hidden, " +
              "never rolled).")]
     [SerializeField] private Dice dicePrefab;
@@ -248,6 +248,9 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Seconds the table waits after opening (and after the tutorial) before the first throw - the Roll " +
              "button stays off meanwhile.")]
     [SerializeField, Min(0f)] private float firstRollDelay = 1f;
+    [Tooltip("How much rarer any combination is on a round's first throw: 0.3 = 30% less likely. Does nothing " +
+             "with 6+ dice, which always make a hand.")]
+    [SerializeField, Range(0f, 1f)] private float firstRollCombinationReduction = 0.3f;
     [Tooltip("Score the dice as soon as the last reroll lands - unless a card's right click could still change them.")]
     [SerializeField] private bool autoFinishWhenOutOfRerolls = true;
     [Tooltip("Seconds the result stays on the table before the turn hands back.")]
@@ -933,16 +936,18 @@ public class DiceManager : MonoBehaviour
         }
 
         if (toRoll.Count == 0) return;
+        bool firstThrow = !HasRolled;
         HasRolled = true;
-        Throw(toRoll);
+        Throw(toRoll, firstThrow);
         PlaySfx(rollSfx);
         UpdateUI();
     }
 
     /// <summary>Throws <paramref name="toRoll"/>; the others stay put.</summary>
-    private void Throw(List<Dice> toRoll)
+    private void Throw(List<Dice> toRoll, bool firstThrow = false)
     {
         landingPending = toRoll.Count;
+        List<int> results = firstThrow ? FirstThrowResults(toRoll.Count) : RandomResults(toRoll.Count);
 
         // Dice staying put (locked) block their spots; each thrown die then claims where it will land.
         List<Vector3> taken = new List<Vector3>();
@@ -955,10 +960,36 @@ public class DiceManager : MonoBehaviour
             Vector3 landAt = PickSpot(die, taken, anywhere: false);
             taken.Add(Occupied(die, landAt));
 
-            int result = UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1);
-            die.Roll(result, rollAnimation, faceSprites, tumbleSprites, i * rollAnimation.stagger, landAt, OnDieLanded);
+            die.Roll(results[i], rollAnimation, faceSprites, tumbleSprites, i * rollAnimation.stagger, landAt, OnDieLanded);
         }
     }
+
+    private static List<int> RandomResults(int count)
+    {
+        List<int> results = new List<int>(count);
+        for (int i = 0; i < count; i++) results.Add(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
+        return results;
+    }
+
+    /// <summary>
+    /// A round's first throw: a combination is <see cref="firstRollCombinationReduction"/> less likely than
+    /// with fair dice. A throw that makes a hand is, at that chance, swapped for a fair throw that makes none.
+    /// </summary>
+    private List<int> FirstThrowResults(int count)
+    {
+        List<int> results = RandomResults(count);
+        if (!MakesHand(results) || UnityEngine.Random.value >= firstRollCombinationReduction) return results;
+
+        // Fair dice redrawn until they make no hand. 6+ dice always make one, so the tries are capped.
+        for (int attempt = 0; attempt < 500; attempt++)
+        {
+            List<int> retry = RandomResults(count);
+            if (!MakesHand(retry)) return retry;
+        }
+        return results;
+    }
+
+    private static bool MakesHand(IReadOnlyList<int> values) => PokerDiceEvaluator.Contained(values).Count > 1;
 
     /// <summary>Locks or unlocks <paramref name="die"/>, when locking is allowed right now.</summary>
     public void ToggleLock(Dice die)
