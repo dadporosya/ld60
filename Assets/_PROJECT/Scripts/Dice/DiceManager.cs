@@ -4,6 +4,7 @@ using PrimeTween;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -226,6 +227,11 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private AudioClip destroySfx;
     [SerializeField] private AudioClip passedSfx;
     [SerializeField] private AudioClip failedSfx;
+    [Tooltip("Played as a good text alert pops up: points gained, a combination, a goal reached, a card upgraded, " +
+             "rerolls gained.")]
+    [SerializeField] private AudioClip goodAlertSfx;
+    [Tooltip("Played as a bad text alert pops up: points lost.")]
+    [SerializeField] private AudioClip badAlertSfx;
 
     [Header("Turn")]
     [Tooltip("Dice games per turn. Each round gets its own rerolls; the points of every round add up, and " +
@@ -295,9 +301,8 @@ public class DiceManager : MonoBehaviour
     [Tooltip("{0} = rerolls left.")]
     [SerializeField] private string rerollLabel = "Reroll ({0})";
     [SerializeField] private Button finishButton;
-    [Tooltip("What the Finish button always says - written into its own text. It can only be pressed once the " +
-             "turn's score reaches the target (or the rerolls are used up); in a round before the last, only once " +
-             "its rerolls are used up.")]
+    [Tooltip("What the Finish button always says - written into its own text. It ends the round, and can be " +
+             "pressed any time the dice are down (not mid-roll, not before the first throw).")]
     [SerializeField] private string finishLabel = "Finish";
     [Tooltip("{0} = rerolls left.")]
     [SerializeField] private TextMeshProUGUI rerollsText;
@@ -337,6 +342,9 @@ public class DiceManager : MonoBehaviour
     [SerializeField, FormerlySerializedAs("roundBelowTargetColor")]
     private Color scoreBelowTargetColor = new Color(1f, 0.35f, 0.35f, 1f);
     [SerializeField] private TextMeshProUGUI combinationText;
+    [Tooltip("Combination Text's colour while the dice make no proper combination - only Nothing, or hands " +
+             "turned off in the scoring table.")]
+    [SerializeField] private Color noCombinationColor = new Color(1f, 0.35f, 0.35f, 1f);
     [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
              "in the scoring table) by driving its Shake Strength. Defaults to the TextAnimation on Combination Text " +
              "(added if missing); Shake is added to its animations when it has none.")]
@@ -351,6 +359,13 @@ public class DiceManager : MonoBehaviour
 
     [Header("Popups")]
     public DicePopups popups = new DicePopups();
+
+    [Header("Debug")]
+    [Tooltip("Debug only: during a turn the keys below end it on the spot - lost, won, or won with the risky goal.")]
+    [SerializeField] private bool debugKeys = true;
+    [SerializeField] private Key debugLoseKey = Key.W;
+    [SerializeField] private Key debugWinKey = Key.E;
+    [SerializeField] private Key debugRiskyWinKey = Key.R;
 
     [Header("Events")]
     public UnityEvent onTurnStarted = new UnityEvent();
@@ -441,6 +456,8 @@ public class DiceManager : MonoBehaviour
     private CountingText roundScoreCounter;
     // Score Text's own colour, from the scene: back to it once the target is reached.
     private Color? scoreColor;
+    // Combination Text's own colour, from the scene: back to it once the dice make a proper combination.
+    private Color? combinationColor;
 
     private static CountingText CounterOn(TextMeshProUGUI text, string format, ref CountingText counter)
     {
@@ -1047,14 +1064,20 @@ public class DiceManager : MonoBehaviour
         }
 
         int total = BankedScore + round.score.total;
+        EndTurn(total, total >= Target, RiskyTarget > 0 && total >= RiskyTarget);
+    }
+
+    /// <summary>Shows the turn's result and hands it back after <see cref="finishDelay"/>.</summary>
+    private void EndTurn(int total, bool passed, bool riskyPassed)
+    {
         pendingResult = new DiceTurnResult
         {
             rounds = new List<DiceRoundResult>(roundResults),
             total = total,
             target = Target,
-            passed = total >= Target,
+            passed = passed,
             riskyTarget = RiskyTarget,
-            riskyPassed = RiskyTarget > 0 && total >= RiskyTarget,
+            riskyPassed = riskyPassed,
         };
 
         if (resultText)
@@ -1087,6 +1110,59 @@ public class DiceManager : MonoBehaviour
         introRunning = false;
         Roll();
     }
+
+    /// <summary>
+    /// Debug: ends the turn on the spot, whatever the dice show and whichever round is on - lost (under the
+    /// target), passed (the target, not the risky goal) or passed with the risky goal (upgrades the next cards).
+    /// </summary>
+    public void DebugEndTurn(bool passed, bool risky)
+    {
+        if (!TurnActive || pendingResult != null) return;
+        if (runningTutorial)
+        {
+            h.Out("DiceManager: the tutorial is playing - the debug keys work once it's over.");
+            return;
+        }
+
+        finishTween.Stop();
+        firstRollTween.Stop();
+        foreach (Dice die in dice)
+            if (die) die.StopRoll();
+        landingPending = 0;
+        introRunning = false;
+        finishing = true;
+
+        // A round being banked (between rounds) is already listed; otherwise the dice on the table are the round.
+        if (roundResults.Count < CurrentRound)
+        {
+            int[] values = Values();
+            roundResults.Add(new DiceRoundResult { score = Evaluate(values, cards), values = values });
+        }
+
+        int scored = 0;
+        foreach (DiceRoundResult round in roundResults) scored += round.score.total;
+
+        risky &= passed;
+        int total = risky ? Mathf.Max(Target, RiskyTarget)
+            : passed ? Target
+            : Mathf.Clamp(scored, 0, Mathf.Max(0, Target - 1));
+        h.Out($"DiceManager: debug {(risky ? "risky win" : passed ? "win" : "loss")} with {total} (target {Target}, risky {RiskyTarget}).");
+        EndTurn(total, passed, risky);
+    }
+
+    private void Update()
+    {
+        if (!TurnActive || !DebugHotkeys.Allowed(debugKeys)) return;
+
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null) return;
+
+        if (Pressed(keyboard, debugLoseKey)) DebugEndTurn(passed: false, risky: false);
+        else if (Pressed(keyboard, debugWinKey)) DebugEndTurn(passed: true, risky: false);
+        else if (Pressed(keyboard, debugRiskyWinKey)) DebugEndTurn(passed: true, risky: true);
+    }
+
+    private static bool Pressed(Keyboard keyboard, Key key) => key != Key.None && keyboard[key].wasPressedThisFrame;
 
     /// <summary>Drops the turn without a result (the song ended mid-turn).</summary>
     public void CancelTurn()
@@ -1333,11 +1409,8 @@ public class DiceManager : MonoBehaviour
 
         UpdateTargetText();
 
-        // Finishing is only allowed once the turn's score reaches the target - or when there's no reroll left
-        // to reach it with (with Auto Finish off the round would otherwise be stuck). A round before the last
-        // is always played out: it only ends once its rerolls are used up.
-        bool mayFinish = IsLastRound ? TargetReached || RerollsLeft <= 0 : RerollsLeft <= 0;
-        if (finishButton) finishButton.interactable = idle && HasRolled && mayFinish;
+        // The round can be finished any time once the dice are down - target reached or not.
+        if (finishButton) finishButton.interactable = idle && HasRolled;
 
         // One round: the score is the turn's total. Several: it is what the finished rounds banked (the round
         // being scored joins it as it finishes), and the running round's points get their own label.
@@ -1374,7 +1447,14 @@ public class DiceManager : MonoBehaviour
             }
         }
 
-        if (combinationText) combinationText.text = shownScore != null ? shownScore.combinationName : "";
+        if (combinationText)
+        {
+            // Red while the dice make no hand that counts: a disabled hand falls back to Nothing.
+            combinationColor ??= combinationText.color;
+            bool proper = shownScore != null && shownScore.combination != PokerDiceCombination.Nothing;
+            combinationText.color = shownScore == null || proper ? combinationColor.Value : noCombinationColor;
+            combinationText.text = shownScore != null ? shownScore.combinationName : "";
+        }
         SetCombinationShake(shownScore != null ? CombinationStrength(shownScore.combination) : 0f);
 
         // Whether a die may be locked just changed (a roll started or landed): hovered dice follow.
@@ -1432,7 +1512,7 @@ public class DiceManager : MonoBehaviour
         int change = newTotal - oldTotal;
         if (change != 0)
             Popup(string.Format(change > 0 ? popups.gainFormat : popups.lossFormat, Mathf.Abs(change)), ScoreAnchor,
-                popups.scoreOffset, change > 0 ? popups.gainColor : popups.lossColor);
+                popups.scoreOffset, change > 0 ? popups.gainColor : popups.lossColor, bad: change < 0);
 
         if (after.combination != PokerDiceCombination.Nothing)
             Popup(after.combinationName, CombinationAnchor, popups.combinationOffset, popups.combinationColor);
@@ -1447,10 +1527,13 @@ public class DiceManager : MonoBehaviour
     /// <summary>
     /// Pops <paramref name="text"/> up at <paramref name="anchor"/> + <paramref name="offset"/> (canvas units),
     /// <see cref="DicePopups.interval"/> after the previous popup, <paramref name="scale"/> times its usual size and
-    /// held <paramref name="extraHold"/> seconds longer.
+    /// held <paramref name="extraHold"/> seconds longer. It plays <see cref="badAlertSfx"/> as it appears when
+    /// <paramref name="bad"/>, else <see cref="goodAlertSfx"/>.
     /// </summary>
-    private void Popup(string text, Transform anchor, Vector2 offset, Color color, float scale = 1f, float extraHold = 0f)
+    private void Popup(string text, Transform anchor, Vector2 offset, Color color, float scale = 1f, float extraHold = 0f,
+        bool bad = false)
     {
+        AudioClip sfx = bad ? badAlertSfx : goodAlertSfx;
         if (!popups.enabled || string.IsNullOrEmpty(text)) return;
         if (!TextAlertManager.Instance)
         {
@@ -1464,21 +1547,23 @@ public class DiceManager : MonoBehaviour
 
         if (delay <= 0f)
         {
-            CreatePopup(text, anchor, offset, color, scale, extraHold);
+            CreatePopup(text, anchor, offset, color, scale, extraHold, sfx);
             return;
         }
 
         popupTweens.RemoveAll(tween => !tween.isAlive);
         popupTweens.Add(Tween.Delay(anchor, delay, a =>
         {
-            if (TextAlertManager.Instance) CreatePopup(text, a, offset, color, scale, extraHold);
+            if (TextAlertManager.Instance) CreatePopup(text, a, offset, color, scale, extraHold, sfx);
         }));
     }
 
-    private static void CreatePopup(string text, Transform anchor, Vector2 offset, Color color, float scale, float extraHold)
+    private static void CreatePopup(string text, Transform anchor, Vector2 offset, Color color, float scale, float extraHold,
+        AudioClip sfx)
     {
         AlertDamageText alert = TextAlertManager.Instance.CreateTextAlert(text, anchor, color, offset);
         if (!alert) return;
+        PlaySfx(sfx);
         // Before the alert's Start, which reads the hold to schedule its fade.
         alert.transform.localScale *= scale;
         alert.holdDuration += extraHold;

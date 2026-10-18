@@ -110,6 +110,20 @@ public class BGMManager : AudioManagerBase
     /// spectrum data or control playback.</summary>
     public AudioSource CurrentAudioSource => current;
 
+    /// <summary>Every AudioSource the music plays through (the pool, then the default source) - e.g. to put filters on.</summary>
+    public IEnumerable<AudioSource> MusicSources
+    {
+        get
+        {
+            foreach (AudioSource source in sourcePool)
+                if (source) yield return source;
+            if (defaultAudioSource) yield return defaultAudioSource;
+        }
+    }
+
+    /// <summary>How many sources <see cref="MusicSources"/> has. The pool grows when a crossfade needs another one.</summary>
+    public int MusicSourceCount => sourcePool.Count + (defaultAudioSource ? 1 : 0);
+
     /// <summary>
     /// Playback position, in seconds, of the clip that is audible right now — 0 when nothing plays.
     /// Together with <see cref="CurrentBGMObject"/> this is what the save system stores so a loaded

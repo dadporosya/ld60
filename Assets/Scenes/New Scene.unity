@@ -441,28 +441,24 @@ MonoBehaviour:
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
-    bgmAfterCutscene: {fileID: 0}
   - name: Childhood friend
     isFinal: 0
     lockedDialogue: {fileID: 0}
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
-    bgmAfterCutscene: {fileID: 0}
   - name: Girlfriend
     isFinal: 0
     lockedDialogue: {fileID: 0}
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
-    bgmAfterCutscene: {fileID: 0}
   - name: Father
     isFinal: 1
     lockedDialogue: {fileID: 0}
     startDialogue: {fileID: 0}
     winDialogue: {fileID: 0}
     lossDialogue: {fileID: 0}
-    bgmAfterCutscene: {fileID: 0}
   pointsByRound: 6f000000ba000000ff000000be010000
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
@@ -720,6 +716,8 @@ MonoBehaviour:
   destroySfx: {fileID: 0}
   passedSfx: {fileID: 0}
   failedSfx: {fileID: 0}
+  goodAlertSfx: {fileID: 0}
+  badAlertSfx: {fileID: 0}
   roundsPerTurn: 3
   rerollsPerRound: 3
   autoFirstRoll: 1
@@ -795,8 +793,9 @@ MonoBehaviour:
   scoreCounter: {fileID: 0}
   roundScoreText: {fileID: 1185190418}
   roundScoreFormat: '{0}'
-  roundBelowTargetColor: {r: 1, g: 0.35, b: 0.35, a: 1}
+  scoreBelowTargetColor: {r: 1, g: 0.35, b: 0.35, a: 1}
   combinationText: {fileID: 548950539}
+  noCombinationColor: {r: 1, g: 0.35, b: 0.35, a: 1}
   combinationAnimation: {fileID: 0}
   combinationShakeStrength: {x: 0.5, y: 6}
   combinationShakeBlend: 0.15
@@ -825,6 +824,10 @@ MonoBehaviour:
     combinationColor: {r: 1, g: 1, b: 1, a: 1}
     goalColor: {r: 1, g: 0.9, b: 0.45, a: 1}
     riskyGoalColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
+  debugKeys: 1
+  debugLoseKey: 37
+  debugWinKey: 19
+  debugRiskyWinKey: 32
   onTurnStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -4217,7 +4220,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &788155893
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4253,10 +4256,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 2052019987}
   - {fileID: 244570388}
-  - {fileID: 1901275428}
   - {fileID: 1743218968}
+  - {fileID: 2052019987}
+  - {fileID: 1901275428}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -6701,13 +6704,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TextAnimation
   animationTarget: 3
-  animations: 01000000
+  animations: 02000000
   cleaned: 0
   shakeStrength: 3
   shakeSpeed: 25
-  waveAmplitude: 6
-  waveFrequency: 2
-  waveSpread: 0.3
+  waveAmplitude: 6.7
+  waveFrequency: 0.2
+  waveSpread: 0.88
   bounceHeight: 8
   bounceFrequency: 2
   bounceSpread: 0.2
@@ -7690,9 +7693,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SongManager
   bgmManager: {fileID: 0}
-  startBgm: {fileID: 0}
-  startFade: 1.5
+  startBgm: {fileID: 11400000, guid: f44f2fe91cf479b48b90dcbdc20d1339, type: 2}
+  startFade: 0
+  bgmByRound:
+  - {fileID: 11400000, guid: 1db27578fd47b834d9acedb4b300ceed, type: 2}
+  - {fileID: 11400000, guid: 8f85c59f560774241b9a54e7090a11c3, type: 2}
+  - {fileID: 11400000, guid: 746fa92aca8b9f748af24facb689fb60, type: 2}
+  - {fileID: 11400000, guid: 0802dbf4764d13a4b93d837601567caf, type: 2}
   levelFade: 1.5
+  volume: 0.6617892
+  lowPass:
+    enabled: 1
+    cutoff: 9984
+    resonanceQ: 1
+  highPass:
+    enabled: 1
+    cutoff: 108.73044
+    resonanceQ: 1
+  reverb:
+    enabled: 1
+    preset: 3
+    dryLevel: 0
+    room: -1000
+    roomHF: -100
+    decayTime: 1.49
+    decayHFRatio: 0.83
+    reflectionsLevel: -2602
+    reverbLevel: 200
+    reverbDelay: 0.011
+    diffusion: 100
+    density: 100
   onBgmChanged:
     m_PersistentCalls:
       m_Calls: []
