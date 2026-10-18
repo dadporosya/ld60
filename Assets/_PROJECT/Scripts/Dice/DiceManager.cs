@@ -136,6 +136,12 @@ public class DicePopups
     [Tooltip("Seconds the risky goal popup stays up before fading, on top of the usual hold.")]
     [Min(0f)] public float riskyGoalExtraHold = 1f;
 
+    [Header("Bust Popup")]
+    [Tooltip("Size of the Bust popup, relative to the other popups.")]
+    [Min(0f)] public float bustScale = 2f;
+    [Tooltip("Seconds the Bust popup stays up before fading, on top of the usual hold.")]
+    [Min(0f)] public float bustExtraHold = 1.5f;
+
     [Header("Colors")]
     public Color gainColor = new Color(0.45f, 0.9f, 0.45f, 1f);
     public Color lossColor = new Color(0.95f, 0.4f, 0.4f, 1f);
@@ -1969,7 +1975,8 @@ public class DiceManager : MonoBehaviour
         DiceScore before = shownScore;
         UpdateUI();
         ShowRollPopups(before, shownScore);
-        Popup(popups.bustText, CombinationAnchor, popups.combinationOffset, popups.lossColor, bad: true);
+        Popup(popups.bustText, CombinationAnchor, popups.combinationOffset, popups.lossColor, popups.bustScale,
+            popups.bustExtraHold, bad: true);
         PlaySfx(bustSfx);
         onRolled?.Invoke();
         onBust?.Invoke();
