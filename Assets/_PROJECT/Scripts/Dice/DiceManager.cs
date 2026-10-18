@@ -110,7 +110,7 @@ public class DicePopups
 
     [Header("Round Popups")]
     [Tooltip("Size of the Round Score popup, relative to the other popups.")]
-    [Min(0f)] public float roundScoreScale = 1.2f;
+    [Min(0f)] public float roundScoreScale = 1.6f;
     [Tooltip("Seconds the Round Score popup stays up before fading, on top of the usual hold.")]
     [Min(0f)] public float roundScoreExtraHold = 0.5f;
 
@@ -343,7 +343,7 @@ public class DiceManager : MonoBehaviour
              "popup shows. The next round - or, after the last one, the turn's result - follows it.")]
     [SerializeField, Min(0f)] private float roundScoreAlertDelay = 0.8f;
     [Tooltip("Seconds after the Round Score popup before the turn's next round starts (its Round popup shows).")]
-    [SerializeField, Min(0f)] private float nextRoundDelay = 1.2f;
+    [SerializeField, Min(0f)] private float nextRoundDelay = 1.6f;
     [Tooltip("Seconds after the next round's Round popup before its dice are thrown.")]
     [SerializeField, Min(0f)] private float nextRoundRollDelay = 1f;
     [Tooltip("Hide the table root when the turn ends.")]
@@ -384,6 +384,7 @@ public class DiceManager : MonoBehaviour
         new CombinationScore(PokerDiceCombination.LargeStraight, "Large Straight", 100),
         new CombinationScore(PokerDiceCombination.FullHouse, "Full House", 67),
         new CombinationScore(PokerDiceCombination.FourOfAKind, "Four of a Kind", 100),
+        new CombinationScore(PokerDiceCombination.TwoThreeOfAKind, "Two Three of a Kind", 150),
         new CombinationScore(PokerDiceCombination.FiveOfAKind, "Five of a Kind", 200),
     };
 
@@ -902,7 +903,7 @@ public class DiceManager : MonoBehaviour
 
     /// <summary>
     /// Resets the dice and rerolls for the turn's next round. The first throw waits for <see cref="QueueFirstRoll"/>.
-    /// The dice keep the faces they were left on - the last round's, or the last turn's - until that throw.
+    /// The dice stay as they were left - the last round's, or the last turn's - until that throw.
     /// </summary>
     private void PrepareRound()
     {
@@ -914,15 +915,17 @@ public class DiceManager : MonoBehaviour
         carriedRerolls = 0;
         roundMult = 0f;
 
-        // The faces stay as they were (they don't score until the first throw lands), so nothing changes on the
-        // table before the roll. Dice destroyed last round are back.
-        for (int i = 0; i < Mathf.Min(diceInTurn, dice.Count); i++)
-        {
-            Dice die = dice[i];
-            if (!die) continue;
-            die.Restore();
-            die.ResetDice();
-        }
+        // A turn's first round: the table has only just opened, so the dice are tidied at once - unlocked, upright,
+        // the destroyed ones back. Later rounds leave them exactly as the last round did (place, face, tilt, lock):
+        // nothing moves before the throw, which picks every die up as it lies (see ReleaseDice).
+        if (CurrentRound == 1)
+            for (int i = 0; i < Mathf.Min(diceInTurn, dice.Count); i++)
+            {
+                Dice die = dice[i];
+                if (!die) continue;
+                die.Restore();
+                die.ResetDice();
+            }
 
         introRunning = true;
         UpdateUI();
@@ -1052,22 +1055,39 @@ public class DiceManager : MonoBehaviour
     {
         if (!TurnActive || finishing || IsRolling || introRunning) return;
 
+        bool firstThrow = !HasRolled;
+        if (firstThrow) ReleaseDice();
+
         List<Dice> toRoll = new List<Dice>();
         foreach (Dice die in DiceInPlay)
-            if (!HasRolled || !die.IsLocked) toRoll.Add(die);
+            if (firstThrow || !die.IsLocked) toRoll.Add(die);
 
-        if (HasRolled)
+        if (!firstThrow)
         {
             if (RerollsLeft <= 0 || toRoll.Count == 0) return;
             RerollsLeft--;
         }
 
         if (toRoll.Count == 0) return;
-        bool firstThrow = !HasRolled;
         HasRolled = true;
         Throw(toRoll, firstThrow);
         PlaySfx(rollSfx);
         UpdateUI();
+    }
+
+    /// <summary>
+    /// A round's first throw takes every die of the turn as the last round left it: destroyed ones come back and
+    /// locked ones are freed - they stay where they lie, and the throw eases them out of the lock.
+    /// </summary>
+    private void ReleaseDice()
+    {
+        for (int i = 0; i < Mathf.Min(diceInTurn, dice.Count); i++)
+        {
+            Dice die = dice[i];
+            if (!die) continue;
+            die.Restore();
+            die.Unlock();
+        }
     }
 
     /// <summary>Throws <paramref name="toRoll"/>; the others stay put.</summary>

@@ -435,14 +435,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelManager
   levels:
-  - name: Mother
-    isFinal: 0
-    lockedDialogue: {fileID: 0}
-    startDialogue: {fileID: 0}
-    speakerTalkable: {fileID: 620020854}
-    badDialogue: {fileID: 11400000, guid: 34584f99b83f4345b60df89bbd3496b6, type: 2}
-    neutralDialogue: {fileID: 11400000, guid: 804765010d1b4a6ea2ce204f09e0ede2, type: 2}
-    hopefulDialogue: {fileID: 11400000, guid: 5cbec6ae373c4d95926430fcd14d339f, type: 2}
   - name: Childhood friend
     isFinal: 0
     lockedDialogue: {fileID: 0}
@@ -459,6 +451,14 @@ MonoBehaviour:
     badDialogue: {fileID: 11400000, guid: 2e2618256eb441ca942b21dd451f291a, type: 2}
     neutralDialogue: {fileID: 11400000, guid: ab50986ea33f48ef82260cba2e198061, type: 2}
     hopefulDialogue: {fileID: 11400000, guid: 06ceddb89ed3428389c0e0c4c67db6fa, type: 2}
+  - name: Mother
+    isFinal: 0
+    lockedDialogue: {fileID: 0}
+    startDialogue: {fileID: 0}
+    speakerTalkable: {fileID: 620020854}
+    badDialogue: {fileID: 11400000, guid: 34584f99b83f4345b60df89bbd3496b6, type: 2}
+    neutralDialogue: {fileID: 11400000, guid: 804765010d1b4a6ea2ce204f09e0ede2, type: 2}
+    hopefulDialogue: {fileID: 11400000, guid: 5cbec6ae373c4d95926430fcd14d339f, type: 2}
   - name: Father
     isFinal: 1
     lockedDialogue: {fileID: 0}
@@ -742,7 +742,7 @@ MonoBehaviour:
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
   roundScoreAlertDelay: 0.8
-  nextRoundDelay: 1.2
+  nextRoundDelay: 1.6
   nextRoundRollDelay: 1
   hideTableOnFinish: 1
   riskyGoalMultiplier: 1.5
@@ -794,6 +794,11 @@ MonoBehaviour:
     combination: 7
     displayName: Four of a Kind
     points: 100
+  - enabled: 1
+    countsAsCombination: 1
+    combination: 9
+    displayName: Two Three of a Kind
+    points: 150
   - enabled: 1
     countsAsCombination: 1
     combination: 8
@@ -850,7 +855,7 @@ MonoBehaviour:
     multGainedFormat: +{0} mult
     roundScoreFormat: 'Round Score: {0}'
     roundStartFormat: Round {0}
-    roundScoreScale: 1.2
+    roundScoreScale: 1.6
     roundScoreExtraHold: 0.5
     riskyGoalScale: 1.15
     riskyGoalExtraHold: 1
@@ -861,6 +866,26 @@ MonoBehaviour:
     riskyGoalColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
     roundScoreColor: {r: 1, g: 0.9, b: 0.45, a: 1}
     roundStartColor: {r: 1, g: 1, b: 1, a: 1}
+  spotlight:
+    text: {fileID: 0}
+    delay: 0.4
+    hold: 1.2
+    fadeOut: 0.3
+    lost:
+      text: LOST
+      color: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+      sfx: {fileID: 0}
+      volume: 1
+    passed:
+      text: PASSED
+      color: {r: 1, g: 1, b: 1, a: 1}
+      sfx: {fileID: 0}
+      volume: 1
+    hope:
+      text: HOPE
+      color: {r: 0.35, g: 0.9, b: 0.4, a: 1}
+      sfx: {fileID: 0}
+      volume: 1
   debugKeys: 1
   debugLoseKey: 37
   debugWinKey: 19
@@ -1566,6 +1591,7 @@ MonoBehaviour:
   levelManager: {fileID: 60807120}
   contacts: []
   introDialogue: {fileID: 0}
+  introCutscene: {fileID: 0}
   startSongAfterIntro: 1
   goodEndingDialogue: {fileID: 0}
   badEndingDialogue: {fileID: 0}
@@ -2141,9 +2167,9 @@ MonoBehaviour:
   defaultVoiceClips: []
   textTarget: {fileID: 0}
   openTextBoxAfterFirstTransition: 1
-  root: {fileID: 0}
+  root: {fileID: 210451664}
   hideRootOnEnd: 1
-  background: {fileID: 0}
+  background: {fileID: 210451666}
   ambience: {fileID: 1897105557}
   shakeTarget: {fileID: 0}
   blur: {fileID: 0}
@@ -2464,8 +2490,7 @@ MonoBehaviour:
   flickerClips: []
   flickerVolume: 0.5
   flickerPitch: {x: 0.9, y: 1.1}
-  flickerSoundThreshold: 0.6
-  flickerSoundInterval: 0.08
+  flickerSoundNoOverlap: 1
 --- !u!114 &404093165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3028,8 +3053,7 @@ MonoBehaviour:
   flickerClips: []
   flickerVolume: 0.5
   flickerPitch: {x: 0.9, y: 1.1}
-  flickerSoundThreshold: 0.6
-  flickerSoundInterval: 0.08
+  flickerSoundNoOverlap: 1
 --- !u!114 &515364395
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3588,8 +3612,7 @@ MonoBehaviour:
   flickerClips: []
   flickerVolume: 0.5
   flickerPitch: {x: 0.9, y: 1.1}
-  flickerSoundThreshold: 0.6
-  flickerSoundInterval: 0.08
+  flickerSoundNoOverlap: 1
 --- !u!114 &665120234
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3737,8 +3760,7 @@ MonoBehaviour:
   flickerClips: []
   flickerVolume: 0.5
   flickerPitch: {x: 0.9, y: 1.1}
-  flickerSoundThreshold: 0.6
-  flickerSoundInterval: 0.08
+  flickerSoundNoOverlap: 1
 --- !u!114 &692205420
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4200,8 +4222,7 @@ MonoBehaviour:
   flickerClips: []
   flickerVolume: 0.5
   flickerPitch: {x: 0.9, y: 1.1}
-  flickerSoundThreshold: 0.6
-  flickerSoundInterval: 0.08
+  flickerSoundNoOverlap: 1
 --- !u!114 &778689435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4357,10 +4378,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 244570388}
   - {fileID: 1901275428}
-  - {fileID: 2052019987}
+  - {fileID: 244570388}
   - {fileID: 1743218968}
+  - {fileID: 2052019987}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -4718,8 +4739,7 @@ MonoBehaviour:
   flickerClips: []
   flickerVolume: 0.5
   flickerPitch: {x: 0.9, y: 1.1}
-  flickerSoundThreshold: 0.6
-  flickerSoundInterval: 0.08
+  flickerSoundNoOverlap: 1
 --- !u!114 &832595629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8437,8 +8457,7 @@ MonoBehaviour:
   flickerClips: []
   flickerVolume: 0.5
   flickerPitch: {x: 0.9, y: 1.1}
-  flickerSoundThreshold: 0.6
-  flickerSoundInterval: 0.08
+  flickerSoundNoOverlap: 1
 --- !u!114 &2007749325
 MonoBehaviour:
   m_ObjectHideFlags: 0

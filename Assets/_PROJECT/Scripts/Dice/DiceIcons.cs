@@ -40,6 +40,7 @@ public static class DiceIcons
             case PokerDiceCombination.FullHouse: return Join(gap, X, X, Y, Y, Y);
             case PokerDiceCombination.FourOfAKind: return Join(gap, X, X, X, X);
             case PokerDiceCombination.FiveOfAKind: return Join(gap, X, X, X, X, X);
+            case PokerDiceCombination.TwoThreeOfAKind: return Join(gap, X, X, X, Y, Y, Y);
             default: return "";
         }
     }

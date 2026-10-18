@@ -367,10 +367,12 @@ public class FuneralGameManager : MonoBehaviour
         int id = ++roundEndId;
         roundEndFading = true;
 
-        // Black over the dice table -> the phone rings on the black -> the outcome dialogue -> black again ->
-        // the card pick, revealed.
+        // (The dice table's LOST / PASSED / HOPE spotlight is up -) black over the dice table -> the phone rings
+        // on the black -> the outcome dialogue -> black again -> the card pick, revealed.
         RoundEndFade(true, roundEndCoverDuration, id, () =>
         {
+            if (Dice) Dice.HideSpotlight();
+
             // No dialogue (none assigned, or an empty one): straight from the black to the card pick.
             if (!outcome || outcome.nodes == null || outcome.nodes.Count == 0)
             {
@@ -460,6 +462,7 @@ public class FuneralGameManager : MonoBehaviour
     {
         roundEndId++;
         if (Levels) Levels.StopOutcomeRing();
+        if (Dice) Dice.HideSpotlight(instant: true);
         if (!roundEndFading) return;
 
         roundEndFading = false;

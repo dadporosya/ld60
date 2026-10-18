@@ -12,6 +12,8 @@ public enum PokerDiceCombination
     FullHouse,
     FourOfAKind,
     FiveOfAKind,
+    /// <summary>Two different faces three times each, e.g. 2 2 2 5 5 5 (needs 6 dice). Six of a kind counts too.</summary>
+    TwoThreeOfAKind,
 }
 
 /// <summary>Which poker dice hands a set of dice values contains.</summary>
@@ -30,12 +32,13 @@ public static class PokerDiceEvaluator
         foreach (int v in values)
             if (v >= 1 && v <= Faces) counts[v]++;
 
-        int max = 0, pairs = 0;
+        int max = 0, pairs = 0, triples = 0;
         bool hasThree = false, hasTwo = false;
         for (int f = 1; f <= Faces; f++)
         {
             max = System.Math.Max(max, counts[f]);
             if (counts[f] >= 2) pairs++;
+            if (counts[f] >= 3) triples++;
             if (counts[f] == 3) hasThree = true;
             if (counts[f] == 2) hasTwo = true;
         }
@@ -51,6 +54,7 @@ public static class PokerDiceEvaluator
         if ((hasThree && hasTwo) || max >= 5) result.Add(PokerDiceCombination.FullHouse);
         if (max >= 4) result.Add(PokerDiceCombination.FourOfAKind);
         if (max >= 5) result.Add(PokerDiceCombination.FiveOfAKind);
+        if (triples >= 2 || max >= 6) result.Add(PokerDiceCombination.TwoThreeOfAKind);
         return result;
     }
 

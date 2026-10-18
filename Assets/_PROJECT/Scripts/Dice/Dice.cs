@@ -80,6 +80,11 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     private float endAngle;
     private Vector3 travelFrom;
     private Vector3 travelTo;
+    // A freed die still sits in its lock pose: the roll eases it out (offset and tint) as it travels.
+    private Vector3 lockFrom;
+    private Vector3 lockTo;
+    private Color tintFrom;
+    private Color tintTo;
     private int lastFrameStep;
     private int lastFrameIndex = -1;
     private Action<Dice> onLanded;
@@ -214,6 +219,12 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         onLanded = landed;
         travelFrom = tablePosition;
         travelTo = landAt;
+        // Still locked (a free reroll of a locked die): it keeps the lock pose. Unlocked: out of it, from wherever
+        // it is - a freed die, or one whose unlock was cut short by the throw.
+        lockFrom = lockOffset;
+        lockTo = IsLocked ? lockOffset : Vector3.zero;
+        tintFrom = Tint;
+        tintTo = IsLocked ? Tint : baseColor;
 
         float direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
         startAngle = visual.localEulerAngles.z;
@@ -229,7 +240,10 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         float height = anim.liftCurve.Evaluate(t);
         visual.localScale = restScale * Mathf.LerpUnclamped(1f, anim.liftScale, height);
         lift = anim.liftHeight * height;
-        tablePosition = Vector3.LerpUnclamped(travelFrom, travelTo, anim.travelCurve.Evaluate(t));
+        float travel = anim.travelCurve.Evaluate(t);
+        tablePosition = Vector3.LerpUnclamped(travelFrom, travelTo, travel);
+        lockOffset = Vector3.Lerp(lockFrom, lockTo, travel);
+        Tint = Color.Lerp(tintFrom, tintTo, travel);
         ApplyPose();
 
         float angle = Mathf.LerpUnclamped(startAngle, endAngle, anim.spinCurve.Evaluate(t));
@@ -262,6 +276,8 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         visual.localScale = restScale;
         lift = 0f;
         tablePosition = travelTo;
+        lockOffset = lockTo;
+        Tint = tintTo;
         ApplyPose();
         visual.localEulerAngles = new Vector3(0f, 0f, endAngle % 360f);
 
@@ -365,6 +381,15 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
             ApplyPose();
             Tint = tint;
         }
+    }
+
+    /// <summary>
+    /// No longer locked, but left where the lock put it (no snap): the next <see cref="Roll"/> eases it out.
+    /// </summary>
+    public void Unlock()
+    {
+        IsLocked = false;
+        if (lockedIndicator) lockedIndicator.SetActive(false);
     }
 
     /// <summary>Unlocked, at rest, ready for a new round. Keeps its face and its place on the table.</summary>

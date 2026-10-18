@@ -29,7 +29,7 @@ PREV_TARGETS = [30, 47, 60, 105]
 # 446 had on 5 dice.
 OUT_OF_REACH_PASS = 0.0482
 HANDS = ["Nothing", "OnePair", "TwoPair", "ThreeOfAKind", "SmallStraight", "LargeStraight",
-         "FullHouse", "FourOfAKind", "FiveOfAKind"]
+         "FullHouse", "FourOfAKind", "FiveOfAKind", "TwoThreeOfAKind"]
 
 # Hand bonus on top of the dice sum (the design sheet's bonus column; large straight as four of a kind).
 POINTS = {
@@ -42,10 +42,12 @@ POINTS = {
     "FourOfAKind": 100,
     "LargeStraight": 100,
     "FiveOfAKind": 200,
+    "TwoThreeOfAKind": 150,
 }
 # The bonus table before (also on top of the dice sum).
 PREV_POINTS = {"Nothing": 0, "OnePair": 10, "TwoPair": 20, "ThreeOfAKind": 25, "SmallStraight": 30,
-               "LargeStraight": 45, "FullHouse": 35, "FourOfAKind": 40, "FiveOfAKind": 65}
+               "LargeStraight": 45, "FullHouse": 35, "FourOfAKind": 40, "FiveOfAKind": 65,
+               "TwoThreeOfAKind": 0}  # not a hand back then: never the best one
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -70,6 +72,7 @@ def contained(dice):
     if (has3 and has2) or mx >= 5: res.add("FullHouse")
     if mx >= 4: res.add("FourOfAKind")
     if mx >= 5: res.add("FiveOfAKind")
+    if sum(1 for c in counts if c >= 3) >= 2 or mx >= 6: res.add("TwoThreeOfAKind")
     return res
 
 
