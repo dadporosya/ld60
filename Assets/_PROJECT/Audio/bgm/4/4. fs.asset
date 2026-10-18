@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42a554c37f0812541bf909ce387b3db7, type: 3}
+  m_Name: 4. fs
+  m_EditorClassIdentifier: Assembly-CSharp::BGMObject
+  playTypeOverride: 0
+  full: {fileID: 0}
+  intro: {fileID: 8300000, guid: fc488e18379b67c4baff627d42448dcd, type: 3}
+  loop: {fileID: 8300000, guid: e6a61e862404b7e4bbe03f7009c8be4a, type: 3}
+  outro: {fileID: 0}

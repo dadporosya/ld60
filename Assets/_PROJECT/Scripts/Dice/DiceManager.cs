@@ -4,6 +4,7 @@ using PrimeTween;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>How a die is thrown. Shared by all dice; lives on the <see cref="DiceManager"/>.</summary>
@@ -295,7 +296,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private string rerollLabel = "Reroll ({0})";
     [SerializeField] private Button finishButton;
     [Tooltip("What the Finish button always says - written into its own text. It can only be pressed once the " +
-             "turn's score reaches the target.")]
+             "turn's score reaches the target (or the rerolls are used up); in a round before the last, only once " +
+             "its rerolls are used up.")]
     [SerializeField] private string finishLabel = "Finish";
     [Tooltip("{0} = rerolls left.")]
     [SerializeField] private TextMeshProUGUI rerollsText;
@@ -330,8 +332,10 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI roundScoreText;
     [Tooltip("{0} = the running round's points. Copied into the CountingText added to Round Score Text when it has none.")]
     [SerializeField] private string roundScoreFormat = "{0}";
-    [Tooltip("Round Score Text's colour while the turn's total (banked rounds + this round) is under the target.")]
-    [SerializeField] private Color roundBelowTargetColor = new Color(1f, 0.35f, 0.35f, 1f);
+    [Tooltip("Score Text's colour, with more than one round per turn, while the points banked over the rounds " +
+             "are under the target. Round Score Text keeps its own colour.")]
+    [SerializeField, FormerlySerializedAs("roundBelowTargetColor")]
+    private Color scoreBelowTargetColor = new Color(1f, 0.35f, 0.35f, 1f);
     [SerializeField] private TextMeshProUGUI combinationText;
     [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
              "in the scoring table) by driving its Shake Strength. Defaults to the TextAnimation on Combination Text " +
@@ -435,8 +439,8 @@ public class DiceManager : MonoBehaviour
     /// <summary>The running round's counter: the CountingText on <see cref="roundScoreText"/> (added if missing).</summary>
     private CountingText RoundScoreCounter => CounterOn(roundScoreText, roundScoreFormat, ref roundScoreCounter);
     private CountingText roundScoreCounter;
-    // Round Score Text's own colour, from the scene: back to it once the target is reached.
-    private Color? roundScoreColor;
+    // Score Text's own colour, from the scene: back to it once the target is reached.
+    private Color? scoreColor;
 
     private static CountingText CounterOn(TextMeshProUGUI text, string format, ref CountingText counter)
     {
@@ -1330,8 +1334,10 @@ public class DiceManager : MonoBehaviour
         UpdateTargetText();
 
         // Finishing is only allowed once the turn's score reaches the target - or when there's no reroll left
-        // to reach it with (with Auto Finish off the round would otherwise be stuck).
-        if (finishButton) finishButton.interactable = idle && HasRolled && (TargetReached || RerollsLeft <= 0);
+        // to reach it with (with Auto Finish off the round would otherwise be stuck). A round before the last
+        // is always played out: it only ends once its rerolls are used up.
+        bool mayFinish = IsLastRound ? TargetReached || RerollsLeft <= 0 : RerollsLeft <= 0;
+        if (finishButton) finishButton.interactable = idle && HasRolled && mayFinish;
 
         // One round: the score is the turn's total. Several: it is what the finished rounds banked (the round
         // being scored joins it as it finishes), and the running round's points get their own label.
@@ -1344,8 +1350,16 @@ public class DiceManager : MonoBehaviour
                 if (shownScore == null && CurrentRound <= 1) counter.SetInstant(0);
                 else counter.SetValue(TurnTotal(shownScore));
             }
-            else if (CurrentRound <= 1 && !HasRolled) counter.SetInstant(0);
-            else counter.SetValue(BankedScore + (finishing ? shownScore?.total ?? 0 : 0));
+            else
+            {
+                int accumulated = BankedScore + (finishing ? shownScore?.total ?? 0 : 0);
+                if (CurrentRound <= 1 && !HasRolled) counter.SetInstant(0);
+                else counter.SetValue(accumulated);
+
+                // Red until the points banked over the rounds reach the minimum goal.
+                scoreColor ??= counter.BaseColor;
+                counter.BaseColor = Target <= 0 || accumulated >= Target ? scoreColor.Value : scoreBelowTargetColor;
+            }
         }
 
         if (roundScoreText)
@@ -1357,10 +1371,6 @@ public class DiceManager : MonoBehaviour
                 // A fresh round starts at 0; then it counts to what the dice make.
                 if (shownScore == null) roundCounter.SetInstant(0);
                 else roundCounter.SetValue(shownScore.total);
-
-                // Red until the turn's total reaches the minimum goal.
-                roundScoreColor ??= roundCounter.BaseColor;
-                roundCounter.BaseColor = TargetReached ? roundScoreColor.Value : roundBelowTargetColor;
             }
         }
 

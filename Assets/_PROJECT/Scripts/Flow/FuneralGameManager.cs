@@ -6,14 +6,14 @@ using UnityEngine.Events;
 /// <summary>
 /// Runs Funeral Song: the hub, the calls and the two endings, all in one scene.
 ///
-/// <para><b>Flow.</b> Intro dialogue -> the song starts -> Hub. From the hub the player clicks things
+/// <para><b>Flow.</b> Intro dialogue -> the start music (<see cref="SongManager"/>) -> Hub. From the hub the player clicks things
 /// (<see cref="HubInteractable"/>); the phone opens the dial panel, and a call goes: the contact's
 /// call dialogue -> dice round against the current level's points (<see cref="LevelManager"/>) -> the
 /// level's win or loss dialogue -> card pick (Hope or
 /// Hate) -> back to the hub (between the round and the pick the screen fades to black and back, see
 /// <see cref="fadeAroundRoundEnd"/>), the name struck off the list. Once everyone has been called: the good
-/// ending (calling dad). If the song ends first, whatever is happening is cut off: the bad ending.
-/// Both endings close the game.</para>
+/// ending (calling dad). Both endings close the game. After each level's win / loss dialogue the music
+/// switches to the track for how many rounds have been played (<see cref="SongManager.PlayAfterRound"/>).</para>
 ///
 /// <para>Alternatively the phone shows the level list (<see cref="LevelPhoneInteractable"/>): a picked level
 /// goes start dialogue -> dice -> win / loss dialogue -> card pick -> hub (<see cref="PlayLevel"/>); finishing
@@ -35,7 +35,7 @@ public class FuneralGameManager : MonoBehaviour
     }
 
     [Header("Systems (default to their Instance)")]
-    [SerializeField] private SongTimer song;
+    [SerializeField] private SongManager songManager;
     [SerializeField] private HubDialogueRunner dialogues;
     [SerializeField] private DiceManager diceManager;
     [SerializeField] private CardManager cardManager;
@@ -47,15 +47,16 @@ public class FuneralGameManager : MonoBehaviour
     [SerializeField] private List<ContactData> contacts = new List<ContactData>();
 
     [Header("Story")]
-    [Tooltip("Played before the song starts. Optional.")]
+    [Tooltip("Played before the start music. Optional.")]
     [SerializeField] private VisualNovelDialogueContainer introDialogue;
-    [Tooltip("Start the song once the intro is over (otherwise something else calls StartSong).")]
+    [Tooltip("Start the SongManager's start music once the intro is over (otherwise something else calls StartSong).")]
     [SerializeField] private bool startSongAfterIntro = true;
     [Tooltip("Everyone has been called: the hero calls his father. \"I love you, dad.\"")]
     [SerializeField] private VisualNovelDialogueContainer goodEndingDialogue;
-    [Tooltip("The song ran out: the gun, his eyes, black, the shot - and \"You understand that it's not the only way out, right?\"")]
+    [Tooltip("The gun, his eyes, black, the shot - and \"You understand that it's not the only way out, right?\" " +
+             "Nothing plays it by itself any more: call BadEnding.")]
     [SerializeField] private VisualNovelDialogueContainer badEndingDialogue;
-    [Tooltip("Seconds the song fades out over when the good ending starts. Negative: it keeps playing.")]
+    [Tooltip("Seconds the music fades out over when the good ending starts. Negative: it keeps playing.")]
     [SerializeField] private float songFadeOnGoodEnding = 3f;
     [Tooltip("Finishing the final level (picked from the phone's level list) plays the good ending.")]
     [SerializeField] private bool goodEndingAfterFinalLevel = true;
@@ -105,7 +106,7 @@ public class FuneralGameManager : MonoBehaviour
     // Called contacts, and whether the dice reached the target for each.
     private readonly Dictionary<ContactData, bool> calls = new Dictionary<ContactData, bool>();
 
-    private SongTimer Song => Resolve(ref song, SongTimer.Instance);
+    private SongManager Songs => Resolve(ref songManager, SongManager.Instance);
     private HubDialogueRunner Dialogues
     {
         get
@@ -164,13 +165,7 @@ public class FuneralGameManager : MonoBehaviour
 
     private void Start()
     {
-        if (Song) Song.onSongEnded.AddListener(OnSongEnded);
         if (startOnPlay) StartGame();
-    }
-
-    private void OnDestroy()
-    {
-        if (song) song.onSongEnded.RemoveListener(OnSongEnded);
     }
 
     // ---------------------------------------------------------------------
@@ -197,7 +192,8 @@ public class FuneralGameManager : MonoBehaviour
 
     public void StartSong()
     {
-        if (Song && !Song.HasStarted) Song.Play();
+        if (Songs) Songs.PlayStartBgm();
+        else h.Out("FuneralGameManager: no SongManager, no music.");
     }
 
     // ---------------------------------------------------------------------
@@ -274,8 +270,8 @@ public class FuneralGameManager : MonoBehaviour
 
     /// <summary>
     /// Debug: runs the <see cref="LevelManager"/>'s current level without a call - dice round, win / loss
-    /// dialogue, card pick, then the hub. A hub dialogue or the intro still playing is cut off (the song
-    /// then doesn't start by itself).
+    /// dialogue, card pick, then the hub. A hub dialogue or the intro still playing is cut off (the start
+    /// music then doesn't start by itself).
     /// </summary>
     public void DebugRunCurrentLevel()
     {
@@ -390,6 +386,8 @@ public class FuneralGameManager : MonoBehaviour
     /// <summary>Puts the card pick up behind the black, then fades the black away.</summary>
     private void OfferCardRevealed(ContactData contact, bool passed, CardMood mood, int id)
     {
+        // The round's final cutscene is over: the music for this many rounds played comes in.
+        if (Songs && Levels) Songs.PlayAfterRound(Levels.RoundsPlayed);
         onCallEnded?.Invoke(contact, passed);
         OfferCard(mood);
         // Even without a pick (no cards, or the good ending started): whatever comes next needs to be seen.
@@ -485,13 +483,13 @@ public class FuneralGameManager : MonoBehaviour
         if (CurrentPhase == Phase.Ending) return;
         SetPhase(Phase.Ending);
 
-        if (Song && songFadeOnGoodEnding >= 0f) Song.Stop(songFadeOnGoodEnding);
+        if (Songs && songFadeOnGoodEnding >= 0f) Songs.Stop(songFadeOnGoodEnding);
 
         onGoodEnding?.Invoke();
         Dialogues.InterruptAndPlay(goodEndingDialogue, QuitGame);
     }
 
-    /// <summary>The song is over: cuts off whatever is happening and plays the bad ending.</summary>
+    /// <summary>Cuts off whatever is happening and plays the bad ending.</summary>
     public void BadEnding()
     {
         if (CurrentPhase == Phase.Ending) return;
@@ -506,8 +504,6 @@ public class FuneralGameManager : MonoBehaviour
         onBadEnding?.Invoke();
         Dialogues.InterruptAndPlay(badEndingDialogue, QuitGame);
     }
-
-    private void OnSongEnded() => BadEnding();
 
     private void QuitGame()
     {
