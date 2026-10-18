@@ -85,9 +85,27 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private AudioClip callStartLoop;
     [SerializeField, Range(0f, 1f)] private float callStartVolume = 1f;
     [Tooltip("Seconds the screen stays black with the phone ringing before the outcome dialogue starts fading in.")]
-    [SerializeField, Min(0f)] private float ringHold = 1.5f;
+    [SerializeField, Min(0f)] private float blackHold = 3.33f;
+    [Tooltip("Seconds the black fades away over, revealing the outcome dialogue; its first line starts once it's " +
+             "gone. Sets the dialogue's first node fade from black (when that node uses Fade Through Color).")]
+    [SerializeField, Min(0f)] private float revealDuration = 2f;
     [Tooltip("Seconds the ringing fades out over once the dialogue's first line starts.")]
     [SerializeField, Min(0f)] private float ringFadeOut = 0.25f;
+
+    [Header("Outcome calls - music")]
+    [Tooltip("Filter and pitch the music (SongManager) around the outcome dialogues.")]
+    [SerializeField] private bool modulateMusic = true;
+    [Tooltip("Music low-pass cutoff (Hz) swept to while the screen fades to black after a round. " +
+             "The lowest value all but silences the music.")]
+    [SerializeField, Range(GlobalLowPass.MinCutoff, GlobalLowPass.OpenCutoff)]
+    private float blackLowPassCutoff = GlobalLowPass.MinCutoff;
+    [Tooltip("Music low-pass cutoff (Hz) during the outcome dialogue, swept to while the black fades away.")]
+    [SerializeField, Range(GlobalLowPass.MinCutoff, GlobalLowPass.OpenCutoff)]
+    private float dialogueLowPassCutoff = 1500f;
+    [Tooltip("Music pitch during the outcome dialogue, slid to while the black fades away.")]
+    [SerializeField, Range(0.1f, 3f)] private float dialoguePitch = 1f;
+    [Tooltip("Put the music's low-pass and pitch back as they were while the card pick is revealed.")]
+    [SerializeField] private bool restoreMusicAfter = true;
 
     [Header("Debug")]
     [Tooltip("Debug only: the digit keys (top row or numpad) run a level's dice round straight away - " +
@@ -241,8 +259,7 @@ public class LevelManager : MonoBehaviour
     /// <summary>
     /// Records the current level's outcome, moves on to the next level, and returns the dialogue to play
     /// for it (bad, neutral or hopeful - <paramref name="risky"/>: the risky goal was reached too - else
-    /// <see cref="defaultEndDialogue"/>; may be null), its speakers set to <see cref="playerTalkable"/> and the
-    /// level's <see cref="Level.speakerTalkable"/>.
+    /// <see cref="defaultEndDialogue"/>; may be null), prepared by <see cref="PrepareOutcome"/>.
     /// </summary>
     public VisualNovelDialogueContainer CompleteLevel(bool passed, bool risky = false)
     {
@@ -261,24 +278,22 @@ public class LevelManager : MonoBehaviour
         else onLevelLost?.Invoke(index);
 
         VisualNovelDialogueContainer dialogue = level?.DialogueFor(passed, risky);
-        return WithSpeakers(dialogue ? dialogue : defaultEndDialogue, level);
+        return PrepareOutcome(dialogue ? dialogue : defaultEndDialogue, level);
     }
 
-    // Runtime copies of the outcome dialogues, by source asset, with the scene's talkables as speakers.
+    // Runtime copies of the outcome dialogues, by source asset (see PrepareOutcome).
     private readonly Dictionary<VisualNovelDialogueContainer, VisualNovelDialogueContainer> speakerCopies =
         new Dictionary<VisualNovelDialogueContainer, VisualNovelDialogueContainer>();
 
     /// <summary>
     /// A runtime copy of <paramref name="dialogue"/> whose speaker ids <see cref="playerSpeakerId"/> and
-    /// <see cref="otherSpeakerId"/> point at <see cref="playerTalkable"/> and the level's talkable. The asset
-    /// itself can't hold scene objects; the copy is what the visual novel stage instantiates and plays.
+    /// <see cref="otherSpeakerId"/> point at <see cref="playerTalkable"/> and the level's talkable, and whose
+    /// first node fades in from black over <see cref="revealDuration"/>. The asset itself can't hold scene
+    /// objects; the copy is what the visual novel stage instantiates and plays.
     /// </summary>
-    private VisualNovelDialogueContainer WithSpeakers(VisualNovelDialogueContainer dialogue, Level level)
+    private VisualNovelDialogueContainer PrepareOutcome(VisualNovelDialogueContainer dialogue, Level level)
     {
         if (!dialogue) return null;
-
-        GameObject other = level?.speakerTalkable;
-        if (!playerTalkable && !other) return dialogue;
 
         if (!speakerCopies.TryGetValue(dialogue, out VisualNovelDialogueContainer copy) || !copy)
         {
@@ -288,7 +303,13 @@ public class LevelManager : MonoBehaviour
         }
 
         SetSpeaker(copy, playerSpeakerId, playerTalkable);
-        SetSpeaker(copy, otherSpeakerId, other);
+        SetSpeaker(copy, otherSpeakerId, level?.speakerTalkable);
+
+        // From the covered start a Fade Through Color only fades in, over half its duration.
+        VisualNovelNodeSettings first = copy.SettingsFor(0);
+        if (copy.startCovered && first != null && first.transition == VisualNovelTransition.FadeThroughColor)
+            first.transitionDuration = revealDuration * 2f;
+
         return copy;
     }
 
@@ -350,7 +371,7 @@ public class LevelManager : MonoBehaviour
             manager.onStartNode.AddListener(StopOutcomeRing);
         }
 
-        return ringHold;
+        return blackHold;
     }
 
     /// <summary>Fades the ringing out (if it's on).</summary>
@@ -364,5 +385,72 @@ public class LevelManager : MonoBehaviour
         Tween.StopAll(ringSource);
         if (ringFadeOut <= 0f) ringSource.Stop();
         else Tween.AudioVolume(ringSource, 0f, ringFadeOut, useUnscaledTime: true).OnComplete(ringSource, s => s.Stop());
+    }
+
+    // ---------------------------------------------------------------------
+    // Music around an outcome dialogue
+    // ---------------------------------------------------------------------
+
+    // The music's low-pass and pitch from before the outcome call, put back by RestoreMusic.
+    private bool musicSaved;
+    private bool savedLowPassOn;
+    private float savedCutoff;
+    private float savedPitch;
+    private Tween lowPassOffTween;
+
+    /// <summary>The screen fades to black before an outcome dialogue: the music's low-pass sweeps to <see cref="blackLowPassCutoff"/>.</summary>
+    public void MuffleMusicForCall(float duration)
+    {
+        SongManager songs = SongManager.Instance;
+        if (!modulateMusic || !songs) return;
+
+        lowPassOffTween.Stop();
+        if (!musicSaved)
+        {
+            savedLowPassOn = songs.lowPass.enabled;
+            savedCutoff = songs.lowPass.cutoff;
+            savedPitch = songs.pitch;
+            musicSaved = true;
+        }
+
+        // A filter that was off starts sweeping from fully open, not from its stored cutoff.
+        if (!songs.lowPass.enabled) songs.TweenLowPassCutoff(GlobalLowPass.OpenCutoff, 0f);
+        songs.TweenLowPassCutoff(blackLowPassCutoff, duration);
+    }
+
+    /// <summary>The black fades away: the music's low-pass and pitch go to the dialogue's, over <see cref="revealDuration"/>.</summary>
+    public void TuneMusicForDialogue()
+    {
+        SongManager songs = SongManager.Instance;
+        if (!modulateMusic || !songs) return;
+
+        songs.TweenLowPassCutoff(dialogueLowPassCutoff, revealDuration);
+        songs.TweenPitch(dialoguePitch, revealDuration);
+    }
+
+    /// <summary>Puts the music's low-pass and pitch back as they were before <see cref="MuffleMusicForCall"/>.</summary>
+    public void RestoreMusic(float duration)
+    {
+        if (!musicSaved) return;
+        musicSaved = false;
+
+        SongManager songs = SongManager.Instance;
+        if (!restoreMusicAfter || !songs) return;
+
+        songs.TweenPitch(savedPitch, duration);
+        if (savedLowPassOn)
+        {
+            songs.TweenLowPassCutoff(savedCutoff, duration);
+            return;
+        }
+
+        // It was off: open it all the way, then switch it off again with its old cutoff.
+        songs.TweenLowPassCutoff(GlobalLowPass.OpenCutoff, duration);
+        float cutoff = savedCutoff;
+        lowPassOffTween = Tween.Delay(songs, duration, s =>
+        {
+            s.SetLowPassEnabled(false);
+            s.lowPass.cutoff = cutoff;
+        });
     }
 }

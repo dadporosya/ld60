@@ -506,7 +506,7 @@ MonoBehaviour:
     clearForeground: 0
     stretchForeground: 1
     textBox: 2
-    transitionDuration: 3
+    transitionDuration: 4
     fadeColor: {r: 0, g: 0, b: 0, a: 1}
     holdOnColor: 0
     blurRadius: 1

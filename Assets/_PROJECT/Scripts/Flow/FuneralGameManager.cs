@@ -366,24 +366,31 @@ public class FuneralGameManager : MonoBehaviour
         CardMood mood = passed ? CardMood.Hope : CardMood.Hate;
         int id = ++roundEndId;
         roundEndFading = true;
+        bool hasOutcome = outcome && outcome.nodes != null && outcome.nodes.Count > 0;
+
+        // The music muffles as the black comes in (LevelManager's Outcome calls - music).
+        if (hasOutcome && Levels) Levels.MuffleMusicForCall(roundEndCoverDuration);
 
         // (The dice table's LOST / PASSED / HOPE spotlight is up -) black over the dice table -> the phone rings
-        // on the black -> the outcome dialogue -> black again -> the card pick, revealed.
+        // on the black -> the black fades away into the outcome dialogue -> black again -> the card pick, revealed.
         RoundEndFade(true, roundEndCoverDuration, id, () =>
         {
             if (Dice) Dice.HideSpotlight();
 
             // No dialogue (none assigned, or an empty one): straight from the black to the card pick.
-            if (!outcome || outcome.nodes == null || outcome.nodes.Count == 0)
+            if (!hasOutcome)
             {
                 OfferCardRevealed(contact, passed, mood, id);
                 return;
             }
 
             // Rings until the dialogue's first line starts typing (LevelManager's Call Start Loop).
-            float ringHold = Levels ? Levels.StartOutcomeRing() : 0f;
-            RoundEndDelay(ringHold, id, () =>
+            float blackHold = Levels ? Levels.StartOutcomeRing() : 0f;
+            RoundEndDelay(blackHold, id, () =>
             {
+                // The stage starts covered and fades in from its own black (LevelManager's Reveal Duration),
+                // while the music eases into the dialogue's filter and pitch.
+                if (Levels) Levels.TuneMusicForDialogue();
                 // Revealed first: a dialogue that can't play calls back at once, and its cover then takes over.
                 RoundEndFade(false, dialogueRevealDuration, id, null);
                 // The stage stays up until the black covers it, so the dice table doesn't flash in between.
@@ -410,6 +417,7 @@ public class FuneralGameManager : MonoBehaviour
     {
         // The round's final cutscene is over: the music for this many rounds played comes in.
         if (Songs && Levels) Songs.PlayAfterRound(Levels.RoundsPlayed);
+        if (Levels) Levels.RestoreMusic(cardsRevealDuration);
         onCallEnded?.Invoke(contact, passed);
         OfferCard(mood);
         // Even without a pick (no cards, or the good ending started): whatever comes next needs to be seen.
@@ -461,7 +469,11 @@ public class FuneralGameManager : MonoBehaviour
     private void CancelRoundEnd()
     {
         roundEndId++;
-        if (Levels) Levels.StopOutcomeRing();
+        if (Levels)
+        {
+            Levels.StopOutcomeRing();
+            Levels.RestoreMusic(cardsRevealDuration);
+        }
         if (Dice) Dice.HideSpotlight(instant: true);
         if (!roundEndFading) return;
 

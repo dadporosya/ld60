@@ -824,11 +824,11 @@ MonoBehaviour:
   scoreText: {fileID: 1617046775}
   scoreFormat: '{0}'
   scoreCounter: {fileID: 0}
-  roundScoreText: {fileID: 1185190418}
+  roundScoreText: {fileID: 0}
   roundScoreFormat: '{0}'
   scoreBelowTargetColor: {r: 1, g: 0.35, b: 0.35, a: 1}
   combinationText: {fileID: 548950539}
-  comboScoreText: {fileID: 0}
+  comboScoreText: {fileID: 1185190418}
   comboScoreFormat: '{0} x {1}'
   comboScorePunch: 0.15
   combinationAnimation: {fileID: 0}
