@@ -239,6 +239,8 @@ public class CursorIconManager : MonoBehaviour
     // Button hover tracking
     private bool buttonClickShown = false;
     private int externalButtonHoverCount = 0;
+    // Set by SetButtonHover(true) until the next state update, so moving straight onto another external button replays the hover sound.
+    private bool externalButtonEntered = false;
     private int externalDragCount = 0;
     // Auto-detected Selectable under the pointer, so moving straight onto a neighbouring button replays the hover sound.
     private Selectable hoveredSelectable;
@@ -370,6 +372,9 @@ public class CursorIconManager : MonoBehaviour
 
     private void HandleAutoState()
     {
+        bool externalEntered = externalButtonEntered;
+        externalButtonEntered = false;
+
         if (State == CursorState.Custom) return;
 
         bool isDragging =
@@ -393,7 +398,8 @@ public class CursorIconManager : MonoBehaviour
         bool overButton = overSelectable || externalButtonHoverCount > 0;
         IsOverButton = overButton;
 
-        bool switchedButton = State == CursorState.Button && hovered && hovered != hoveredSelectable;
+        bool switchedButton = State == CursorState.Button &&
+                              ((hovered && hovered != hoveredSelectable) || externalEntered);
         hoveredSelectable = hovered;
 
         if (overButton)
@@ -451,6 +457,7 @@ public class CursorIconManager : MonoBehaviour
     public void SetButtonHover(bool hovering)
     {
         externalButtonHoverCount = Mathf.Max(0, externalButtonHoverCount + (hovering ? 1 : -1));
+        if (hovering) externalButtonEntered = true;
     }
 
     /// <summary>Clears every external button-hover registration.</summary>

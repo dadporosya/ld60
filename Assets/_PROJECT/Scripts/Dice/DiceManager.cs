@@ -130,6 +130,64 @@ public class DicePopups
     public Color roundStartColor = Color.white;
 }
 
+/// <summary>How a dice turn came out: under the target, the target, or the risky goal.</summary>
+public enum DiceOutcome
+{
+    Lost,
+    Passed,
+    Hope,
+}
+
+/// <summary>What the outcome spotlight shows for one <see cref="DiceOutcome"/>.</summary>
+[Serializable]
+public class DiceOutcomeLook
+{
+    public string text;
+    public Color color = Color.white;
+    [Tooltip("Played as the text appears. Empty: silent.")]
+    public AudioClip sfx;
+    [Range(0f, 1f)] public float volume = 1f;
+
+    public DiceOutcomeLook() { }
+
+    public DiceOutcomeLook(string text, Color color)
+    {
+        this.text = text;
+        this.color = color;
+    }
+}
+
+/// <summary>
+/// The big cinematic text at the end of a turn: LOST / PASSED / HOPE. The turn ends -> <see cref="delay"/> ->
+/// the text is on, at once, with its sfx -> <see cref="hold"/> -> the turn hands back (the round end's fade to
+/// black and the outcome dialogue follow, see <see cref="FuneralGameManager"/>).
+/// </summary>
+[Serializable]
+public class DiceOutcomeSpotlight
+{
+    [Tooltip("The big text. Keep it out of the Table Root (hidden as the turn hands back) and above the " +
+             "FadeImageController's image to keep it readable over the black. Empty: no spotlight - the turn " +
+             "hands back after Finish Delay, as before.")]
+    public TextMeshProUGUI text;
+    [Tooltip("Seconds after the turn's result before the text appears.")]
+    [Min(0f)] public float delay = 0.4f;
+    [Tooltip("Seconds the text stays up before the turn hands back (and the fade to black starts).")]
+    [Min(0f)] public float hold = 1.2f;
+    [Tooltip("Seconds the text fades out over once it's hidden (the black has covered the screen). 0: off at once.")]
+    [Min(0f)] public float fadeOut = 0.3f;
+
+    public DiceOutcomeLook lost = new DiceOutcomeLook("LOST", new Color(0.9f, 0.15f, 0.15f, 1f));
+    public DiceOutcomeLook passed = new DiceOutcomeLook("PASSED", Color.white);
+    public DiceOutcomeLook hope = new DiceOutcomeLook("HOPE", new Color(0.35f, 0.9f, 0.4f, 1f));
+
+    public DiceOutcomeLook For(DiceOutcome outcome) => outcome switch
+    {
+        DiceOutcome.Hope => hope,
+        DiceOutcome.Passed => passed,
+        _ => lost,
+    };
+}
+
 /// <summary>Points a poker dice hand is worth.</summary>
 [Serializable]
 public class CombinationScore
@@ -191,6 +249,8 @@ public class DiceTurnResult
     public int riskyTarget;
     /// <summary>The total reached the risky goal: the next cards are upgraded.</summary>
     public bool riskyPassed;
+
+    public DiceOutcome Outcome => !passed ? DiceOutcome.Lost : riskyPassed ? DiceOutcome.Hope : DiceOutcome.Passed;
 }
 
 /// <summary>
@@ -400,6 +460,10 @@ public class DiceManager : MonoBehaviour
     [Header("Popups")]
     public DicePopups popups = new DicePopups();
 
+    [Header("Outcome Spotlight")]
+    [Tooltip("The big LOST / PASSED / HOPE text once the turn is over, before the fade to the outcome dialogue.")]
+    public DiceOutcomeSpotlight spotlight = new DiceOutcomeSpotlight();
+
     [Header("Debug")]
     [Tooltip("Debug only: during a turn the keys below end it on the spot - lost, won, or won with the risky goal.")]
     [SerializeField] private bool debugKeys = true;
@@ -591,6 +655,7 @@ public class DiceManager : MonoBehaviour
             if (!die) continue;
             die.Init(this);
             die.SetFaces(faceSprites);
+            ShowRandomFace(die);
         }
 
         ScatterSpawned(spawned);
@@ -610,6 +675,10 @@ public class DiceManager : MonoBehaviour
         }
         if (tableRoot) tableRoot.SetActive(false);
         if (resultText) resultText.gameObject.SetActive(false);
+        if (spotlight.text) spotlight.text.gameObject.SetActive(false);
+        if (spotlight.text && hideTableOnFinish && tableRoot && spotlight.text.transform.IsChildOf(tableRoot.transform))
+            h.Out($"DiceManager: the spotlight text '{spotlight.text.name}' is inside the Table Root - it's hidden " +
+                  "with the table before the fade. Move it out.");
     }
 
     /// <summary>
@@ -663,6 +732,12 @@ public class DiceManager : MonoBehaviour
     // ---------------------------------------------------------------------
 
     /// <summary>
+    /// A new die's starting face, set once before it is ever seen. After that a die only changes face by being
+    /// thrown (or by a card), so nothing jumps on the table before a roll.
+    /// </summary>
+    private static void ShowRandomFace(Dice die) => die.ShowFace(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
+
+    /// <summary>
     /// Puts <paramref name="count"/> dice on the table for the turn: spawns the missing ones (Extra Dice cards)
     /// and hides the ones over the count.
     /// </summary>
@@ -673,6 +748,7 @@ public class DiceManager : MonoBehaviour
         {
             die.Init(this);
             die.SetFaces(faceSprites);
+            ShowRandomFace(die);
         }
 
         diceInTurn = count;
@@ -815,6 +891,7 @@ public class DiceManager : MonoBehaviour
         turnId++;
         if (tableRoot) tableRoot.SetActive(true);
         if (resultText) resultText.gameObject.SetActive(false);
+        HideSpotlight(instant: true);
         SetDiceCount(DiceCountFor(cards));
         onTurnStarted?.Invoke();
 
@@ -825,9 +902,9 @@ public class DiceManager : MonoBehaviour
 
     /// <summary>
     /// Resets the dice and rerolls for the turn's next round. The first throw waits for <see cref="QueueFirstRoll"/>.
-    /// With <paramref name="keepFaces"/> the dice keep the faces the last round left them on.
+    /// The dice keep the faces they were left on - the last round's, or the last turn's - until that throw.
     /// </summary>
-    private void PrepareRound(bool keepFaces = false)
+    private void PrepareRound()
     {
         CurrentRound++;
         HasRolled = false;
@@ -837,15 +914,14 @@ public class DiceManager : MonoBehaviour
         carriedRerolls = 0;
         roundMult = 0f;
 
-        // A turn's first round starts on random faces, later ones on the last round's - they don't score
-        // until the first throw lands. Dice destroyed last round are back.
+        // The faces stay as they were (they don't score until the first throw lands), so nothing changes on the
+        // table before the roll. Dice destroyed last round are back.
         for (int i = 0; i < Mathf.Min(diceInTurn, dice.Count); i++)
         {
             Dice die = dice[i];
             if (!die) continue;
             die.Restore();
             die.ResetDice();
-            if (!keepFaces) die.ShowFace(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
         }
 
         introRunning = true;
@@ -1203,8 +1279,54 @@ public class DiceManager : MonoBehaviour
         UpdateUI();
         if (pendingResult.riskyPassed) Popup(popups.cardUpgradedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
 
-        if (finishDelay > 0f) finishTween = Tween.Delay(this, finishDelay, manager => manager.CompleteTurn());
-        else CompleteTurn();
+        if (spotlight.text) AfterDelay(spotlight.delay, manager => manager.SpotlightOutcome());
+        else AfterDelay(finishDelay, manager => manager.CompleteTurn());
+    }
+
+    /// <summary>The big outcome text, on at once with its sfx; the turn hands back after <see cref="DiceOutcomeSpotlight.hold"/>.</summary>
+    private void SpotlightOutcome()
+    {
+        if (!TurnActive || pendingResult == null) return;
+
+        ShowSpotlight(pendingResult.Outcome);
+        AfterDelay(spotlight.hold, manager => manager.CompleteTurn());
+    }
+
+    private Tween spotlightTween;
+
+    /// <summary>Shows the spotlight text for <paramref name="outcome"/> (with its sfx), instantly.</summary>
+    public void ShowSpotlight(DiceOutcome outcome)
+    {
+        TextMeshProUGUI text = spotlight.text;
+        if (!text) return;
+
+        DiceOutcomeLook look = spotlight.For(outcome);
+        spotlightTween.Stop();
+        text.text = look.text;
+        text.color = look.color;
+        text.gameObject.SetActive(true);
+
+        if (look.sfx && SFXManager.Instance) SFXManager.Instance.PlayClip(look.sfx, look.volume);
+    }
+
+    /// <summary>Takes the spotlight text away: over <see cref="DiceOutcomeSpotlight.fadeOut"/>, or at once.</summary>
+    public void HideSpotlight(bool instant = false)
+    {
+        TextMeshProUGUI text = spotlight.text;
+        if (!text) return;
+
+        spotlightTween.Stop();
+        if (!text.gameObject.activeInHierarchy) return;
+
+        if (instant || spotlight.fadeOut <= 0f)
+        {
+            text.gameObject.SetActive(false);
+            return;
+        }
+
+        // Unscaled, like the round end's fades around it.
+        spotlightTween = Tween.Alpha(text, 0f, spotlight.fadeOut, useUnscaledTime: true)
+            .OnComplete(text, t => t.gameObject.SetActive(false));
     }
 
     /// <summary>
@@ -1220,7 +1342,7 @@ public class DiceManager : MonoBehaviour
         onRoundFinished?.Invoke(roundScore);
 
         // The intro keeps the Roll / Finish buttons off until the dice are thrown.
-        PrepareRound(keepFaces: true);
+        PrepareRound();
         Popup(string.Format(popups.roundStartFormat, CurrentRound, RoundsInTurn), CombinationAnchor,
             popups.combinationOffset, popups.roundStartColor);
         AfterDelay(nextRoundRollDelay, manager => manager.ThrowNextRound());
@@ -1306,6 +1428,7 @@ public class DiceManager : MonoBehaviour
         pendingResult = null;
         roundResults.Clear();
         StopPopups();
+        HideSpotlight(instant: true);
         if (tableRoot) tableRoot.SetActive(false);
     }
 

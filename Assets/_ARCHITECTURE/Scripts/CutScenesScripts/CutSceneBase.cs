@@ -42,7 +42,13 @@ public class CutSceneBase : MonoBehaviour
         initialized = true;
     }
 
-    public void Run()
+    public void Run() => RunInstance();
+
+    /// <summary>
+    /// Like <see cref="Run"/>, but returns the running clone (null if nothing was started), so the
+    /// caller can talk to it — e.g. hand it a callback for when it is done.
+    /// </summary>
+    public CutSceneBase RunInstance()
     {
         // if (!initialized) Init();
 
@@ -53,7 +59,7 @@ public class CutSceneBase : MonoBehaviour
         if (isRunningInstance)
         {
             h.Out($"{name}: Run() called on an already-running cutscene instance — ignored.");
-            return;
+            return null;
         }
 
         CutSceneBase instance = Instantiate(this);
@@ -64,6 +70,7 @@ public class CutSceneBase : MonoBehaviour
         instance.isRunningInstance = true;
 
         instance.StartCoroutine(instance.ExecuteSequence(instance.gameObject));
+        return instance;
     }
 
     public IEnumerator ExecuteSequence(GameObject instanceToDestroy = null)

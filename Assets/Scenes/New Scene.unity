@@ -439,29 +439,44 @@ MonoBehaviour:
     isFinal: 0
     lockedDialogue: {fileID: 0}
     startDialogue: {fileID: 0}
-    winDialogue: {fileID: 0}
-    lossDialogue: {fileID: 0}
+    speakerTalkable: {fileID: 620020854}
+    badDialogue: {fileID: 11400000, guid: 34584f99b83f4345b60df89bbd3496b6, type: 2}
+    neutralDialogue: {fileID: 11400000, guid: 804765010d1b4a6ea2ce204f09e0ede2, type: 2}
+    hopefulDialogue: {fileID: 11400000, guid: 5cbec6ae373c4d95926430fcd14d339f, type: 2}
   - name: Childhood friend
     isFinal: 0
     lockedDialogue: {fileID: 0}
     startDialogue: {fileID: 0}
-    winDialogue: {fileID: 0}
-    lossDialogue: {fileID: 0}
+    speakerTalkable: {fileID: 1010990755}
+    badDialogue: {fileID: 11400000, guid: 9465432a46924a76a42d3b706bf7b17e, type: 2}
+    neutralDialogue: {fileID: 11400000, guid: 4891c4a3cd5e46c49a6b35b94d7369f1, type: 2}
+    hopefulDialogue: {fileID: 11400000, guid: de9e043ffccf48d7a024373af4ba6e33, type: 2}
   - name: Girlfriend
     isFinal: 0
     lockedDialogue: {fileID: 0}
     startDialogue: {fileID: 0}
-    winDialogue: {fileID: 0}
-    lossDialogue: {fileID: 0}
+    speakerTalkable: {fileID: 782407217}
+    badDialogue: {fileID: 11400000, guid: 2e2618256eb441ca942b21dd451f291a, type: 2}
+    neutralDialogue: {fileID: 11400000, guid: ab50986ea33f48ef82260cba2e198061, type: 2}
+    hopefulDialogue: {fileID: 11400000, guid: 06ceddb89ed3428389c0e0c4c67db6fa, type: 2}
   - name: Father
     isFinal: 1
     lockedDialogue: {fileID: 0}
     startDialogue: {fileID: 0}
-    winDialogue: {fileID: 0}
-    lossDialogue: {fileID: 0}
+    speakerTalkable: {fileID: 1251089179}
+    badDialogue: {fileID: 11400000, guid: 04c6ff0519d746f48f75bcbb656782fe, type: 2}
+    neutralDialogue: {fileID: 11400000, guid: fe7cd64ce4be426faddf2e88cd89353b, type: 2}
+    hopefulDialogue: {fileID: 11400000, guid: 5e79cd3e6cfd4a84bd6407d8dc2bf395, type: 2}
   pointsByRound: ad000000250100007d0100004a020000
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
+  playerTalkable: {fileID: 2120501552}
+  playerSpeakerId: 1
+  otherSpeakerId: 2
+  callStartLoop: {fileID: 8300000, guid: 0ef97fee35ac1d840aa45b695b54ea51, type: 3}
+  callStartVolume: 1
+  ringHold: 1.5
+  ringFadeOut: 0.25
   debugKeys: 1
   onLevelStarted:
     m_PersistentCalls:
@@ -723,11 +738,12 @@ MonoBehaviour:
   rerollsPerRound: 3
   autoFirstRoll: 1
   firstRollDelay: 1
-  firstRollCombinationReduction: 0.617
+  firstRollCombinationReduction: 1
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
   roundScoreAlertDelay: 0.8
   nextRoundDelay: 1.2
+  nextRoundRollDelay: 1
   hideTableOnFinish: 1
   riskyGoalMultiplier: 1.5
   tutorialDialogue: {fileID: 11400000, guid: 993b1b18e1955df48adff7cb82110f37, type: 2}
@@ -1672,6 +1688,8 @@ MonoBehaviour:
   textFadeOutDuration: 0.5
   textSpeed: 60
   textSpread: 12
+  avoidOverlap: 1
+  overlapGap: 6
 --- !u!1 &346760856
 GameObject:
   m_ObjectHideFlags: 0
@@ -3355,7 +3373,7 @@ MonoBehaviour:
   portrait: {fileID: 0}
   portraitAtlas: []
   material: {fileID: 0}
-  useCustomTextColor: 0
+  useCustomTextColor: 1
   textColor: {r: 1, g: 0.7028302, b: 0.9855354, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 0c97bc262fec732419d4722dd9223c02, type: 3}
@@ -4267,7 +4285,7 @@ MonoBehaviour:
   portrait: {fileID: 0}
   portraitAtlas: []
   material: {fileID: 0}
-  useCustomTextColor: 0
+  useCustomTextColor: 1
   textColor: {r: 0.97402066, g: 1, b: 0.740566, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: ca675fb2edd582d438372811fff5b040, type: 3}
@@ -4341,8 +4359,8 @@ MonoBehaviour:
   holes:
   - {fileID: 244570388}
   - {fileID: 1901275428}
-  - {fileID: 1743218968}
   - {fileID: 2052019987}
+  - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -4955,7 +4973,7 @@ MonoBehaviour:
   portrait: {fileID: 0}
   portraitAtlas: []
   material: {fileID: 0}
-  useCustomTextColor: 0
+  useCustomTextColor: 1
   textColor: {r: 0.759434, g: 1, b: 0.7732798, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: ad377b28be75a9f4c9a04b83fe6a2a06, type: 3}
@@ -5084,7 +5102,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -464.42996, y: 447}
+  m_AnchoredPosition: {x: -464.42996, y: 446.99997}
   m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364
@@ -6069,7 +6087,7 @@ MonoBehaviour:
   portrait: {fileID: 0}
   portraitAtlas: []
   material: {fileID: 0}
-  useCustomTextColor: 0
+  useCustomTextColor: 1
   textColor: {r: 0.7688679, g: 0.78129053, b: 1, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 1d44c77ca969e0c4fb99255422c6ac67, type: 3}
@@ -8910,7 +8928,7 @@ MonoBehaviour:
   portrait: {fileID: 0}
   portraitAtlas: []
   material: {fileID: 0}
-  useCustomTextColor: 0
+  useCustomTextColor: 1
   textColor: {r: 1, g: 1, b: 1, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 2758419553b2b3d41893f0710f8e1355, type: 3}

@@ -6,7 +6,7 @@ using UnityEngine.Events;
 /// <summary>
 /// Runs Funeral Song: the hub, the calls and the two endings, all in one scene.
 ///
-/// <para><b>Flow.</b> Intro dialogue -> the start music (<see cref="SongManager"/>) -> Hub. From the hub the player clicks things
+/// <para><b>Flow.</b> Intro dialogue (or <see cref="IntroCutscene"/>) -> the start music (<see cref="SongManager"/>) -> Hub. From the hub the player clicks things
 /// (<see cref="HubInteractable"/>); the phone opens the dial panel, and a call goes: the contact's
 /// call dialogue -> dice round against the current level's points (<see cref="LevelManager"/>) -> the
 /// level's win or loss dialogue -> card pick (Hope or
@@ -49,6 +49,8 @@ public class FuneralGameManager : MonoBehaviour
     [Header("Story")]
     [Tooltip("Played before the start music. Optional.")]
     [SerializeField] private VisualNovelDialogueContainer introDialogue;
+    [Tooltip("Played instead of the intro dialogue: its dialogue, then a fade to black and back to the hub. Optional.")]
+    [SerializeField] private IntroCutscene introCutscene;
     [Tooltip("Start the SongManager's start music once the intro is over (otherwise something else calls StartSong).")]
     [SerializeField] private bool startSongAfterIntro = true;
     [Tooltip("Everyone has been called: the hero calls his father. \"I love you, dad.\"")]
@@ -183,11 +185,17 @@ public class FuneralGameManager : MonoBehaviour
         onContactsChanged?.Invoke();
         SetPhase(Phase.Intro);
 
-        Dialogues.Play(introDialogue, () =>
-        {
-            if (startSongAfterIntro) StartSong();
-            SetPhase(Phase.Hub);
-        });
+        if (introCutscene) introCutscene.Play(EndIntro);
+        else Dialogues.Play(introDialogue, EndIntro);
+    }
+
+    private void EndIntro()
+    {
+        // Something else (a debug round) took over while the intro's fades were still running.
+        if (CurrentPhase != Phase.Intro) return;
+
+        if (startSongAfterIntro) StartSong();
+        SetPhase(Phase.Hub);
     }
 
     public void StartSong()
@@ -316,7 +324,8 @@ public class FuneralGameManager : MonoBehaviour
         {
             // The risky goal reached: the card pick after this call offers upgraded cards.
             if (result.riskyPassed && Cards) Cards.UpgradeNextChoice = true;
-            AfterShowcase(() => EndCall(contact, Levels ? Levels.Passes(result.total) : result.passed));
+            bool passed = Levels ? Levels.Passes(result.total) : result.passed;
+            AfterShowcase(() => EndCall(contact, passed, passed && result.riskyPassed));
         });
     }
 
@@ -339,7 +348,8 @@ public class FuneralGameManager : MonoBehaviour
         ended.AddListener(once);
     }
 
-    private void EndCall(ContactData contact, bool passed)
+    /// <param name="risky">The risky goal was reached too: the level's hopeful dialogue plays.</param>
+    private void EndCall(ContactData contact, bool passed, bool risky = false)
     {
         if (CurrentPhase == Phase.Ending) return;
 
@@ -352,12 +362,13 @@ public class FuneralGameManager : MonoBehaviour
 
         SetPhase(Phase.Call);
         // The level decides what plays after the round, and moves on to the next one.
-        VisualNovelDialogueContainer outcome = Levels ? Levels.CompleteLevel(passed) : null;
+        VisualNovelDialogueContainer outcome = Levels ? Levels.CompleteLevel(passed, risky) : null;
         CardMood mood = passed ? CardMood.Hope : CardMood.Hate;
         int id = ++roundEndId;
         roundEndFading = true;
 
-        // Black over the dice table -> the outcome dialogue -> black again -> the card pick, revealed.
+        // Black over the dice table -> the phone rings on the black -> the outcome dialogue -> black again ->
+        // the card pick, revealed.
         RoundEndFade(true, roundEndCoverDuration, id, () =>
         {
             // No dialogue (none assigned, or an empty one): straight from the black to the card pick.
@@ -367,14 +378,23 @@ public class FuneralGameManager : MonoBehaviour
                 return;
             }
 
-            // Revealed first: a dialogue that can't play calls back at once, and its cover then takes over.
-            RoundEndFade(false, dialogueRevealDuration, id, null);
-            // The stage stays up until the black covers it, so the dice table doesn't flash in between.
-            Dialogues.Play(outcome, () => RoundEndFade(true, dialogueCoverDuration, id, () =>
+            // Rings until the dialogue's first line starts typing (LevelManager's Call Start Loop).
+            float ringHold = Levels ? Levels.StartOutcomeRing() : 0f;
+            RoundEndDelay(ringHold, id, () =>
             {
-                Dialogues.HideStage();
-                OfferCardRevealed(contact, passed, mood, id);
-            }), hideStage: false);
+                // Revealed first: a dialogue that can't play calls back at once, and its cover then takes over.
+                RoundEndFade(false, dialogueRevealDuration, id, null);
+                // The stage stays up until the black covers it, so the dice table doesn't flash in between.
+                Dialogues.Play(outcome, () =>
+                {
+                    if (Levels) Levels.StopOutcomeRing();
+                    RoundEndFade(true, dialogueCoverDuration, id, () =>
+                    {
+                        Dialogues.HideStage();
+                        OfferCardRevealed(contact, passed, mood, id);
+                    });
+                }, hideStage: false);
+            });
         });
     }
 
@@ -422,10 +442,24 @@ public class FuneralGameManager : MonoBehaviour
         if (then != null) tween.OnComplete(() => { if (id == roundEndId) then(); });
     }
 
+    /// <summary>Runs <paramref name="then"/> after <paramref name="seconds"/> - unless round end <paramref name="id"/> was cut off meanwhile.</summary>
+    private void RoundEndDelay(float seconds, int id, System.Action then)
+    {
+        if (id != roundEndId) return;
+        if (seconds <= 0f)
+        {
+            then();
+            return;
+        }
+
+        Tween.Delay(seconds, () => { if (id == roundEndId) then(); }, useUnscaledTime: true);
+    }
+
     /// <summary>Cuts off a round end's fades, clearing the screen if it was dark.</summary>
     private void CancelRoundEnd()
     {
         roundEndId++;
+        if (Levels) Levels.StopOutcomeRing();
         if (!roundEndFading) return;
 
         roundEndFading = false;

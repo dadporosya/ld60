@@ -131,6 +131,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
     // Off: only picking a line closes the list (clicking outside and the close button do nothing).
     private bool listCancellable = true;
     private Talkable listSpeaker;
+    // The line the cursor is told it's on a button for (its hover/click icon and sounds); null: none.
+    private TextMeshProUGUI cursorLine;
 
     /// <summary>True while a list showcase is waiting for a pick.</summary>
     public bool IsListOpen => listOpen;
@@ -220,6 +222,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
     private void OnDisable()
     {
+        SetCursorLine(null);
         if (dialogueManager && onDialogueEnded != null) dialogueManager.onDialogueEnd.RemoveListener(onDialogueEnded);
     }
 
@@ -423,9 +426,22 @@ public class ShowcaseDialogueManager : MonoBehaviour
 
     private void HoverLine(TextMeshProUGUI text, ListLine line, bool hovered)
     {
+        if (!hovered && cursorLine == text) SetCursorLine(null);
         if (!listOpen || !line.interactable || !text) return;
         text.color = hovered ? lineHoverColor : lineColor;
+        if (hovered) SetCursorLine(text);
         if (hovered && lineHoverSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(lineHoverSfx);
+    }
+
+    /// <summary>
+    /// Tells the cursor whether the pointer is on a clickable line, so it shows its button icon and plays its
+    /// button hover / click sounds there (the lines aren't Selectables, which it would find by itself).
+    /// </summary>
+    private void SetCursorLine(TextMeshProUGUI line)
+    {
+        bool wasOn = cursorLine;
+        cursorLine = line;
+        if (wasOn != (bool)line && CursorIconManager.Instance) CursorIconManager.Instance.SetButtonHover(line);
     }
 
     private void PickLine(TextMeshProUGUI text, ListLine line, int index, Action<int> onPicked)
@@ -497,6 +513,8 @@ public class ShowcaseDialogueManager : MonoBehaviour
     private void FreezeList()
     {
         listOpen = false;
+        // The pointer-exit that follows is ignored while frozen; the line gets it back on unfreeze.
+        SetCursorLine(null);
         foreach (TextMeshProUGUI line in listLines)
             if (line) line.raycastTarget = false;
     }
@@ -516,6 +534,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
     private void ClearList()
     {
         listOpen = false;
+        SetCursorLine(null);
         foreach (TextMeshProUGUI line in listLines)
             if (line) Destroy(line.gameObject);
         listLines.Clear();

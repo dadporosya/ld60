@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
+using PrimeTween;
 
 /// <summary>
 /// One level: its name, whether it's final, and what plays around its dice round. How many points the round needs
@@ -20,12 +22,23 @@ public class Level
     public DialogueContainer lockedDialogue;
     [Tooltip("Played before the dice round when the level is picked from the phone. Optional.")]
     public VisualNovelDialogueContainer startDialogue;
-    [Tooltip("Played when the round reaches the points it needs.")]
-    public VisualNovelDialogueContainer winDialogue;
-    [Tooltip("Played when the round falls short.")]
-    public VisualNovelDialogueContainer lossDialogue;
+    [Tooltip("The other end of the line in this level's outcome dialogues: speaker id \"2\" " +
+             "(LevelManager's Other Speaker Id) - its voice clips and text color. Optional.")]
+    public GameObject speakerTalkable;
+    [Tooltip("Bad: played when the round falls short (the player lost).")]
+    [FormerlySerializedAs("lossDialogue")]
+    public VisualNovelDialogueContainer badDialogue;
+    [Tooltip("Neutral: played when the round reaches the points it needs, but not the risky goal.")]
+    [FormerlySerializedAs("winDialogue")]
+    public VisualNovelDialogueContainer neutralDialogue;
+    [Tooltip("Hopeful: played when the round reaches the risky goal. Empty = the Neutral Dialogue.")]
+    public VisualNovelDialogueContainer hopefulDialogue;
 
-    public VisualNovelDialogueContainer DialogueFor(bool passed) => passed ? winDialogue : lossDialogue;
+    public VisualNovelDialogueContainer DialogueFor(bool passed, bool risky)
+    {
+        if (!passed) return badDialogue;
+        return risky && hopefulDialogue ? hopefulDialogue : neutralDialogue;
+    }
 }
 
 /// <summary>
@@ -56,8 +69,25 @@ public class LevelManager : MonoBehaviour
              "round was won. Off: playing it is enough.")]
     [SerializeField] private bool onlyWinsComplete = false;
 
-    [Tooltip("Played after a round when its level has no Win Dialogue / Loss Dialogue for the outcome. Optional.")]
+    [Tooltip("Played after a round when its level has no Bad / Neutral / Hopeful Dialogue for the outcome. Optional.")]
     [SerializeField] private VisualNovelDialogueContainer defaultEndDialogue;
+
+    [Header("Outcome calls")]
+    [Tooltip("Speaker id \"1\" in the outcome dialogues (Player Speaker Id): the hero's Talkable - its voice " +
+             "clips and text color.")]
+    [SerializeField] private GameObject playerTalkable;
+    [Tooltip("Outcome dialogue nodes with this speaker id are spoken by the Player Talkable.")]
+    [SerializeField] private string playerSpeakerId = "1";
+    [Tooltip("Outcome dialogue nodes with this speaker id are spoken by the level's Speaker Talkable.")]
+    [SerializeField] private string otherSpeakerId = "2";
+    [Tooltip("Looped over the black screen before an outcome dialogue, until its first line starts typing " +
+             "(the phone ringing while the black fades away). Empty: no ringing.")]
+    [SerializeField] private AudioClip callStartLoop;
+    [SerializeField, Range(0f, 1f)] private float callStartVolume = 1f;
+    [Tooltip("Seconds the screen stays black with the phone ringing before the outcome dialogue starts fading in.")]
+    [SerializeField, Min(0f)] private float ringHold = 1.5f;
+    [Tooltip("Seconds the ringing fades out over once the dialogue's first line starts.")]
+    [SerializeField, Min(0f)] private float ringFadeOut = 0.25f;
 
     [Header("Debug")]
     [Tooltip("Debug only: the digit keys (top row or numpad) run a level's dice round straight away - " +
@@ -210,9 +240,11 @@ public class LevelManager : MonoBehaviour
 
     /// <summary>
     /// Records the current level's outcome, moves on to the next level, and returns the dialogue to play
-    /// for it (win or loss, else <see cref="defaultEndDialogue"/>; may be null).
+    /// for it (bad, neutral or hopeful - <paramref name="risky"/>: the risky goal was reached too - else
+    /// <see cref="defaultEndDialogue"/>; may be null), its speakers set to <see cref="playerTalkable"/> and the
+    /// level's <see cref="Level.speakerTalkable"/>.
     /// </summary>
-    public VisualNovelDialogueContainer CompleteLevel(bool passed)
+    public VisualNovelDialogueContainer CompleteLevel(bool passed, bool risky = false)
     {
         Level level = Current;
         // Past the end of the list the last level repeats; it's that one being completed.
@@ -228,7 +260,109 @@ public class LevelManager : MonoBehaviour
         if (passed) onLevelWon?.Invoke(index);
         else onLevelLost?.Invoke(index);
 
-        VisualNovelDialogueContainer dialogue = level?.DialogueFor(passed);
-        return dialogue ? dialogue : defaultEndDialogue;
+        VisualNovelDialogueContainer dialogue = level?.DialogueFor(passed, risky);
+        return WithSpeakers(dialogue ? dialogue : defaultEndDialogue, level);
+    }
+
+    // Runtime copies of the outcome dialogues, by source asset, with the scene's talkables as speakers.
+    private readonly Dictionary<VisualNovelDialogueContainer, VisualNovelDialogueContainer> speakerCopies =
+        new Dictionary<VisualNovelDialogueContainer, VisualNovelDialogueContainer>();
+
+    /// <summary>
+    /// A runtime copy of <paramref name="dialogue"/> whose speaker ids <see cref="playerSpeakerId"/> and
+    /// <see cref="otherSpeakerId"/> point at <see cref="playerTalkable"/> and the level's talkable. The asset
+    /// itself can't hold scene objects; the copy is what the visual novel stage instantiates and plays.
+    /// </summary>
+    private VisualNovelDialogueContainer WithSpeakers(VisualNovelDialogueContainer dialogue, Level level)
+    {
+        if (!dialogue) return null;
+
+        GameObject other = level?.speakerTalkable;
+        if (!playerTalkable && !other) return dialogue;
+
+        if (!speakerCopies.TryGetValue(dialogue, out VisualNovelDialogueContainer copy) || !copy)
+        {
+            copy = Instantiate(dialogue);
+            copy.name = dialogue.name;
+            speakerCopies[dialogue] = copy;
+        }
+
+        SetSpeaker(copy, playerSpeakerId, playerTalkable);
+        SetSpeaker(copy, otherSpeakerId, other);
+        return copy;
+    }
+
+    private static void SetSpeaker(DialogueContainer dialogue, string id, GameObject talkable)
+    {
+        if (string.IsNullOrEmpty(id) || !talkable) return;
+
+        int index = dialogue.speakerIds.IndexOf(id);
+        if (index < 0)
+        {
+            index = dialogue.speakerIds.Count;
+            dialogue.speakerIds.Add(id);
+        }
+
+        while (dialogue.speakerPrefabs.Count <= index) dialogue.speakerPrefabs.Add(null);
+        dialogue.speakerPrefabs[index] = talkable;
+    }
+
+    private void OnDestroy()
+    {
+        StopOutcomeRing();
+        foreach (VisualNovelDialogueContainer copy in speakerCopies.Values)
+            if (copy) Destroy(copy);
+        speakerCopies.Clear();
+    }
+
+    // ---------------------------------------------------------------------
+    // Ringing before an outcome dialogue
+    // ---------------------------------------------------------------------
+
+    private AudioSource ringSource;
+
+    /// <summary>
+    /// Starts looping <see cref="callStartLoop"/> until the next dialogue line starts typing (or
+    /// <see cref="StopOutcomeRing"/>). Returns how long to hold the black before the dialogue starts.
+    /// </summary>
+    public float StartOutcomeRing()
+    {
+        if (!callStartLoop) return 0f;
+
+        if (!ringSource)
+        {
+            ringSource = gameObject.AddComponent<AudioSource>();
+            ringSource.playOnAwake = false;
+            ringSource.loop = true;
+            ringSource.spatialBlend = 0f;
+            ringSource.outputAudioMixerGroup = AudioMixerManager.GetSFXGroup();
+        }
+
+        Tween.StopAll(ringSource);
+        ringSource.clip = callStartLoop;
+        ringSource.volume = callStartVolume;
+        ringSource.Play();
+
+        DialogueManager manager = DialogueManager.Instance;
+        if (manager)
+        {
+            manager.onStartNode.RemoveListener(StopOutcomeRing);
+            manager.onStartNode.AddListener(StopOutcomeRing);
+        }
+
+        return ringHold;
+    }
+
+    /// <summary>Fades the ringing out (if it's on).</summary>
+    public void StopOutcomeRing()
+    {
+        DialogueManager manager = DialogueManager.Instance;
+        if (manager) manager.onStartNode.RemoveListener(StopOutcomeRing);
+
+        if (!ringSource || !ringSource.isPlaying) return;
+
+        Tween.StopAll(ringSource);
+        if (ringFadeOut <= 0f) ringSource.Stop();
+        else Tween.AudioVolume(ringSource, 0f, ringFadeOut, useUnscaledTime: true).OnComplete(ringSource, s => s.Stop());
     }
 }

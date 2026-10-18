@@ -69,16 +69,14 @@ public class RoomLight : RoomLightLayer
     [SerializeField, Range(0f, 1f)] private float clickVolume = 0.5f;
 
     [Header("Flicker sound (optional, any style)")]
-    [Tooltip("One of these plays (through SFXManager) each time the flicker drops the light under Flicker Sound " +
-             "Threshold: a stutter, a chatter step, the tube cutting out. Lights following another's flicker stay " +
-             "quiet, so a lamp and its pool don't double up.")]
+    [Tooltip("One of these plays (through SFXManager) once when a flicker wave starts: a stutter, or a broken " +
+             "tube leaving its stable state. Lights following another's flicker play on their source's waves, so " +
+             "give clips to only one light of a lamp + pool pair.")]
     [SerializeField] private List<AudioClip> flickerClips = new List<AudioClip>();
     [SerializeField, Range(0f, 1f)] private float flickerVolume = 0.5f;
     [SerializeField] private Vector2 flickerPitch = new Vector2(0.9f, 1.1f);
-    [Tooltip("Flicker brightness (1 = steady) the light must drop under for the sound to play.")]
-    [SerializeField, Range(0.05f, 1f)] private float flickerSoundThreshold = 0.6f;
-    [Tooltip("Seconds at least between two flicker sounds, so fast chatter doesn't machine-gun.")]
-    [SerializeField, Min(0f)] private float flickerSoundInterval = 0.08f;
+    [Tooltip("Skip a new wave's sound while the previous one is still playing.")]
+    [SerializeField] private bool flickerSoundNoOverlap = true;
 
     private float seed;
     private float onAmount = 1f;
@@ -98,15 +96,19 @@ public class RoomLight : RoomLightLayer
     private int flashesLeft;
     private bool flashLit;
 
-    // Flicker sound: the light was under the threshold last frame, and when the last sound played.
-    private bool flickerDipped;
-    private float lastFlickerSound = float.NegativeInfinity;
+    // Flicker sound: the wave (and whose) last heard, and the sound still playing.
+    private RoomLight heardWaveFrom;
+    private int heardWave;
+    private AudioSource flickerSound;
 
     /// <summary>Current flicker brightness (0..1+), for lights that follow this one.</summary>
     public float FlickerMultiplier { get; private set; } = 1f;
 
     /// <summary>Current flicker tint (white when healthy), for lights that follow this one.</summary>
     public Color FlickerTint { get; private set; } = Color.white;
+
+    /// <summary>Counts flicker waves (a stutter, a broken tube's failure run), for lights that follow this one.</summary>
+    public int FlickerWave { get; private set; }
 
     public bool IsOn { get; private set; } = true;
 
@@ -185,6 +187,8 @@ public class RoomLight : RoomLightLayer
         {
             FlickerMultiplier = flickerSource.FlickerMultiplier;
             FlickerTint = flickerSource.FlickerTint;
+            FlickerWave = flickerSource.FlickerWave;
+            UpdateFlickerSound(flickerSource);
         }
         else
         {
@@ -197,7 +201,7 @@ public class RoomLight : RoomLightLayer
                 FlickerStyle.Broken => humValue * BrokenFlicker(t),
                 _ => humValue,
             };
-            UpdateFlickerSound(t);
+            UpdateFlickerSound(this);
         }
 
         float brightness = FlickerMultiplier * onAmount;
@@ -222,6 +226,7 @@ public class RoomLight : RoomLightLayer
         {
             stutterEnd = t + Random.Range(stutterDuration.x, stutterDuration.y);
             ScheduleStutter(stutterEnd);
+            FlickerWave++;
         }
 
         // Hard on/off chatter instead of a smooth dip.
@@ -316,6 +321,8 @@ public class RoomLight : RoomLightLayer
         switch (state)
         {
             case BrokenState.Stable:
+                // Every failure run starts from stable and ends back in it.
+                FlickerWave++;
                 // More broken = more often out, less chatter-only.
                 float r = Random.value;
                 float outChance = Mathf.Lerp(0.15f, 0.45f, brokenness);
@@ -371,19 +378,19 @@ public class RoomLight : RoomLightLayer
     private float RandomOutDuration() =>
         Random.Range(outDuration.x, outDuration.y) * Mathf.Lerp(0.6f, 1.4f, brokenness);
 
-    /// <summary>Plays a flicker clip as the flicker drops the light under <see cref="flickerSoundThreshold"/>.</summary>
-    private void UpdateFlickerSound(float t)
+    /// <summary>Plays one flicker clip when <paramref name="from"/> (this light or its source) starts a new wave.</summary>
+    private void UpdateFlickerSound(RoomLight from)
     {
-        // Hum alone never dips this far; the light being switched off (SetOn) isn't a flicker.
-        bool dipped = FlickerMultiplier < flickerSoundThreshold;
-        bool dropped = dipped && !flickerDipped;
-        flickerDipped = dipped;
+        // Switching whose flicker we follow jumps the count: resync without playing.
+        bool newWave = from == heardWaveFrom && FlickerWave != heardWave;
+        heardWaveFrom = from;
+        heardWave = FlickerWave;
 
-        if (!dropped || !IsOn || flickerClips.Count == 0 || !SFXManager.Instance) return;
-        if (t - lastFlickerSound < flickerSoundInterval) return;
+        if (!newWave || !IsOn || flickerClips.Count == 0 || !SFXManager.Instance) return;
+        if (flickerSoundNoOverlap && flickerSound && flickerSound.isPlaying) return;
 
-        lastFlickerSound = t;
-        SFXManager.Instance.PlayRandomClipIndependently(flickerClips, flickerVolume, randomPitchRange: flickerPitch);
+        flickerSound = SFXManager.Instance.PlayClipIndependently(h.RandChoice(flickerClips), flickerVolume,
+            randomPitchRange: flickerPitch);
     }
 
     private void PlayClick()
