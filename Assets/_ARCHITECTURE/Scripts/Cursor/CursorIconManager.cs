@@ -129,6 +129,12 @@ public class CursorIconManager : MonoBehaviour
     [Tooltip("Optional. Played once when the pointer enters a button.")]
     [SerializeField] private AudioClip buttonHoverSound;
 
+    [Tooltip("Optional. Played when the mouse is pressed over a button. Falls back to the click sound.")]
+    [SerializeField] private AudioClip buttonClickSound;
+
+    [Tooltip("Random pitch range (x = min, y = max) of the button click sound.")]
+    [SerializeField] private Vector2 buttonClickPitchRange = new Vector2(0.9f, 1.1f);
+
     [Header("Button Hover Shake")]
     [Tooltip("Shake the cursor icon when the pointer enters a button.")]
     [SerializeField] private bool shakeOnButtonHover = false;
@@ -484,12 +490,14 @@ public class CursorIconManager : MonoBehaviour
             if (shakeOnButtonHover)
                 StartShake(buttonShakeDuration, buttonShakeStrength, buttonShakeFrequency, tiedToButton: true);
         }
-        else if (clicked && !buttonClickShown && clickSound)
+        else if (clicked && !buttonClickShown)
         {
-            SFXManager.Instance.PlayClip(
-                clickSound,
-                randomPitchRange: new Vector2(0.9f, 1.1f),
-                volumeIn: sfxVolume, playIndependently: true);
+            AudioClip sound = buttonClickSound ? buttonClickSound : clickSound;
+            if (sound)
+                SFXManager.Instance.PlayClip(
+                    sound,
+                    randomPitchRange: buttonClickPitchRange,
+                    volumeIn: sfxVolume, playIndependently: true);
         }
 
         State = CursorState.Button;

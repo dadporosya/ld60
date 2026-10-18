@@ -102,6 +102,17 @@ public class DicePopups
     public string rerollsGainedFormat = "+{0} reroll";
     [Tooltip("A die destroyed for mult (a card's right click). {0} = mult gained.")]
     public string multGainedFormat = "+{0} mult";
+    [Tooltip("A round scored (last reroll landed or Finish pressed), shown before the next round starts. " +
+             "{0} = the round's score, {1} = mult, {2} = points. Empty: none.")]
+    public string roundScoreFormat = "Combo Score: {0}";
+    [Tooltip("The turn's next round starting. {0} = the round, {1} = rounds per turn. Empty: none.")]
+    public string roundStartFormat = "Round {0}";
+
+    [Header("Round Popups")]
+    [Tooltip("Size of the Combo Score popup, relative to the other popups.")]
+    [Min(0f)] public float roundScoreScale = 1.2f;
+    [Tooltip("Seconds the Combo Score popup stays up before fading, on top of the usual hold.")]
+    [Min(0f)] public float roundScoreExtraHold = 0.5f;
 
     [Header("Risky Goal Popup")]
     [Tooltip("Size of the risky goal popup, relative to the other popups.")]
@@ -115,6 +126,8 @@ public class DicePopups
     public Color combinationColor = Color.white;
     public Color goalColor = new Color(1f, 0.9f, 0.45f, 1f);
     public Color riskyGoalColor = new Color(0.45f, 0.9f, 0.45f, 1f);
+    public Color roundScoreColor = new Color(1f, 0.9f, 0.45f, 1f);
+    public Color roundStartColor = Color.white;
 }
 
 /// <summary>Points a poker dice hand is worth.</summary>
@@ -266,7 +279,10 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private bool autoFinishWhenOutOfRerolls = true;
     [Tooltip("Seconds the result stays on the table before the turn hands back.")]
     [SerializeField, Min(0f)] private float finishDelay = 1.5f;
-    [Tooltip("Seconds a finished round's dice stay on the table before the next round of the turn starts.")]
+    [Tooltip("Seconds after a round is scored (the last reroll landed or Finish was pressed) before the Combo Score " +
+             "popup shows. The next round - or, after the last one, the turn's result - follows it.")]
+    [SerializeField, Min(0f)] private float roundScoreAlertDelay = 0.4f;
+    [Tooltip("Seconds after the Combo Score popup before the turn's next round starts.")]
     [SerializeField, Min(0f)] private float nextRoundDelay = 1f;
     [Tooltip("Hide the table root when the turn ends.")]
     [SerializeField] private bool hideTableOnFinish = true;
@@ -1116,9 +1132,10 @@ public class DiceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Scores the dice and ends the round. A round before the last banks its points and the next round
-    /// starts after <see cref="nextRoundDelay"/>; the last one checks the turn's total against the target
-    /// and ends the turn after <see cref="finishDelay"/>.
+    /// Scores the dice and ends the round. After <see cref="roundScoreAlertDelay"/> the round's score pops up
+    /// (<see cref="DicePopups.roundScoreFormat"/>); then a round before the last banks its points and the next
+    /// round starts after <see cref="nextRoundDelay"/>, and the last one checks the turn's total against the
+    /// target and ends the turn after <see cref="finishDelay"/>.
     /// </summary>
     public void Finish()
     {
@@ -1130,16 +1147,35 @@ public class DiceManager : MonoBehaviour
         roundResults.Add(round);
         carriedRerolls += round.score.nextRoundRerolls;
 
+        UpdateUI();
+        AfterDelay(roundScoreAlertDelay, manager => manager.RoundScored());
+    }
+
+    /// <summary>The finished round's score pops up; then the next round, or the end of the turn.</summary>
+    private void RoundScored()
+    {
+        if (!TurnActive) return;
+
+        DiceScore score = roundResults[roundResults.Count - 1].score;
+        Popup(string.Format(popups.roundScoreFormat, score.total, CardEffect.FormatMult(score.mult), score.points),
+            CombinationAnchor, popups.combinationOffset, popups.roundScoreColor, popups.roundScoreScale,
+            popups.roundScoreExtraHold);
+
         if (!IsLastRound)
         {
-            UpdateUI();
-            if (nextRoundDelay > 0f) finishTween = Tween.Delay(this, nextRoundDelay, manager => manager.NextRound());
-            else NextRound();
+            AfterDelay(nextRoundDelay, manager => manager.NextRound());
             return;
         }
 
-        int total = BankedScore + round.score.total;
+        int total = BankedScore + score.total;
         EndTurn(total, total >= Target, RiskyTarget > 0 && total >= RiskyTarget);
+    }
+
+    /// <summary>Runs <paramref name="then"/> after <paramref name="delay"/> seconds (as the finish tween, so a cancel stops it), or now.</summary>
+    private void AfterDelay(float delay, Action<DiceManager> then)
+    {
+        if (delay > 0f) finishTween = Tween.Delay(this, delay, then);
+        else then(this);
     }
 
     /// <summary>Shows the turn's result and hands it back after <see cref="finishDelay"/>.</summary>
@@ -1183,6 +1219,8 @@ public class DiceManager : MonoBehaviour
 
         PrepareRound(keepFaces: true);
         introRunning = false;
+        Popup(string.Format(popups.roundStartFormat, CurrentRound, RoundsInTurn), CombinationAnchor,
+            popups.combinationOffset, popups.roundStartColor);
         Roll();
     }
 

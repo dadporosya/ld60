@@ -713,19 +713,20 @@ MonoBehaviour:
   landSfx: {fileID: 8300000, guid: 9de58750eb52127408e569c699007d56, type: 3}
   lockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
   unlockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
-  flipSfx: {fileID: 0}
-  destroySfx: {fileID: 0}
-  passedSfx: {fileID: 0}
-  failedSfx: {fileID: 0}
+  flipSfx: {fileID: 8300000, guid: 0dee433ca9ac0d5459e2ef1577f4253e, type: 3}
+  destroySfx: {fileID: 8300000, guid: 7556b6b00941f184185c97ac403f3471, type: 3}
+  passedSfx: {fileID: 8300000, guid: 4bba0118efba90042a2a71ee1faeaf65, type: 3}
+  failedSfx: {fileID: 8300000, guid: 3066e1554385c8245a3e2f1def8ff472, type: 3}
   goodAlertSfx: {fileID: 8300000, guid: 0eb3c9fd738f448478ce2537ca927556, type: 3}
   badAlertSfx: {fileID: 8300000, guid: b7139ac7780ce934eb5baa1244611319, type: 3}
   roundsPerTurn: 3
   rerollsPerRound: 3
   autoFirstRoll: 1
   firstRollDelay: 1
-  firstRollCombinationReduction: 0.3
+  firstRollCombinationReduction: 0.617
   autoFinishWhenOutOfRerolls: 1
   finishDelay: 1.5
+  roundScoreAlertDelay: 0.4
   nextRoundDelay: 1
   hideTableOnFinish: 1
   riskyGoalMultiplier: 1.5
@@ -742,13 +743,13 @@ MonoBehaviour:
     combination: 0
     displayName: Nothing
     points: 0
-  - enabled: 1
-    countsAsCombination: 1
+  - enabled: 0
+    countsAsCombination: 0
     combination: 1
     displayName: Pair
     points: 10
-  - enabled: 1
-    countsAsCombination: 1
+  - enabled: 0
+    countsAsCombination: 0
     combination: 2
     displayName: Two Pair
     points: 20
@@ -831,6 +832,10 @@ MonoBehaviour:
     cardUpgradedText: Card upgraded!
     rerollsGainedFormat: +{0} reroll
     multGainedFormat: +{0} mult
+    roundScoreFormat: 'Combo Score: {0}'
+    roundStartFormat: Round {0}
+    roundScoreScale: 1.2
+    roundScoreExtraHold: 0.5
     riskyGoalScale: 1.15
     riskyGoalExtraHold: 1
     gainColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
@@ -838,6 +843,8 @@ MonoBehaviour:
     combinationColor: {r: 1, g: 1, b: 1, a: 1}
     goalColor: {r: 1, g: 0.9, b: 0.45, a: 1}
     riskyGoalColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
+    roundScoreColor: {r: 1, g: 0.9, b: 0.45, a: 1}
+    roundStartColor: {r: 1, g: 1, b: 1, a: 1}
   debugKeys: 1
   debugLoseKey: 37
   debugWinKey: 19
@@ -1899,6 +1906,7 @@ MonoBehaviour:
   alphaHitThreshold: 0
   singleUse: 0
   clickSfx: {fileID: 0}
+  countsAsButton: 1
   visual: {fileID: 0}
   hoverScale: 1.06
   hoverDuration: 0.15
@@ -2661,6 +2669,7 @@ MonoBehaviour:
   alphaHitThreshold: 0
   singleUse: 0
   clickSfx: {fileID: 0}
+  countsAsButton: 1
   visual: {fileID: 0}
   hoverScale: 1.06
   hoverDuration: 0.15
@@ -3417,6 +3426,7 @@ MonoBehaviour:
   alphaHitThreshold: 0
   singleUse: 0
   clickSfx: {fileID: 0}
+  countsAsButton: 1
   visual: {fileID: 0}
   hoverScale: 1.06
   hoverDuration: 0.15
@@ -4061,6 +4071,7 @@ MonoBehaviour:
   alphaHitThreshold: 0
   singleUse: 0
   clickSfx: {fileID: 0}
+  countsAsButton: 1
   visual: {fileID: 0}
   hoverScale: 1.06
   hoverDuration: 0.15
@@ -4328,10 +4339,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 1743218968}
-  - {fileID: 244570388}
-  - {fileID: 2052019987}
   - {fileID: 1901275428}
+  - {fileID: 244570388}
+  - {fileID: 1743218968}
+  - {fileID: 2052019987}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -5073,7 +5084,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -464.42996, y: 446.99997}
+  m_AnchoredPosition: {x: -464.42996, y: 447}
   m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364
@@ -5256,6 +5267,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1074680907}
+  - component: {fileID: 1074680908}
   m_Layer: 0
   m_Name: CursorManager
   m_TagString: Untagged
@@ -5278,6 +5290,75 @@ Transform:
   m_Children: []
   m_Father: {fileID: 291783876}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1074680908
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1074680906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d07b1693247eab6449908e4d6ceccc41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CursorIconManager
+  sfxVolume: 1
+  defaultIcon:
+    texture: {fileID: 0}
+    normalizedHotspot: {x: 0, y: 0}
+    useCenterHotspot: 0
+    animate: 0
+    frames: []
+    gapBetweenFrames: 0.2
+  clickSound: {fileID: 0}
+  clickIcon:
+    texture: {fileID: 0}
+    normalizedHotspot: {x: 0, y: 0}
+    useCenterHotspot: 0
+    animate: 0
+    frames: []
+    gapBetweenFrames: 0.2
+  dragReleaseSound: {fileID: 0}
+  dragIcon:
+    texture: {fileID: 0}
+    normalizedHotspot: {x: 0, y: 0}
+    useCenterHotspot: 0
+    animate: 0
+    frames: []
+    gapBetweenFrames: 0.2
+  buttonIcon:
+    texture: {fileID: 0}
+    normalizedHotspot: {x: 0, y: 0}
+    useCenterHotspot: 0
+    animate: 0
+    frames: []
+    gapBetweenFrames: 0.2
+  buttonClickIcon:
+    texture: {fileID: 0}
+    normalizedHotspot: {x: 0, y: 0}
+    useCenterHotspot: 0
+    animate: 0
+    frames: []
+    gapBetweenFrames: 0.2
+  buttonHoverSound: {fileID: 8300000, guid: 256e3c89b222b3042a2e3b4bc5bc97fc, type: 3}
+  buttonClickSound: {fileID: 8300000, guid: 9ac8c6d872d71cb47bc10ad7ed576459, type: 3}
+  buttonClickPitchRange: {x: 0.9, y: 1.1}
+  shakeOnButtonHover: 0
+  buttonShakeStrength: 3
+  buttonShakeDuration: 0
+  buttonShakeFrequency: 30
+  softwareCursorWhileShaking: 1
+  autoHandleState: 1
+  autoDetectButtons: 1
+  cursorMode: 0
+  visibleOnStart: 1
+  renderCursorInScene: 0
+  sceneCursorCamera: {fileID: 0}
+  sceneCursorDistance: 1
+  sceneCursorScale: 1
+  sceneCursorMaterial: {fileID: 0}
+  sceneCursorSortingLayer: Default
+  sceneCursorSortingOrder: 32000
 --- !u!1 &1136020434
 GameObject:
   m_ObjectHideFlags: 0

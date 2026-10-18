@@ -26,6 +26,8 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
     [SerializeField] private bool singleUse = false;
     [Tooltip("Played on click (through the SFXManager).")]
     [SerializeField] private AudioClip clickSfx;
+    [Tooltip("While hovered, the cursor treats it as a button: button icon, hover and press sounds.")]
+    [SerializeField] private bool countsAsButton = true;
 
     [Header("Hover")]
     [Tooltip("What scales up on hover. Defaults to this transform.")]
@@ -139,6 +141,7 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
     protected virtual void OnDisable()
     {
         hoverTween.Stop();
+        if (hovered) SetCursorButtonHover(false);
         hovered = false;
         if (visual) visual.localScale = restScale;
         if (hoverHighlight) hoverHighlight.SetActive(false);
@@ -232,6 +235,7 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
         if (hovered == value) return;
         hovered = value;
 
+        SetCursorButtonHover(value);
         if (hoverHighlight) hoverHighlight.SetActive(value);
         ShowOutline(value);
         if (!visual) return;
@@ -243,5 +247,11 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
 
         if (value) onHoverEnter?.Invoke();
         else onHoverExit?.Invoke();
+    }
+
+    /// <summary>Tells the cursor the pointer is on / off a button (reference counted there, so calls must pair up).</summary>
+    private void SetCursorButtonHover(bool value)
+    {
+        if (countsAsButton && CursorIconManager.Instance) CursorIconManager.Instance.SetButtonHover(value);
     }
 }
