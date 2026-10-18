@@ -20,6 +20,9 @@ using UnityEngine.SceneManagement;
 /// <c>Ending:Good</c> [song seconds], <c>Ending:Death</c> [levels won].</para>
 ///
 /// <para><b>Other design events</b> (value in brackets):
+/// <c>Level:Started:&lt;level&gt;</c> [round number - the order levels are played in],
+/// <c>Level:Time:&lt;level&gt;</c> [seconds from the round's start to its end],
+/// <c>Death:Choice:&lt;fork line&gt;</c> - the line picked at the end of the death cutscene,
 /// <c>Song:Started</c>,
 /// <c>Hub:Interact:&lt;object&gt;</c> [song seconds],
 /// <c>Phone:Opened</c> [song seconds],
@@ -30,7 +33,11 @@ using UnityEngine.SceneManagement;
 /// <c>Dice:Margin:&lt;level&gt;</c> [total - target],
 /// <c>Dice:Rolls:&lt;level&gt;</c> [rolls this turn],
 /// <c>Dice:RiskyGoal:&lt;level&gt;</c> [total],
+/// <c>Dice:Hand:&lt;level&gt;:&lt;hand&gt;</c> [round points] - the poker hand each round scored with,
+/// <c>Dice:Bust:&lt;level&gt;</c> [banked points],
+/// <c>Dice:Picked:&lt;kind&gt;</c> - a special die taken in the dice choice,
 /// <c>Card:Chosen:Hope|Hate:&lt;card&gt;</c>,
+/// <c>Hint:Opened:&lt;level&gt;</c> [song seconds] - the combinations paper,
 /// <c>Game:Quit:&lt;phase&gt;</c> [song seconds] - closed before an ending.</para>
 ///
 /// <para>The SDK only sends from builds; in the editor it logs the calls when Info Log Editor is on in its
@@ -54,6 +61,7 @@ public class GameAnalyticsTracker : MonoBehaviour
     private string activeLevel;
     private int lastDiceTotal;
     private int rollsThisTurn;
+    private float levelStartTime;
 
     // ---------------------------------------------------------------------
     // Setup
@@ -69,6 +77,8 @@ public class GameAnalyticsTracker : MonoBehaviour
         AddTo(SceneManager.GetActiveScene());
         // The first scene's sceneLoaded has already fired by now; this catches the later ones.
         SceneManager.sceneLoaded += (scene, mode) => AddTo(scene);
+        // The death cutscene runs as a clone made after Awake: its static event is listened to once, here.
+        DeathCutscene.ForkPicked += title => Design($"Death:Choice:{Part(title)}");
     }
 
     private static void AddTo(Scene scene)
@@ -108,9 +118,14 @@ public class GameAnalyticsTracker : MonoBehaviour
             dice.onRolled.AddListener(() => rollsThisTurn++);
             dice.onRoundFinished.AddListener(OnRoundFinished);
             dice.onTurnFinished.AddListener(OnTurnFinished);
+            dice.onBust.AddListener(() => Design($"Dice:Bust:{CurrentLevel}", dice.BankedScore));
         }
 
-        if (cards) cards.onCardChosen.AddListener(OnCardChosen);
+        if (cards)
+        {
+            cards.onCardChosen.AddListener(OnCardChosen);
+            cards.onDiceChosen.AddListener(kind => Design($"Dice:Picked:{kind}"));
+        }
         if (song) song.onSongStarted.AddListener(() => Design("Song:Started"));
 
         foreach (HubInteractable interactable in FindObjectsByType<HubInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -118,6 +133,9 @@ public class GameAnalyticsTracker : MonoBehaviour
             string id = Part(interactable.gameObject.name);
             interactable.onInteract.AddListener(() => Design($"Hub:Interact:{id}", SongSeconds));
         }
+
+        foreach (HintPaper paper in FindObjectsByType<HintPaper>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            paper.onOpened.AddListener(() => Design($"Hint:Opened:{CurrentLevel}", SongSeconds));
     }
 
     // The game's systems register their Instance in Awake; ones on inactive objects haven't yet.
@@ -162,7 +180,9 @@ public class GameAnalyticsTracker : MonoBehaviour
     {
         activeLevel = LevelName(index);
         lastDiceTotal = 0;
+        levelStartTime = Time.unscaledTime;
         GameAnalytics.NewProgressionEvent(GAProgressionStatus.Start, "Run", activeLevel);
+        Design($"Level:Started:{activeLevel}", levels.RoundsPlayed + 1);
     }
 
     private void OnLevelEnded(int index, bool won)
@@ -173,10 +193,16 @@ public class GameAnalyticsTracker : MonoBehaviour
         // LevelManager records the outcome before it raises onLevelWon / onLevelLost.
         LevelOutcome outcome = levels ? levels.LastOutcome : won ? LevelOutcome.Neutral : LevelOutcome.Bad;
         Design($"Level:{level}:{outcome}", lastDiceTotal);
+        Design($"Level:Time:{level}", Mathf.Round(Time.unscaledTime - levelStartTime));
         if (activeLevel == level) activeLevel = null;
     }
 
-    private void OnRoundFinished(int score) => Design($"Dice:RoundScore:{CurrentLevel}", score);
+    private void OnRoundFinished(int score)
+    {
+        string level = CurrentLevel;
+        Design($"Dice:RoundScore:{level}", score);
+        Design($"Dice:Hand:{level}:{dice.LastRoundCombination}", score);
+    }
 
     private void OnTurnFinished(int total)
     {

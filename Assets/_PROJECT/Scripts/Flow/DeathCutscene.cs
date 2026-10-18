@@ -165,6 +165,9 @@ public class DeathCutscene : CutSceneBase
     private ChoiceFork choiceFork;
     private int forkPick = -1;
 
+    /// <summary>A fork line was clicked: its title.</summary>
+    public static event Action<string> ForkPicked;
+
     /// <summary>
     /// Whether it wants the screen black from the start: it opens on the black (step 0), or has no visual novel
     /// dialogue and goes straight to the black step.
@@ -275,6 +278,7 @@ public class DeathCutscene : CutSceneBase
             yield return WaitForTextBox();
             yield return ShowFork(fork);
             ForkOption picked = fork[forkPick];
+            ForkPicked?.Invoke(picked?.title);
             yield return PlayTextDialogue(picked?.dialogue);
             yield return WaitForTextBox();
         }

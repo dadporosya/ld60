@@ -558,6 +558,8 @@ public class DiceManager : MonoBehaviour
     public UnityEvent<int> onTurnFinished = new UnityEvent<int>();
     /// <summary>The outcome spotlight frame cut in (with its sfx).</summary>
     public UnityEvent<DiceOutcome> onSpotlight = new UnityEvent<DiceOutcome>();
+    /// <summary>A reroll busted: the round's points are lost.</summary>
+    public UnityEvent onBust = new UnityEvent();
 
     public bool TurnActive { get; private set; }
     /// <summary>The round being played, 1-based (0 before the turn's first round).</summary>
@@ -578,6 +580,9 @@ public class DiceManager : MonoBehaviour
     private int riskyTargetOverride;
     /// <summary>The scoring table: each hand's bonus points.</summary>
     public IReadOnlyList<CombinationScore> Combinations => combinations;
+    /// <summary>The hand the last scored round of this turn made; Nothing before any.</summary>
+    public PokerDiceCombination LastRoundCombination =>
+        roundResults.Count > 0 ? roundResults[roundResults.Count - 1].score.combination : PokerDiceCombination.Nothing;
     public bool IsRolling => landingPending > 0;
     public IReadOnlyList<Dice> AllDice => dice;
     /// <summary>Dice in the running round: the turn's dice count, without the ones destroyed this round.</summary>
@@ -1967,6 +1972,7 @@ public class DiceManager : MonoBehaviour
         Popup(popups.bustText, CombinationAnchor, popups.combinationOffset, popups.lossColor, bad: true);
         PlaySfx(bustSfx);
         onRolled?.Invoke();
+        onBust?.Invoke();
 
         AfterDelay(roundScoreAlertDelay, manager => manager.RoundScored());
     }
