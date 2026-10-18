@@ -487,11 +487,11 @@ MonoBehaviour:
   - points: 100
     riskyPoints: 200
   - points: 200
-    riskyPoints: 300
-  - points: 300
-    riskyPoints: 450
-  - points: 400
-    riskyPoints: 670
+    riskyPoints: 333
+  - points: 350
+    riskyPoints: 550
+  - points: 475
+    riskyPoints: 800
   pointsByRound: 
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
@@ -926,6 +926,7 @@ MonoBehaviour:
     root: {fileID: 118505316}
     text: {fileID: 1531122480}
     delay: 0.72
+    passedExtraDelay: 1
     hold: 2.19
     fadeOut: 3.01
     lost:
@@ -3692,7 +3693,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 1, g: 0.5330188, b: 0.97542214, a: 1}
+  textColor: {r: 1, g: 0.740566, b: 0.9869194, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 0c97bc262fec732419d4722dd9223c02, type: 3}
   dialogueManager: {fileID: 0}
@@ -4037,7 +4038,7 @@ MonoBehaviour:
   openOnBlack: 1
   openingFadeDuration: 1.5
   openingFadeEase: 1
-  openingHold: 2
+  openingHold: 5.95
   openingReveal: 1.5
   openingRevealEase: 1
   vnDialogue: {fileID: 11400000, guid: 2e616d7fe376bc34396be7d593eafb38, type: 2}
@@ -4705,7 +4706,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 0.70261914, g: 0.504717, b: 1, a: 1}
+  textColor: {r: 1, g: 0.6777814, b: 0.6745283, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: ca675fb2edd582d438372811fff5b040, type: 3}
   dialogueManager: {fileID: 0}
@@ -4776,9 +4777,9 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 244570388}
-  - {fileID: 1901275428}
   - {fileID: 2052019987}
+  - {fileID: 1901275428}
+  - {fileID: 244570388}
   - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
@@ -5392,7 +5393,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 0.495283, g: 1, b: 0.5201051, a: 1}
+  textColor: {r: 0.75, g: 1, b: 0.7635659, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: ad377b28be75a9f4c9a04b83fe6a2a06, type: 3}
   dialogueManager: {fileID: 0}
@@ -5889,10 +5890,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f7c40a3748db2f46b589fd0280379bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutSceneManager
-  currentCutScene: {fileID: 2072675787}
+  currentCutScene: {fileID: 1150178273}
   currentCutScenePath: 
   defaultLabel: Cutscenes/
-  runOnStart: 0
+  runOnStart: 1
 --- !u!1 &1150178271
 GameObject:
   m_ObjectHideFlags: 0
@@ -5945,7 +5946,7 @@ MonoBehaviour:
   openOnBlack: 1
   openingFadeDuration: 1.5
   openingFadeEase: 1
-  openingHold: 2
+  openingHold: 6.06
   openingReveal: 1.5
   openingRevealEase: 1
   vnDialogue: {fileID: 11400000, guid: 3636be73ad68dac42a19c56e9372eb9a, type: 2}
@@ -6583,7 +6584,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 0.4292453, g: 0.45826676, b: 1, a: 1}
+  textColor: {r: 0.740566, g: 0.7547816, b: 1, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 1d44c77ca969e0c4fb99255422c6ac67, type: 3}
   dialogueManager: {fileID: 0}
@@ -8908,6 +8909,7 @@ MonoBehaviour:
   cardPrefab: {fileID: 8211534820775114999, guid: 18ecd4166aa7d224ba714c034fe6bcc3, type: 3}
   defaultChoiceCount: 3
   allowOwnedPermanentCards: 1
+  noRepeatsAcrossChoices: 1
   startingCards: []
   upgradeBonus: 0.5
   root: {fileID: 1859262027}
