@@ -26,6 +26,15 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
     public bool IsLocked { get; private set; }
 
+    /// <summary>
+    /// Locked before the last roll: it stays locked for the rest of the round, can't be clicked any more and shows
+    /// the sealed outline. A die locked since the last roll can still be unlocked.
+    /// </summary>
+    public bool IsSealed { get; private set; }
+
+    /// <summary>What the die does (a plain die, or one won in the dice choice). The manager picks its faces by it.</summary>
+    public DiceKind Kind { get; private set; } = DiceKind.Default;
+
     /// <summary>Destroyed by a card for the rest of the round: off the table, not scored.</summary>
     public bool IsRemoved { get; private set; }
 
@@ -55,6 +64,8 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     private bool initialized;
     private Vector3 restScale;
     private Vector3 visualRestPosition;
+    // The Image's own color, and that with the kind's tint (what the die shows unlocked).
+    private Color defaultColor = Color.white;
     private Color baseColor = Color.white;
 
     // The pose: the table position plus what is layered on top of it.
@@ -70,6 +81,7 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     private Outline outline;
     private bool hovered;
     private bool outlineShown;
+    private Color outlineColor;
 
     // The roll in progress.
     private DiceRollAnimation anim;
@@ -106,7 +118,9 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         restScale = visual.localScale;
         visualRestPosition = VisualIsRoot ? Vector3.zero : visual.localPosition;
         tablePosition = transform.localPosition;
-        baseColor = Tint;
+        defaultColor = Tint;
+        baseColor = defaultColor * kindTint;
+        Tint = baseColor;
         if (lockedIndicator) lockedIndicator.SetActive(false);
     }
 
@@ -114,7 +128,7 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     {
         StopTweens();
         hovered = false;
-        ShowOutline(false, instant: true);
+        HideOutlineNow();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -130,40 +144,52 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     }
 
     /// <summary>
-    /// Outlined while hovered - and, with <see cref="DiceOutlineStyle.onlyWhenLockable"/>, only while clicking it
-    /// would lock / unlock it or right clicking it would use a card. The manager calls this whenever that may have
-    /// changed (a roll starts or ends).
+    /// A sealed die always shows the sealed outline. Others are outlined while hovered - and, with
+    /// <see cref="DiceOutlineStyle.onlyWhenLockable"/>, only while clicking it would lock / unlock it or right
+    /// clicking it would use a card. The manager calls this whenever that may have changed (a roll starts or ends).
     /// </summary>
     public void RefreshOutline()
     {
         DiceOutlineStyle style = manager ? manager.hoverOutline : null;
-        bool show = hovered && !IsRemoved && style != null && style.enabled &&
+        if (style == null) return;
+
+        if (IsSealed && !IsRemoved)
+        {
+            ShowOutline(true, style.sealedColor);
+            return;
+        }
+
+        bool show = hovered && !IsRemoved && style.enabled &&
                     (!style.onlyWhenLockable || manager.CanLockNow || manager.HasDieAction(this));
-        ShowOutline(show);
+        ShowOutline(show, style.color);
     }
 
     private void SetUpOutline()
     {
+        // Set up even with the hover outline off: sealed dice still need theirs.
         DiceOutlineStyle style = manager ? manager.hoverOutline : null;
-        if (style == null || !style.enabled || !image) return;
+        if (style == null || !image) return;
 
         outline = image.GetComponent<Outline>();
         if (!outline) outline = image.gameObject.AddComponent<Outline>();
         outline.effectDistance = style.width;
         outline.useGraphicAlpha = true;
-        ShowOutline(false, instant: true);
+        outlineColor = style.color;
+        HideOutlineNow();
     }
 
-    private void ShowOutline(bool show, bool instant = false)
+    private void HideOutlineNow() => ShowOutline(false, outlineColor, instant: true);
+
+    private void ShowOutline(bool show, Color color, bool instant = false)
     {
         if (!outline) return;
         DiceOutlineStyle style = manager ? manager.hoverOutline : null;
-        Color color = style != null ? style.color : Color.white;
         Color target = show ? color : new Color(color.r, color.g, color.b, 0f);
 
         // Already there (or on its way): nothing to restart.
-        if (!instant && outlineShown == show) return;
+        if (!instant && outlineShown == show && (!show || outlineColor == color)) return;
         outlineShown = show;
+        outlineColor = color;
 
         outlineTween.Stop();
         float duration = style != null ? style.fadeDuration : 0f;
@@ -180,10 +206,10 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         if (!show) outlineTween.OnComplete(outline, o => o.enabled = false);
     }
 
-    /// <summary>Left click locks / unlocks; right click uses a card on the die (reroll, destroy, flip).</summary>
+    /// <summary>Left click locks / unlocks; right click uses a card on the die (reroll, destroy, flip). Not once sealed.</summary>
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (!manager) return;
+        if (!manager || IsSealed) return;
         if (eventData.button == PointerEventData.InputButton.Left) manager.ToggleLock(this);
         else if (eventData.button == PointerEventData.InputButton.Right) manager.UseDieAction(this);
     }
@@ -298,6 +324,22 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
     public void SetFaces(Sprite[] faceSprites) => faces = faceSprites;
 
+    private Color kindTint = Color.white;
+
+    /// <summary>Makes it a <paramref name="kind"/> die, colored <paramref name="tint"/> (over the Image's own color).</summary>
+    public void SetKind(DiceKind kind, Color tint)
+    {
+        Kind = kind;
+        kindTint = tint;
+        if (!initialized) return;
+
+        baseColor = defaultColor * tint;
+        tintTween.Stop();
+        Color shown = IsLocked && manager ? baseColor * manager.lockStyle.lockedTint : baseColor;
+        if (IsRolling) tintTo = shown;
+        else Tint = shown;
+    }
+
     // ---------------------------------------------------------------------
     // Card actions
     // ---------------------------------------------------------------------
@@ -330,7 +372,7 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     {
         IsRemoved = true;
         hovered = false;
-        ShowOutline(false, instant: true);
+        HideOutlineNow();
         if (lockedIndicator) lockedIndicator.SetActive(false);
 
         StopTweens();
@@ -383,13 +425,23 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         }
     }
 
+    /// <summary>Locked before a roll: locked for the rest of the round, with the sealed outline (see <see cref="IsSealed"/>).</summary>
+    public void Seal()
+    {
+        if (!IsLocked || IsSealed) return;
+        IsSealed = true;
+        RefreshOutline();
+    }
+
     /// <summary>
-    /// No longer locked, but left where the lock put it (no snap): the next <see cref="Roll"/> eases it out.
+    /// No longer locked (nor sealed), but left where the lock put it (no snap): the next <see cref="Roll"/> eases it out.
     /// </summary>
     public void Unlock()
     {
         IsLocked = false;
+        IsSealed = false;
         if (lockedIndicator) lockedIndicator.SetActive(false);
+        RefreshOutline();
     }
 
     /// <summary>Unlocked, at rest, ready for a new round. Keeps its face and its place on the table.</summary>
@@ -398,6 +450,8 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         if (!initialized) return;
         StopTweens();
         IsLocked = false;
+        IsSealed = false;
+        RefreshOutline();
         lockOffset = Vector3.zero;
         lift = 0f;
         if (lockedIndicator) lockedIndicator.SetActive(false);

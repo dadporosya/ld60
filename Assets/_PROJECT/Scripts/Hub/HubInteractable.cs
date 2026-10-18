@@ -38,6 +38,12 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
              "targets, so showing it never steals the hover from the object.")]
     [SerializeField] private GameObject hoverHighlight;
 
+    [Header("Attention pulse")]
+    [Tooltip("Scale at the top of the idle pulse, while the object asks for attention (see WantsPulse).")]
+    [SerializeField, Min(0f)] private float pulseScale = 1.05f;
+    [Tooltip("Seconds for one grow + shrink.")]
+    [SerializeField, Min(0.01f)] private float pulsePeriod = 1.4f;
+
     [Header("Outline on hover")]
     [SerializeField] private bool outlineOnHover = true;
     [Tooltip("The Image that gets outlined. Defaults to this object's Image, else the first one in its children.")]
@@ -54,7 +60,11 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
     public UnityEvent onInteract = new UnityEvent();
 
     private Vector3 restScale;
+    private float hoverFactor = 1f;
+    private float pulseFactor = 1f;
     private Tween hoverTween;
+    private Tween pulseTween;
+    private bool pulsing;
     private Outline outline;
     private Tween outlineTween;
     private bool hovered;
@@ -81,6 +91,9 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
 
     /// <summary>Also clickable while a dice round is running (not only in the hub).</summary>
     protected virtual bool UsableDuringDice => false;
+
+    /// <summary>Pulses (scales slightly up and down) while this is true and the object can be clicked.</summary>
+    protected virtual bool WantsPulse => false;
 
     protected virtual void Awake()
     {
@@ -138,11 +151,21 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
         return true;
     }
 
+    protected virtual void Update()
+    {
+        bool pulse = WantsPulse && CanInteract;
+        if (pulse != pulsing) SetPulsing(pulse);
+    }
+
     protected virtual void OnDisable()
     {
         hoverTween.Stop();
+        pulseTween.Stop();
+        pulsing = false;
         if (hovered) SetCursorButtonHover(false);
         hovered = false;
+        hoverFactor = 1f;
+        pulseFactor = 1f;
         if (visual) visual.localScale = restScale;
         if (hoverHighlight) hoverHighlight.SetActive(false);
         ShowOutline(false, instant: true);
@@ -241,12 +264,48 @@ public abstract class HubInteractable : MonoBehaviour, IPointerClickHandler, IPo
         if (!visual) return;
 
         hoverTween.Stop();
-        Vector3 target = value ? restScale * hoverScale : restScale;
-        if (hoverDuration > 0f) hoverTween = Tween.Scale(visual, target, hoverDuration, Ease.OutQuad);
-        else visual.localScale = target;
+        float target = value ? hoverScale : 1f;
+        if (hoverDuration > 0f)
+            hoverTween = Tween.Custom(this, hoverFactor, target, hoverDuration, (o, f) =>
+            {
+                o.hoverFactor = f;
+                o.ApplyScale();
+            }, Ease.OutQuad);
+        else
+        {
+            hoverFactor = target;
+            ApplyScale();
+        }
 
         if (value) onHoverEnter?.Invoke();
         else onHoverExit?.Invoke();
+    }
+
+    /// <summary>Starts the looping attention pulse, or eases it back to rest.</summary>
+    private void SetPulsing(bool value)
+    {
+        pulsing = value;
+        pulseTween.Stop();
+        if (!visual) return;
+
+        if (value)
+            pulseTween = Tween.Custom(this, 1f, pulseScale, pulsePeriod * 0.5f, (o, f) =>
+            {
+                o.pulseFactor = f;
+                o.ApplyScale();
+            }, Ease.InOutSine, cycles: -1, cycleMode: CycleMode.Yoyo);
+        else
+            pulseTween = Tween.Custom(this, pulseFactor, 1f, 0.2f, (o, f) =>
+            {
+                o.pulseFactor = f;
+                o.ApplyScale();
+            }, Ease.OutQuad);
+    }
+
+    // Hover and pulse multiply, so either can run without fighting the other over the scale.
+    private void ApplyScale()
+    {
+        if (visual) visual.localScale = restScale * (hoverFactor * pulseFactor);
     }
 
     /// <summary>Tells the cursor the pointer is on / off a button (reference counted there, so calls must pair up).</summary>

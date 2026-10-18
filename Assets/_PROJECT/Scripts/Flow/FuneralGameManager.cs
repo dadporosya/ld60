@@ -553,7 +553,14 @@ public class FuneralGameManager : MonoBehaviour
         SetPhase(Phase.CardDraft);
         // Titled from the played level's list for how its round went (empty: the cards' own titles).
         IReadOnlyList<string> titles = Levels ? Levels.LastCardTitles : null;
-        if (!Cards.ChooseCards(Cards.DefaultChoiceCount, mood, _ => AfterCall(), titles)) AfterCall();
+        if (!Cards.ChooseCards(Cards.DefaultChoiceCount, mood, _ => OfferDice(), titles)) AfterCall();
+    }
+
+    /// <summary>After the card pick: a choice of new dice (or none), then the round is over.</summary>
+    private void OfferDice()
+    {
+        if (CurrentPhase == Phase.Ending) return;
+        if (!Cards.ChooseDice(AfterCall)) AfterCall();
     }
 
     private void AfterCall()

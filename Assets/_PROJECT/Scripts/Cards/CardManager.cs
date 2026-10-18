@@ -20,10 +20,13 @@ using UnityEngine.UI;
 /// <para><b>Upgrades</b>: with <see cref="UpgradeNextChoice"/> set (the player reached the risky goal), the next
 /// choice offers upgraded cards - their points are worth <see cref="upgradeBonus"/> more and show tinted.</para>
 ///
+/// <para><b>Dice</b> (<see cref="ChooseDice"/>, CardManager.DiceChoice.cs): the same menu offers new dice as cards,
+/// plus a card to turn them down.</para>
+///
 /// <para>Keep this component OUTSIDE <see cref="root"/>: the root is disabled between choices, and the
 /// debug key needs this object running.</para>
 /// </summary>
-public class CardManager : MonoBehaviour
+public partial class CardManager : MonoBehaviour
 {
     public static CardManager Instance;
 
@@ -140,6 +143,9 @@ public class CardManager : MonoBehaviour
     // A permanent card just chosen: its view in the spot, hidden until the chosen card has flown there.
     private CardView pendingKept;
     private Action<CardInstance> onChosen;
+    // A choice of plain card faces (OpenChoice): gets the picked one's index.
+    private Action<int> onOptionChosen;
+    private int chosenOption = -1;
     private bool picking;
     private bool initialized;
     private Tween fadeTween;
@@ -170,8 +176,9 @@ public class CardManager : MonoBehaviour
         if (!DebugHotkeys.Allowed(debugKey) || IsChoosing) return;
 
         Keyboard keyboard = Keyboard.current;
-        if (keyboard != null && debugChooseKey != Key.None && keyboard[debugChooseKey].wasPressedThisFrame)
-            ChooseCards(defaultChoiceCount);
+        if (keyboard == null) return;
+        if (debugChooseKey != Key.None && keyboard[debugChooseKey].wasPressedThisFrame) ChooseCards(defaultChoiceCount);
+        else if (debugChooseDiceKey != Key.None && keyboard[debugChooseDiceKey].wasPressedThisFrame) ChooseDice();
     }
 
     // ---------------------------------------------------------------------
@@ -207,39 +214,95 @@ public class CardManager : MonoBehaviour
             return true;
         }
 
-        IsChoosing = true;
-        picking = false;
+        BeginChoice();
         onChosen = chosen;
-        ClearOffered();
 
         float upgrade = UpgradeNextChoice ? upgradeBonus : 0f;
         UpgradeNextChoice = false;
 
-        if (root) root.SetActive(true);
-        FadeTo(fadeAlpha, fadeDuration);
-
         List<string> titlePool = new List<string>();
-        bool layout = chooseArea.GetComponent<LayoutGroup>();
         for (int i = 0; i < offer.Count; i++)
         {
-            CardView view = Spawn(offer[i], chooseArea);
+            CardView view = Spawn(offer[i].viewPrefab, chooseArea);
             if (!view) continue;
-
             view.Bind(new CardInstance(offer[i], mood, upgrade, DrawTitle(titles, titlePool)), Pick);
-            view.Clickable = false;
-            Vector3 scale = view.transform.localScale;
-            view.SetHoverBase(scale);
-
-            if (!layout) PlaceInRow(view, i, offer.Count);
-
-            view.transform.localScale = Vector3.zero;
-            view.Group.alpha = 0f;
-            float delay = i * appearStagger;
-            Tween.Scale(view.transform, scale, appearDuration, appearEase, startDelay: delay, useUnscaledTime: true);
-            Tween.Alpha(view.Group, 1f, appearDuration * 0.6f, startDelay: delay, useUnscaledTime: true);
-            offered.Add(view);
+            ShowOffered(view, i, offer.Count);
         }
 
+        FinishOpening();
+        return true;
+    }
+
+    /// <summary>
+    /// Opens the menu with plain card <paramref name="faces"/> - no bonus behind them, nothing kept.
+    /// <paramref name="chosen"/> gets the picked one's index once the menu has closed (-1 when nothing could be
+    /// shown, right away). Returns false (and never calls back) when a choice is already open.
+    /// </summary>
+    public bool OpenChoice(IReadOnlyList<CardFace> faces, Action<int> chosen)
+    {
+        Initialize();
+
+        if (IsChoosing)
+        {
+            h.Out("CardManager: a choice is already open.");
+            return false;
+        }
+
+        if (faces == null || faces.Count == 0 || !chooseArea)
+        {
+            if (!chooseArea) h.Out("CardManager: no Choose Area to show the cards in.");
+            chosen?.Invoke(-1);
+            return true;
+        }
+
+        BeginChoice();
+        onOptionChosen = chosen;
+
+        for (int i = 0; i < faces.Count; i++)
+        {
+            CardView view = Spawn(null, chooseArea);
+            if (!view) continue;
+            view.Bind(faces[i], Pick);
+            ShowOffered(view, i, faces.Count);
+        }
+
+        FinishOpening();
+        return true;
+    }
+
+    /// <summary>The menu comes up and darkens the screen, emptied of the last choice's cards.</summary>
+    private void BeginChoice()
+    {
+        IsChoosing = true;
+        picking = false;
+        onChosen = null;
+        onOptionChosen = null;
+        chosenOption = -1;
+        ClearOffered();
+
+        if (root) root.SetActive(true);
+        FadeTo(fadeAlpha, fadeDuration);
+    }
+
+    /// <summary>Card <paramref name="index"/> of <paramref name="count"/> flies in; clicks wait for <see cref="FinishOpening"/>.</summary>
+    private void ShowOffered(CardView view, int index, int count)
+    {
+        view.Clickable = false;
+        Vector3 scale = view.transform.localScale;
+        view.SetHoverBase(scale);
+
+        if (!chooseArea.GetComponent<LayoutGroup>()) PlaceInRow(view, index, count);
+
+        view.transform.localScale = Vector3.zero;
+        view.Group.alpha = 0f;
+        float delay = index * appearStagger;
+        Tween.Scale(view.transform, scale, appearDuration, appearEase, startDelay: delay, useUnscaledTime: true);
+        Tween.Alpha(view.Group, 1f, appearDuration * 0.6f, startDelay: delay, useUnscaledTime: true);
+        offered.Add(view);
+    }
+
+    private void FinishOpening()
+    {
         PlaySfx(appearSfx);
         onChoiceOpened?.Invoke();
 
@@ -247,7 +310,6 @@ public class CardManager : MonoBehaviour
         float total = appearDuration + appearStagger * Mathf.Max(0, offered.Count - 1);
         stepTween.Stop();
         stepTween = Tween.Delay(this, total, manager => manager.SetOfferedClickable(true), useUnscaledTime: true);
-        return true;
     }
 
     /// <summary>Closes an open choice without a pick (e.g. the game ended). Its callback is dropped.</summary>
@@ -255,6 +317,7 @@ public class CardManager : MonoBehaviour
     {
         if (!IsChoosing) return;
         onChosen = null;
+        onOptionChosen = null;
         stepTween.Stop();
         CloseMenu(animate: false);
     }
@@ -281,8 +344,13 @@ public class CardManager : MonoBehaviour
         if (pickPunch > 0f)
             Tween.PunchScale(view.transform, Vector3.one * pickPunch, 0.3f, useUnscaledTime: true);
 
-        Apply(card);
-        onCardChosen?.Invoke(card.data);
+        chosenOption = offered.IndexOf(view);
+        // A plain face (OpenChoice) has no card: its caller applies the pick.
+        if (card != null)
+        {
+            Apply(card);
+            onCardChosen?.Invoke(card.data);
+        }
 
         stepTween.Stop();
         stepTween = Tween.Delay(this, pickHold, manager => manager.FinishPick(view), useUnscaledTime: true);
@@ -302,7 +370,8 @@ public class CardManager : MonoBehaviour
 
         if (view)
         {
-            bool burn = view.Card != null && !view.Card.IsPermanent;
+            // Nothing kept: an immediate card - or a plain face (a die, the reject card) - burns.
+            bool burn = view.Card == null || !view.Card.IsPermanent;
             if (burn)
             {
                 PlaySfx(burnSfx);
@@ -353,6 +422,10 @@ public class CardManager : MonoBehaviour
 
         Action<CardInstance> callback = onChosen;
         onChosen = null;
+        Action<int> optionCallback = onOptionChosen;
+        onOptionChosen = null;
+        int option = chosenOption;
+        chosenOption = -1;
 
         ClearOffered();
         IsChoosing = false;
@@ -372,7 +445,9 @@ public class CardManager : MonoBehaviour
         }
 
         onChoiceClosed?.Invoke();
-        if (animate) callback?.Invoke(chosen);
+        if (!animate) return;
+        callback?.Invoke(chosen);
+        optionCallback?.Invoke(option);
     }
 
     // ---------------------------------------------------------------------
@@ -421,7 +496,7 @@ public class CardManager : MonoBehaviour
         CardView view = null;
         if (permanentCardsSpot)
         {
-            view = Spawn(card.data, permanentCardsSpot);
+            view = Spawn(card.data.viewPrefab, permanentCardsSpot);
             if (view)
             {
                 view.Bind(card);
@@ -578,9 +653,10 @@ public class CardManager : MonoBehaviour
         return drawn;
     }
 
-    private CardView Spawn(CardData data, Transform parent)
+    /// <summary>A card from <paramref name="prefab"/> (a card's own), else <see cref="cardPrefab"/>.</summary>
+    private CardView Spawn(CardView prefab, Transform parent)
     {
-        CardView prefab = data.viewPrefab ? data.viewPrefab : cardPrefab;
+        if (!prefab) prefab = cardPrefab;
         if (!prefab)
         {
             h.Out("CardManager: no Card Prefab assigned.");

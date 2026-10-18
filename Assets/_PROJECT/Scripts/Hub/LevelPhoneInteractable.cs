@@ -46,6 +46,9 @@ public class LevelPhoneInteractable : ShowcaseInteractable
     // Levels are started from the hub only.
     protected override bool UsableDuringDice => false;
 
+    // Points the player at the phone until the first level of the game has been played.
+    protected override bool WantsPulse => LevelManager.Instance && LevelManager.Instance.LastPlayedIndex < 0;
+
     protected override bool IsAvailable() =>
         LevelManager.Instance && LevelManager.Instance.Levels.Count > 0 && !ShowcaseBusy;
 

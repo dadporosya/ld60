@@ -2185,8 +2185,17 @@ MonoBehaviour:
   loopFrames: 1
   speaker: {fileID: 0}
   usableDuringDice: 1
-  defaultDialogue: {fileID: 11400000, guid: fa57cedca4e24ba4e89dba8057ad643d, type: 2}
-  afterLevels: []
+  defaultDialogue: {fileID: 11400000, guid: 88ddfd05281b4c75a43f21f2b0469138, type: 2}
+  afterLevels:
+  - level: 2
+    dialogue: {fileID: 11400000, guid: 41732d05658a4bab8445ebde9cac4a3c, type: 2}
+    lossDialogue: {fileID: 0}
+  - level: 0
+    dialogue: {fileID: 11400000, guid: b1839da970c943589f8111718196e69a, type: 2}
+    lossDialogue: {fileID: 0}
+  - level: 1
+    dialogue: {fileID: 11400000, guid: 5ada4e4893ff483a857693b6a3290d50, type: 2}
+    lossDialogue: {fileID: 0}
 --- !u!1 &357885303
 GameObject:
   m_ObjectHideFlags: 0
@@ -3704,9 +3713,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 655459339}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d57f5400742a474880abffe95a6486a, type: 3}
+  m_Script: {fileID: 11500000, guid: 0eda24afdd8eb0f4aabae7dbd6cf35f7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShowcaseInteractable
+  m_EditorClassIdentifier: Assembly-CSharp::RifleInteractable
   interactable: 1
   alphaHitThreshold: 0
   singleUse: 0
@@ -3738,8 +3747,13 @@ MonoBehaviour:
   loopFrames: 1
   speaker: {fileID: 0}
   usableDuringDice: 1
-  dialogues:
-  - {fileID: 11400000, guid: fa57cedca4e24ba4e89dba8057ad643d, type: 2}
+  showcaseDialogue: {fileID: 11400000, guid: fa57cedca4e24ba4e89dba8057ad643d, type: 2}
+  beforeDeathDialogue: {fileID: 0}
+  yesTitle: Yes
+  noTitle: No
+  forkLookFrom: {fileID: 0}
+  deathBgm: {fileID: 0}
+  deathBgmFade: 1.5
 --- !u!114 &655459342
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4471,10 +4485,10 @@ MonoBehaviour:
   levels: {fileID: 0}
   count: 0
   dialogues:
-  - dialogue: {fileID: 11400000, guid: d6a754062960d3d4caed469b214a8905, type: 2}
-  - dialogue: {fileID: 0}
-  - dialogue: {fileID: 0}
-  - dialogue: {fileID: 0}
+  - dialogue: {fileID: 11400000, guid: 7f6d885d304b40f19be173c082df5205, type: 2}
+  - dialogue: {fileID: 11400000, guid: 3d836a0fd5474d01a91ebad9bd41bfb0, type: 2}
+  - dialogue: {fileID: 11400000, guid: e22329e881a24db694fa593bc0775965, type: 2}
+  - dialogue: {fileID: 11400000, guid: ddf36266a9564f2f89c25fae410e0f0d, type: 2}
 --- !u!1 &778689432
 GameObject:
   m_ObjectHideFlags: 0

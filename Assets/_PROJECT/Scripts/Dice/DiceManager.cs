@@ -756,6 +756,52 @@ public class DiceManager : MonoBehaviour
     }
 
     // ---------------------------------------------------------------------
+    // Dice kinds (won in the dice choice)
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Turns a random plain die of the table into a <paramref name="kind"/> die, tinted <paramref name="tint"/> -
+    /// or, when none is plain any more, a random one. It keeps its face unless the kind doesn't allow it.
+    /// Returns the die (null without dice).
+    /// </summary>
+    public Dice ReplaceRandomDefaultDie(DiceKind kind, Color tint)
+    {
+        Initialize();
+
+        // The table's dice: the start dice, plus the ones Extra Dice cards brought.
+        int count = Mathf.Min(dice.Count, Mathf.Max(diceInTurn, startDiceCount));
+        List<Dice> plain = new List<Dice>(), any = new List<Dice>();
+        for (int i = 0; i < count; i++)
+        {
+            Dice die = dice[i];
+            if (!die) continue;
+            any.Add(die);
+            if (die.Kind == DiceKind.Default) plain.Add(die);
+        }
+
+        List<Dice> pool = plain.Count > 0 ? plain : any;
+        if (pool.Count == 0)
+        {
+            h.Out("DiceManager: no dice to replace.");
+            return null;
+        }
+
+        Dice replaced = pool[UnityEngine.Random.Range(0, pool.Count)];
+        replaced.SetKind(kind, tint);
+        if (!DiceKinds.Allows(kind, replaced.Value)) replaced.ShowFace(DiceKinds.RandomFace(kind));
+        h.Out($"DiceManager: '{replaced.name}' is now a {kind} die.");
+        return replaced;
+    }
+
+    /// <summary>Every die back to a plain one (a new game).</summary>
+    public void ClearDiceKinds()
+    {
+        Initialize();
+        foreach (Dice die in dice)
+            if (die) die.SetKind(DiceKind.Default, Color.white);
+    }
+
+    // ---------------------------------------------------------------------
     // Placement inside the dice area
     // ---------------------------------------------------------------------
 
@@ -1125,7 +1171,7 @@ public class DiceManager : MonoBehaviour
     private void Throw(List<Dice> toRoll, bool firstThrow = false)
     {
         landingPending = toRoll.Count;
-        List<int> results = firstThrow ? FirstThrowResults(toRoll.Count) : RandomResults(toRoll.Count);
+        List<int> results = firstThrow ? FirstThrowResults(toRoll) : ResultsFor(toRoll);
 
         // Dice staying put (locked) block their spots; each thrown die then claims where it will land.
         List<Vector3> taken = new List<Vector3>();
@@ -1142,26 +1188,61 @@ public class DiceManager : MonoBehaviour
         }
     }
 
-    private static List<int> RandomResults(int count)
+    /// <summary>
+    /// Where <paramref name="toRoll"/> will land, each by its <see cref="DiceKind"/>: plain dice anywhere, Blue /
+    /// Yellow / Pink on the faces they allow; then Green on the face the other dice show most, then Red on one
+    /// none of them show (the dice staying put included).
+    /// </summary>
+    private List<int> ResultsFor(List<Dice> toRoll)
     {
-        List<int> results = new List<int>(count);
-        for (int i = 0; i < count; i++) results.Add(UnityEngine.Random.Range(1, PokerDiceEvaluator.Faces + 1));
-        return results;
+        int[] results = new int[toRoll.Count];
+        List<int> known = new List<int>();
+        foreach (Dice die in DiceInPlay)
+            if (!toRoll.Contains(die)) known.Add(die.Value);
+
+        for (int i = 0; i < toRoll.Count; i++)
+        {
+            DiceKind kind = toRoll[i].Kind;
+            if (kind is DiceKind.Green or DiceKind.Red) continue;
+            results[i] = DiceKinds.RandomFace(kind);
+            known.Add(results[i]);
+        }
+
+        // Every green copies the same face: the one shown most before any of them landed.
+        int mostCommon = DiceKinds.MostCommon(known);
+        for (int i = 0; i < toRoll.Count; i++)
+        {
+            if (toRoll[i].Kind != DiceKind.Green) continue;
+            results[i] = mostCommon > 0 ? mostCommon : DiceKinds.RandomFace(DiceKind.Green);
+            known.Add(results[i]);
+        }
+
+        // Each red differs from the reds before it too. Every face taken (7+ dice): any face.
+        for (int i = 0; i < toRoll.Count; i++)
+        {
+            if (toRoll[i].Kind != DiceKind.Red) continue;
+            int missing = DiceKinds.Missing(known);
+            results[i] = missing > 0 ? missing : DiceKinds.RandomFace(DiceKind.Red);
+            known.Add(results[i]);
+        }
+
+        return new List<int>(results);
     }
 
     /// <summary>
     /// A round's first throw: a combination is <see cref="firstRollCombinationReduction"/> less likely than
     /// with fair dice. A throw that makes a hand is, at that chance, swapped for a fair throw that makes none.
     /// </summary>
-    private List<int> FirstThrowResults(int count)
+    private List<int> FirstThrowResults(List<Dice> toRoll)
     {
-        List<int> results = RandomResults(count);
+        List<int> results = ResultsFor(toRoll);
         if (!MakesHand(results) || UnityEngine.Random.value >= firstRollCombinationReduction) return results;
 
-        // Fair dice redrawn until they make no hand. Some dice counts always make one, so the tries are capped.
+        // Fair dice redrawn until they make no hand. Some dice counts (and green dice) always make one, so the
+        // tries are capped.
         for (int attempt = 0; attempt < 500; attempt++)
         {
-            List<int> retry = RandomResults(count);
+            List<int> retry = ResultsFor(toRoll);
             if (!MakesHand(retry)) return retry;
         }
         return results;
@@ -1203,19 +1284,36 @@ public class DiceManager : MonoBehaviour
             if (effect == null || !effect.ActsOn(die.Value)) continue;
             // The last die can't go: the round needs something to score.
             if (effect.type == CardEffectType.DestroyFace && DiceInPlay.Count <= 1) continue;
+            // A blue die stays odd, a yellow one even, a pink one high.
+            if (effect.type == CardEffectType.FlipFace && !DiceKinds.Allows(die.Kind, effect.FlipOf(die.Value))) continue;
             return card;
         }
         return null;
     }
 
-    /// <summary>True when right clicking <paramref name="die"/> would use a card on it.</summary>
-    public bool HasDieAction(Dice die) => DieActionFor(die) != null;
+    /// <summary>A cyan die not showing 1, while the dice can be acted on: a right click turns it to 1.</summary>
+    private bool CanTurnToOne(Dice die) => CanAct && InPlay(die) && die.Kind == DiceKind.Cyan && die.Value != 1;
 
-    /// <summary>Right click: uses the first owned card that acts on <paramref name="die"/>'s face.</summary>
+    /// <summary>True when right clicking <paramref name="die"/> would use a card on it (or turn a cyan die to 1).</summary>
+    public bool HasDieAction(Dice die) => DieActionFor(die) != null || CanTurnToOne(die);
+
+    /// <summary>
+    /// Right click: uses the first owned card that acts on <paramref name="die"/>'s face - or, with none, turns a
+    /// cyan die to 1.
+    /// </summary>
     public void UseDieAction(Dice die)
     {
         CardInstance card = DieActionFor(die);
-        if (card == null) return;
+        if (card == null)
+        {
+            if (!CanTurnToOne(die)) return;
+            DiceScore old = shownScore;
+            die.Flip(1);
+            PlaySfx(flipSfx);
+            UpdateUI();
+            ShowRollPopups(old, shownScore);
+            return;
+        }
 
         CardEffect effect = card.Effect;
         DiceScore before = shownScore;

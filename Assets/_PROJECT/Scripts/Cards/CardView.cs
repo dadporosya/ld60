@@ -6,6 +6,27 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
+/// A card that isn't a bonus card - a die in the dice choice, or its reject card: just what it shows.
+/// </summary>
+[Serializable]
+public class CardFace
+{
+    public string title;
+    [TextArea] public string description;
+    [Tooltip("TMP rich text for the icon in the middle (<sprite name=\"1\"> etc.). Empty: no icon.")]
+    [TextArea] public string icon;
+
+    public CardFace() { }
+
+    public CardFace(string title, string description, string icon)
+    {
+        this.title = title;
+        this.description = description;
+        this.icon = icon;
+    }
+}
+
+/// <summary>
 /// Shows one card: its title (the CardData's good or bad title, on the same text), the description
 /// (an upgraded card's points tinted <see cref="upgradedPointsColor"/>) and the icon in the middle - dice
 /// sprite tags (<see cref="DiceIcons"/>) on a text. Clickable when bound with a callback (the card choice); otherwise it only
@@ -92,11 +113,7 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         if (titleText) titleText.text = card?.Title ?? "";
 
         if (descriptionText) descriptionText.text = card?.DescriptionWith(upgradedPointsColor) ?? "";
-        if (icon)
-        {
-            icon.text = card?.Icon ?? "";
-            icon.enabled = icon.text.Length > 0;
-        }
+        SetIcon(card?.Icon);
         if (frame) frame.color = good ? goodColor : badColor;
         if (crop) Crop();
 
@@ -104,6 +121,31 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         if (permanentBadge) permanentBadge.SetActive(permanent);
         if (immediateBadge) immediateBadge.SetActive(card != null && !permanent);
         if (upgradedBadge) upgradedBadge.SetActive(card != null && card.IsUpgraded);
+    }
+
+    /// <summary>Shows <paramref name="face"/> - no bonus card behind it (<see cref="Card"/> is null), no badges.</summary>
+    public void Bind(CardFace face, Action<CardView> clicked = null)
+    {
+        Card = null;
+        onClick = clicked;
+        FindMissingReferences();
+
+        if (titleText) titleText.text = face?.title ?? "";
+        if (descriptionText) descriptionText.text = face?.description ?? "";
+        SetIcon(face?.icon);
+        if (frame) frame.color = goodColor;
+        if (crop) Crop();
+
+        if (permanentBadge) permanentBadge.SetActive(false);
+        if (immediateBadge) immediateBadge.SetActive(false);
+        if (upgradedBadge) upgradedBadge.SetActive(false);
+    }
+
+    private void SetIcon(string text)
+    {
+        if (!icon) return;
+        icon.text = text ?? "";
+        icon.enabled = icon.text.Length > 0;
     }
 
     // The sizes the last crop was measured at: a layout resizing the card (or its text) after Bind re-wraps

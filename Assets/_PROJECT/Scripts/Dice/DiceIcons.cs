@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 /// <summary>
 /// TMP sprite tags for the dice icons in the default sprite asset (DiceFaces): faces 1..6, "x" and "y"
@@ -21,6 +22,10 @@ public static class DiceIcons
     public static string Face(int face) => $"<sprite name=\"{face}\">";
 
     public static string Parity(DiceParity parity) => parity == DiceParity.Even ? Even : Odd;
+
+    /// <summary>The sprite named <paramref name="spriteName"/> ("1".."6", "x", "odd"...) tinted <paramref name="color"/>.</summary>
+    public static string Tinted(string spriteName, Color color) =>
+        $"<color=#{ColorUtility.ToHtmlStringRGBA(color)}><sprite name=\"{spriteName}\" tint=1></color>";
 
     /// <summary>
     /// The dice a hand is made of: a pair "x x", two pair "x x y y", a full house "x x y y y", a small straight
