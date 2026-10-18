@@ -57,7 +57,9 @@ public class IntroCutscene : CutSceneBase
         // The stage stays up so the black covers it, rather than the hub flashing in between.
         runner.Play(dialogue, () => done = true, hideStage: false);
 
-        while (!done && runner.IsPlaying) yield return null;
+        // The stage's own end fade (Fade To Color On End) still runs after the dialogue is over: only a dropped
+        // callback means it was cut off.
+        while (!done && (runner.IsPlaying || runner.IsFinishing)) yield return null;
 
         if (!done)
         {

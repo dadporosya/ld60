@@ -63,8 +63,12 @@ public class FuneralGameManager : MonoBehaviour
     [SerializeField] private DeathCutscene deathCutscene;
     [Tooltip("Seconds the music fades out over when the good ending starts. Negative: it keeps playing.")]
     [SerializeField] private float songFadeOnGoodEnding = 3f;
-    [Tooltip("Finishing the final level (picked from the phone's level list) plays the good ending.")]
+    [Tooltip("Finishing the final level (picked from the phone's level list) plays the good ending. " +
+             "Unused while Death After Final Level is on.")]
     [SerializeField] private bool goodEndingAfterFinalLevel = true;
+    [Tooltip("After the final level's round there is no card pick: once its outcome dialogue fades to black, " +
+             "the bad ending (the Death Cutscene) plays.")]
+    [SerializeField] private bool deathAfterFinalLevel = true;
 
     [Header("Round end")]
     [Tooltip("After a dice round the FadeImageController covers the screen: black -> win / loss dialogue -> " +
@@ -96,6 +100,9 @@ public class FuneralGameManager : MonoBehaviour
     public UnityEvent onBadEnding = new UnityEvent();
 
     public Phase CurrentPhase { get; private set; } = Phase.Intro;
+
+    /// <summary>What <see cref="BadEnding"/> plays; null: the Bad Ending Dialogue.</summary>
+    public DeathCutscene DeathCutscene => deathCutscene;
 
     /// <summary>True while the player is free to click around the hub.</summary>
     public bool IsInHub => CurrentPhase == Phase.Hub && NothingPlaying;
@@ -387,6 +394,8 @@ public class FuneralGameManager : MonoBehaviour
         // The level decides what plays after the round, and moves on to the next one.
         VisualNovelDialogueContainer outcome = Levels ? Levels.CompleteLevel(passed, risky) : null;
         CardMood mood = passed ? CardMood.Hope : CardMood.Hate;
+        // The final level ends in the death cutscene instead of a card pick.
+        bool deathAfter = deathAfterFinalLevel && Levels && Levels.IsFinal(Levels.LastPlayedIndex);
         int id = ++roundEndId;
         roundEndFading = true;
         bool hasOutcome = outcome && outcome.nodes != null && outcome.nodes.Count > 0;
@@ -409,7 +418,8 @@ public class FuneralGameManager : MonoBehaviour
             // No dialogue (none assigned, or an empty one): straight from the black to the card pick.
             if (!hasOutcome)
             {
-                OfferCardRevealed(contact, passed, mood, id);
+                if (deathAfter) DeathAfterCall(contact, passed);
+                else OfferCardRevealed(contact, passed, mood, id);
                 return;
             }
 
@@ -429,7 +439,8 @@ public class FuneralGameManager : MonoBehaviour
                     RoundEndFade(true, dialogueCoverDuration, id, () =>
                     {
                         Dialogues.HideStage();
-                        OfferCardRevealed(contact, passed, mood, id);
+                        if (deathAfter) DeathAfterCall(contact, passed);
+                        else OfferCardRevealed(contact, passed, mood, id);
                     });
                 }, hideStage: false);
             });
@@ -452,6 +463,19 @@ public class FuneralGameManager : MonoBehaviour
         // Even without a pick (no cards, or the good ending started): whatever comes next needs to be seen.
         roundEndFading = false;
         RoundEndFade(false, cardsRevealDuration, id, null);
+    }
+
+    /// <summary>
+    /// The final level's outcome call is over and the screen is black: no card pick, the death cutscene plays.
+    /// The black fades away into its dialogue - or, when it has none, stays for its black step.
+    /// </summary>
+    private void DeathAfterCall(ContactData contact, bool passed)
+    {
+        onCallEnded?.Invoke(contact, passed);
+        phoneLevel = -1;
+        debugRound = false;
+        if (deathCutscene && !deathCutscene.HasDialogue) roundEndFading = false;
+        BadEnding();
     }
 
     /// <summary>

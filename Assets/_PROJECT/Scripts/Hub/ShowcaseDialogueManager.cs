@@ -255,7 +255,38 @@ public class ShowcaseDialogueManager : MonoBehaviour
     /// don't advance).
     /// </summary>
     public bool Show(IReadOnlyList<Sprite> frames, IReadOnlyList<float> frameDurations, bool loop,
-        DialogueContainer dialogue, Talkable speaker = null, Action onFinished = null)
+        DialogueContainer dialogue, Talkable speaker = null, Action onFinished = null) =>
+        ShowDialogue(frames, frameDurations, loop, dialogue, speaker, onFinished, null);
+
+    /// <summary>
+    /// Like <see cref="Show(IReadOnlyList{Sprite}, IReadOnlyList{float}, bool, DialogueContainer, Talkable, Action)"/>,
+    /// but the picture stays up once <paramref name="dialogue"/> is over: <paramref name="afterDialogue"/> runs then,
+    /// and the showcase waits for <see cref="Close"/> (<paramref name="onClosed"/> runs once it's gone).
+    /// </summary>
+    public bool ShowAndHold(IReadOnlyList<Sprite> frames, IReadOnlyList<float> frameDurations, bool loop,
+        DialogueContainer dialogue, Action afterDialogue, Talkable speaker = null, Action onClosed = null) =>
+        ShowDialogue(frames, frameDurations, loop, dialogue, speaker, onClosed, afterDialogue ?? (() => { }));
+
+    /// <summary>
+    /// Closes a showcase held by <see cref="ShowAndHold"/> (or an open list, as cancelled), animated. Does nothing
+    /// while its dialogue still plays.
+    /// </summary>
+    public void Close()
+    {
+        if (!IsShowing) return;
+        if (listOpen)
+        {
+            CloseList();
+            return;
+        }
+        if (runningDialogue) return;
+
+        Hide(animate: true);
+    }
+
+    /// <summary>The picture appears, then <paramref name="dialogue"/> plays; then <paramref name="after"/>, or (null) it closes.</summary>
+    private bool ShowDialogue(IReadOnlyList<Sprite> frames, IReadOnlyList<float> frameDurations, bool loop,
+        DialogueContainer dialogue, Talkable speaker, Action onFinished, Action after)
     {
         Initialize();
 
@@ -277,7 +308,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
         if (listRoot) listRoot.gameObject.SetActive(false);
 
         stepTween.Stop();
-        stepTween = Tween.Delay(this, appearDuration + dialogueDelay, manager => manager.StartDialogue(dialogue, speaker),
+        stepTween = Tween.Delay(this, appearDuration + dialogueDelay, manager => manager.StartDialogue(dialogue, speaker, after),
             useUnscaledTime: true);
         return true;
     }

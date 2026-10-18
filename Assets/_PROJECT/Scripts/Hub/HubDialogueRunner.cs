@@ -22,8 +22,17 @@ public class HubDialogueRunner : MonoBehaviour
     private int playId;
     private Coroutine interruptRoutine;
 
+    // The Play whose callback is still to come; 0 once it ran.
+    private int pendingId;
+
     /// <summary>True while a dialogue is playing (or waiting for an interrupted one to clear).</summary>
     public bool IsPlaying => interruptRoutine != null || (Talkable && Talkable.IsPlaying);
+
+    /// <summary>
+    /// The last <see cref="Play"/>'s callback is still to come and wasn't cut off: also true through the stage's
+    /// end fade, when <see cref="IsPlaying"/> is already false.
+    /// </summary>
+    public bool IsFinishing => pendingId != 0 && pendingId == playId;
 
     private VisualNovelTalkable Talkable
     {
@@ -67,9 +76,12 @@ public class HubDialogueRunner : MonoBehaviour
         }
 
         int id = ++playId;
+        pendingId = id;
         Talkable.PlayDialogue(dialogue, () =>
         {
-            if (id == playId) onFinished?.Invoke();
+            if (id != playId) return;
+            pendingId = 0;
+            onFinished?.Invoke();
         }, hideStageOnFinish: hideStage);
     }
 

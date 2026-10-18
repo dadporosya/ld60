@@ -1023,43 +1023,10 @@ public class DialogueManager : MonoBehaviour
         currentTypingText = textIn;
         currentTextIndex = 0;
 
-        // Slice textIn by color tags
-        Queue<string> textSlicesByColor = new Queue<string>();
-        string colorTagPattern = @"(<color[^>]*>)";
-        System.Text.RegularExpressions.Regex colorRegex = new System.Text.RegularExpressions.Regex(colorTagPattern);
-
-        string[] parts = colorRegex.Split(HTML.RemoveUniqueTags(textIn));
-
-// Recombine each tag with the text that follows it
-        for (int i = 0; i < parts.Length; i++)
-        {
-            if (colorRegex.IsMatch(parts[i]) && i + 1 < parts.Length)
-            {
-                textSlicesByColor.Enqueue(parts[i] + parts[i + 1]);
-                i++; // skip the next part, already consumed
-            }
-            else if (!string.IsNullOrEmpty(parts[i]))
-            {
-                textSlicesByColor.Enqueue(parts[i]);
-            }
-        }
-
-        //h.Out(textSlicesByColor, textSlicesByColor.Count);
-
-        string filteredText = "";
-        
-        void AddSplit()
-        {
-            if (textSlicesByColor.Count == 0) return;
-            filteredText += textSlicesByColor.Dequeue();
-        }
-
-        
-        // n
-        AddSplit();
-        
-        string displayedText = "";
-        int alphaIndex = 0; // position in filteredText, rich-text tags included
+        // The whole text goes into the box at once, every letter hidden; typing only reveals them by
+        // TMP character index. (It used to be fed in slices split at <color> tags, but the box was
+        // never updated with the later slices, so typing stalled at the first color tag.)
+        string filteredText = HTML.RemoveUniqueTags(textIn);
         int charIndex = 0;  // TMP character index of the next letter to show (tags don't count)
 
         if (ActiveTextAnimation)
@@ -1118,7 +1085,6 @@ public class DialogueManager : MonoBehaviour
                     // If not a unique tag, skip it
                     if (!isUniqueTag)
                     {
-                        alphaIndex += tag.Length;
                         // A rich-text tag (<i>, <color>, ...) is no character of TMP's own;
                         // a <sprite> is one.
                         if (tag.StartsWith("<sprite"))
@@ -1185,20 +1151,7 @@ public class DialogueManager : MonoBehaviour
                 if (playVoice) TryPlayVoice(audioClips, c, ref voiceCharCounter);
             }
             charIndex++;
-            alphaIndex++;
-            // SetText(dialogueScalingText, dialogueText, originalText);
-            // displayedText = dialogueText.text.originalText.Insert(alphaIndex, HTML_ALPHA);
-            
-            // // change char alpha instead
-            // displayedText = filteredText.Insert(alphaIndex, HTML.ALPHA);
-            // SetText(scalingTextBox, defaultTextBox, displayedText);
 
-            if (alphaIndex == filteredText.Length)
-            {
-                AddSplit();
-            }
-
-            // _textAnimationComponent.cleaned = true;
             if (!skipToNextStopRequested)
             {
                 yield return WaitForSecondsOrSkip(MAX_TYPE_SPEED / typeSpeed);

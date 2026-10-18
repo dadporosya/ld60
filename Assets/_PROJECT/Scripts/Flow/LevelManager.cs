@@ -187,6 +187,9 @@ public class LevelManager : MonoBehaviour
     /// <summary>How the last played round (<see cref="LastPlayedIndex"/>) went.</summary>
     public LevelOutcome LastOutcome { get; private set; }
 
+    /// <summary>True when a round has been played this game and the last one was lost.</summary>
+    public bool LastRoundLost => LastPlayedIndex >= 0 && !LastPlayedPassed;
+
     /// <summary>
     /// The titles for the cards offered after the last played round: that level's list for how it went
     /// (<see cref="Level.CardTitlesFor"/>). Null before any round, or when the list is empty.

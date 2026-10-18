@@ -5,7 +5,6 @@ using PrimeTween;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -123,15 +122,12 @@ public class DeathCutscene : CutSceneBase
     private AudioSource afterSource;
     private AudioSource sfxSource;
 
-    // The fork currently on screen.
-    private RectTransform forkCanvas;
-    private RectTransform forkContainer;
-    private CanvasGroup forkGroup;
-    private readonly List<TextMeshProUGUI> forkLines = new List<TextMeshProUGUI>();
-    private bool forkOpen;
+    // Made on first use, on this cutscene.
+    private ChoiceFork choiceFork;
     private int forkPick = -1;
-    private int hoveredLine = -1;
-    private bool cursorOnLine;
+
+    /// <summary>Whether it opens with a visual novel dialogue (step 1), or goes straight to the black.</summary>
+    public bool HasDialogue => vnDialogue;
 
     /// <summary>Runs the cutscene. It never hands control back: it ends by reloading the scene or closing the game.</summary>
     public void Play() => RunInstance();
@@ -144,62 +140,6 @@ public class DeathCutscene : CutSceneBase
         cutsceneSteps.Add(BlackStep());
         cutsceneSteps.Add(AfterShotStep());
         cutsceneSteps.Add(ForkStep());
-    }
-
-    private void OnDestroy()
-    {
-        SetCursorOnLine(false);
-    }
-
-    /// <summary>
-    /// Hover and click on the fork lines, read straight from the mouse against each line's text - so no other
-    /// canvas's raycast target can swallow them.
-    /// </summary>
-    private void Update()
-    {
-        if (!forkOpen) return;
-
-        Mouse mouse = Mouse.current;
-        if (mouse == null) return;
-
-        Vector2 pointer = mouse.position.ReadValue();
-        int hovered = -1;
-        for (int i = 0; i < forkLines.Count; i++)
-            if (IsOver(forkLines[i], pointer))
-            {
-                hovered = i;
-                break;
-            }
-
-        if (hovered != hoveredLine)
-        {
-            if (hoveredLine >= 0 && hoveredLine < forkLines.Count && forkLines[hoveredLine])
-                forkLines[hoveredLine].color = lineColor;
-            hoveredLine = hovered;
-            if (hovered >= 0)
-            {
-                forkLines[hovered].color = lineHoverColor;
-                PlayUiSfx(lineHoverSfx);
-            }
-            SetCursorOnLine(hovered >= 0);
-        }
-
-        if (hovered >= 0 && mouse.leftButton.wasPressedThisFrame) PickLine(forkLines[hovered], hovered);
-    }
-
-    /// <summary>Whether <paramref name="screen"/> is on <paramref name="line"/>'s text (plus <see cref="hitPadding"/>).</summary>
-    private bool IsOver(TextMeshProUGUI line, Vector2 screen)
-    {
-        if (!line || !line.canvas) return false;
-
-        Canvas canvas = line.canvas.rootCanvas;
-        Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(line.rectTransform, screen, cam, out Vector2 local))
-            return false;
-
-        Bounds bounds = line.textBounds;
-        bounds.Expand(new Vector3(hitPadding * 2f, hitPadding * 2f, 0f));
-        return local.x >= bounds.min.x && local.x <= bounds.max.x && local.y >= bounds.min.y && local.y <= bounds.max.y;
     }
 
     // ---------------------------------------------------------------------
@@ -331,175 +271,37 @@ public class DeathCutscene : CutSceneBase
     // Forks
     // ---------------------------------------------------------------------
 
+    /// <summary>
+    /// The fork's look, from the Fork look fields - for other forks that should look like this one (the rifle's).
+    /// </summary>
+    public ChoiceForkLook ForkLook => new ChoiceForkLook
+    {
+        parent = forkParent,
+        sortingOrder = forkSortingOrder,
+        lineTemplate = lineTemplate,
+        font = font,
+        fontSize = fontSize,
+        lineColor = lineColor,
+        lineHoverColor = lineHoverColor,
+        width = forkWidth,
+        hitPadding = hitPadding,
+        offset = forkOffset,
+        fadeDuration = forkFadeDuration,
+        hoverSfx = lineHoverSfx,
+        clickSfx = lineClickSfx,
+    };
+
     /// <summary>Shows one line per option and waits for a click; the picked index is left in <see cref="forkPick"/>.</summary>
     private IEnumerator ShowFork(IReadOnlyList<ForkOption> options)
     {
-        BuildFork(options);
+        if (!choiceFork) choiceFork = ChoiceFork.Create(ForkLook, transform);
 
-        while (forkPick < 0) yield return null;
+        List<string> titles = new List<string>();
+        foreach (ForkOption option in options) titles.Add(option != null ? option.title : "");
 
-        // The picked line stays lit while the others fade out with it.
-        if (forkFadeDuration > 0f)
-            yield return Tween.Alpha(forkGroup, 0f, forkFadeDuration, useUnscaledTime: true).ToYieldInstruction();
-        ClearFork();
-    }
-
-    private void BuildFork(IReadOnlyList<ForkOption> options)
-    {
-        ClearFork();
         forkPick = -1;
-        RectTransform container = ForkContainer();
-
-        for (int i = 0; i < options.Count; i++)
-        {
-            ForkOption option = options[i];
-            TextMeshProUGUI line = MakeLine(container);
-            line.text = option != null ? option.title : "";
-            line.color = lineColor;
-            // Hover and click are read in Update; the lines block nothing.
-            line.raycastTarget = false;
-            forkLines.Add(line);
-        }
-
-        hoveredLine = -1;
-        forkOpen = true;
-        forkGroup.blocksRaycasts = true;
-        Tween.StopAll(forkGroup);
-        if (forkFadeDuration > 0f)
-        {
-            forkGroup.alpha = 0f;
-            Tween.Alpha(forkGroup, 1f, forkFadeDuration, useUnscaledTime: true);
-        }
-        else forkGroup.alpha = 1f;
-    }
-
-    private void PickLine(TextMeshProUGUI line, int index)
-    {
-        if (!forkOpen) return;
-        forkOpen = false;
-        forkGroup.blocksRaycasts = false;
-        SetCursorOnLine(false);
-        PlayUiSfx(lineClickSfx);
-        if (line) line.color = lineHoverColor;
-        forkPick = index;
-    }
-
-    private void ClearFork()
-    {
-        forkOpen = false;
-        hoveredLine = -1;
-        SetCursorOnLine(false);
-        foreach (TextMeshProUGUI line in forkLines)
-            if (line) Destroy(line.gameObject);
-        forkLines.Clear();
-        if (forkGroup)
-        {
-            Tween.StopAll(forkGroup);
-            forkGroup.alpha = 0f;
-            forkGroup.blocksRaycasts = false;
-        }
-    }
-
-    /// <summary>
-    /// The centred row the lines go into (made once): <see cref="forkWidth"/> wide, split into equal cells, one
-    /// per line, each text centred in its cell.
-    /// </summary>
-    private RectTransform ForkContainer()
-    {
-        if (forkContainer) return forkContainer;
-
-        RectTransform parent = forkParent ? forkParent : ForkCanvas();
-        GameObject go = new GameObject("Death Fork", typeof(RectTransform), typeof(CanvasGroup),
-            typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
-        forkContainer = (RectTransform)go.transform;
-        forkContainer.SetParent(parent, false);
-        forkContainer.anchorMin = forkContainer.anchorMax = forkContainer.pivot = new Vector2(0.5f, 0.5f);
-        forkContainer.anchoredPosition = forkOffset;
-        forkContainer.sizeDelta = new Vector2(forkWidth, 0f);
-
-        HorizontalLayoutGroup layout = go.GetComponent<HorizontalLayoutGroup>();
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.spacing = 0f;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = false;
-
-        ContentSizeFitter fitter = go.GetComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        forkGroup = go.GetComponent<CanvasGroup>();
-        forkGroup.alpha = 0f;
-        forkGroup.blocksRaycasts = false;
-        return forkContainer;
-    }
-
-    /// <summary>A screen-space overlay canvas over everything (<see cref="forkSortingOrder"/>), on this cutscene.</summary>
-    private RectTransform ForkCanvas()
-    {
-        if (forkCanvas) return forkCanvas;
-
-        GameObject go = new GameObject("Death Fork Canvas", typeof(RectTransform), typeof(Canvas),
-            typeof(CanvasScaler), typeof(GraphicRaycaster));
-        go.transform.SetParent(transform, false);
-
-        Canvas canvas = go.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = forkSortingOrder;
-
-        CanvasScaler scaler = go.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        forkCanvas = (RectTransform)go.transform;
-        return forkCanvas;
-    }
-
-    private TextMeshProUGUI MakeLine(RectTransform container)
-    {
-        TextMeshProUGUI line;
-        if (lineTemplate)
-        {
-            line = Instantiate(lineTemplate, container);
-            line.gameObject.SetActive(true);
-        }
-        else
-        {
-            GameObject go = new GameObject("Fork Line", typeof(RectTransform));
-            go.transform.SetParent(container, false);
-            line = go.AddComponent<TextMeshProUGUI>();
-            if (font) line.font = font;
-            line.fontSize = fontSize;
-            line.textWrappingMode = TextWrappingModes.NoWrap;
-        }
-
-        line.alignment = TextAlignmentOptions.Center;
-
-        // Every cell exactly as wide, whatever its text: the row splits evenly.
-        LayoutElement cell = line.GetComponent<LayoutElement>();
-        if (!cell) cell = line.gameObject.AddComponent<LayoutElement>();
-        cell.minWidth = 0f;
-        cell.preferredWidth = 0f;
-        cell.flexibleWidth = 1f;
-        return line;
-    }
-
-    /// <summary>
-    /// Tells the cursor whether the pointer is on a line, so it shows its button icon there (the lines aren't
-    /// Selectables, which it would find by itself).
-    /// </summary>
-    private void SetCursorOnLine(bool on)
-    {
-        if (cursorOnLine == on) return;
-        cursorOnLine = on;
-        if (CursorIconManager.Instance) CursorIconManager.Instance.SetButtonHover(on);
-    }
-
-    private void PlayUiSfx(AudioClip clip)
-    {
-        if (clip && SFXManager.Instance) SFXManager.Instance.PlayClip(clip);
+        choiceFork.Show(titles, index => forkPick = index);
+        while (forkPick < 0) yield return null;
     }
 
     // ---------------------------------------------------------------------
