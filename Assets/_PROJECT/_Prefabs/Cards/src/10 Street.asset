@@ -23,7 +23,7 @@ MonoBehaviour:
     type: 1
     operation: 1
     amount: 0
-    multiplier: 2
+    multiplier: 3.33
     nextRoundRerolls: 0
     combination: 4
     otherCombinations: 

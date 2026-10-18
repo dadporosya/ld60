@@ -471,6 +471,10 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI roundText;
     [Tooltip("{0} = current round, {1} = rounds per turn.")]
     [SerializeField] private string roundFormat = "Round {0}/{1}";
+    [Tooltip("Position shake on Round Text when its numbers change. 0: none.")]
+    [SerializeField, Min(0f)] private float roundTextShake = 8f;
+    [Tooltip("Seconds the Round Text shake lasts.")]
+    [SerializeField, Min(0f)] private float roundTextShakeDuration = 0.35f;
     [Tooltip("The turn's total so far (rounds banked + the dice on the table). With more than one round per " +
              "turn: the points of the finished rounds only - the running round's go to Round Score Text, and " +
              "are added here as the round finishes.")]
@@ -630,6 +634,10 @@ public class DiceManager : MonoBehaviour
     private int carriedRerolls;
     private Tween comboPunchTween;
     private Vector3? comboTextScale;
+    private Tween roundShakeTween;
+    private Vector3? roundTextPosition;
+    // What Round Text was last set to by code (null before the first fill, so the scene's placeholder doesn't shake).
+    private string shownRoundText;
     private Action<DiceTurnResult> turnCallback;
     // The turn's rounds so far; the last one is added (not yet banked) as it finishes.
     private readonly List<DiceRoundResult> roundResults = new List<DiceRoundResult>();
@@ -2199,7 +2207,7 @@ public class DiceManager : MonoBehaviour
         if (roundText)
         {
             roundText.gameObject.SetActive(RoundsInTurn > 1);
-            roundText.text = string.Format(roundFormat, Mathf.Max(1, CurrentRound), RoundsInTurn);
+            UpdateRoundText(string.Format(roundFormat, Mathf.Max(1, CurrentRound), RoundsInTurn));
         }
 
         // The round's score is what the dice on the table make right now - never added up over rolls. While
@@ -2283,6 +2291,23 @@ public class DiceManager : MonoBehaviour
             comboPunchTween.Stop();
             comboScoreText.transform.localScale = comboTextScale ??= comboScoreText.transform.localScale;
             comboPunchTween = Tween.PunchScale(comboScoreText.transform, Vector3.one * comboScorePunch, 0.25f);
+        }
+    }
+
+    /// <summary>Round Text: shaken when its numbers change (not on the first fill).</summary>
+    private void UpdateRoundText(string text)
+    {
+        if (text == shownRoundText) return;
+        bool changed = shownRoundText != null;
+        shownRoundText = roundText.text = text;
+
+        if (changed &&roundTextShake > 0f && roundTextShakeDuration > 0f && roundText.isActiveAndEnabled)
+        {
+            roundShakeTween.Stop();
+            Transform t = roundText.transform;
+            t.localPosition = roundTextPosition ??= t.localPosition;
+            roundShakeTween = Tween.ShakeLocalPosition(t, new Vector3(roundTextShake, roundTextShake, 0f),
+                roundTextShakeDuration);
         }
     }
 

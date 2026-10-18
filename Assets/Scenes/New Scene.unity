@@ -489,9 +489,9 @@ MonoBehaviour:
   - points: 200
     riskyPoints: 333
   - points: 350
-    riskyPoints: 550
+    riskyPoints: 500
   - points: 475
-    riskyPoints: 800
+    riskyPoints: 700
   pointsByRound: 
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
@@ -925,10 +925,10 @@ MonoBehaviour:
   spotlight:
     root: {fileID: 118505316}
     text: {fileID: 1531122480}
-    delay: 0.72
+    delay: 1.18
     passedExtraDelay: 1
-    hold: 2.19
-    fadeOut: 3.01
+    hold: 2.02
+    fadeOut: 4
     lost:
       text: ALONE
       color: {r: 0.9, g: 0.15, b: 0.15, a: 1}
@@ -5890,10 +5890,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f7c40a3748db2f46b589fd0280379bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutSceneManager
-  currentCutScene: {fileID: 1150178273}
+  currentCutScene: {fileID: 2072675787}
   currentCutScenePath: 
   defaultLabel: Cutscenes/
-  runOnStart: 1
+  runOnStart: 0
 --- !u!1 &1150178271
 GameObject:
   m_ObjectHideFlags: 0
@@ -9228,11 +9228,11 @@ RectTransform:
   - {fileID: 357885304}
   m_Father: {fileID: 493053514}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0.000061035156, y: 0}
   m_SizeDelta: {x: 363.92297, y: 99.91699}
-  m_Pivot: {x: 0, y: 0.5}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &2026351235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9513,11 +9513,11 @@ RectTransform:
   - {fileID: 802812222}
   m_Father: {fileID: 493053514}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 363.92297, y: 99.91699}
-  m_Pivot: {x: 1, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 35.809998, y: 0}
+  m_SizeDelta: {x: 292.3, y: 78.85}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &2056738854
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9575,7 +9575,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0.9292453, b: 0.9292453, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

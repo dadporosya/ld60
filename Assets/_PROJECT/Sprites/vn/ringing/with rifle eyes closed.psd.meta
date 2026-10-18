@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 82a7f5a9f13c39f47bb37b5dc8e5a26f
+guid: 5b2b22ce647ee16459b352fa5f94233c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5969798928019733306
-    second: with rifle_0
+      213: -789923085587438313
+    second: with rifle eyes closed_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: with rifle_0
+      name: with rifle eyes closed_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6c440ea1183072da0800000000000000
-      internalID: -5969798928019733306
+      spriteID: 7152eab8321a905f0800000000000000
+      internalID: -789923085587438313
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      with rifle_0: -5969798928019733306
+      with rifle eyes closed_0: -789923085587438313
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

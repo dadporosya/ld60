@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Three Ones"
   badTitle: "Three Ones"
-  description: "1 1 1 multiplies the combination's points by {0}"
+  description: "1 1 1 grants +{0} multiplier"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0
   effect:
     type: 6
-    operation: 3
+    operation: 1
     amount: 0
-    multiplier: 2
+    multiplier: 1.11
     nextRoundRerolls: 0
     combination: 1
     otherCombinations: []

@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a41d21fc66d36464987736c980b2be7e, type: 3}
   m_Name: 01 Ones
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  goodTitle: "Ones"
-  badTitle: "Ones"
-  description: "Each 1 grants {0} bonus points"
+  goodTitle: "Fours"
+  badTitle: "Fours"
+  description: "Each 4 grants {0} bonus points"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
@@ -27,7 +27,7 @@ MonoBehaviour:
     nextRoundRerolls: 0
     combination: 1
     otherCombinations: []
-    faceValue: 1
+    faceValue: 4
     pattern: ""
     parity: 0
     rerollCost: 0

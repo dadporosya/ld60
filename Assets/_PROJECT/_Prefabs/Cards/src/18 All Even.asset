@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Mostly Even"
   badTitle: "Mostly Even"
-  description: "The result is multiplied by {0} if there are more even dice than odd"
+  description: "Grants +{0} multiplier if there are more even dice than odd"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0
   effect:
     type: 15
-    operation: 2
+    operation: 1
     amount: 0
     multiplier: 2
     nextRoundRerolls: 0
