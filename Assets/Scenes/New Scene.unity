@@ -487,7 +487,7 @@ MonoBehaviour:
   - points: 100
     riskyPoints: 200
   - points: 200
-    riskyPoints: 333
+    riskyPoints: 300
   - points: 350
     riskyPoints: 500
   - points: 475
@@ -5531,7 +5531,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -464.42996, y: 447}
+  m_AnchoredPosition: {x: -464.42996, y: 446.99997}
   m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364
@@ -5580,6 +5580,7 @@ MonoBehaviour:
   exampleFaces: 1
   bustLine: Bust - if the dice you rolled make no combination (and show no {0}),
     you lose all your points.
+  bustLineScale: 0.5
   openSfx: {fileID: 0}
   closeSfx: {fileID: 0}
   onOpened:
@@ -5756,7 +5757,7 @@ MonoBehaviour:
   sfxVolume: 1
   defaultIcon:
     texture: {fileID: 2800000, guid: 841b3e9f3f736c4498aa90dfdf0e2b04, type: 3}
-    normalizedHotspot: {x: 0.5, y: 0}
+    normalizedHotspot: {x: -0.5, y: 0}
     useCenterHotspot: 0
     animate: 0
     frames: []
@@ -5764,7 +5765,7 @@ MonoBehaviour:
   clickSound: {fileID: 0}
   clickIcon:
     texture: {fileID: 2800000, guid: 5169a94f51537254097db2c79d205cfb, type: 3}
-    normalizedHotspot: {x: 0.5, y: 0}
+    normalizedHotspot: {x: -0.5, y: 0}
     useCenterHotspot: 0
     animate: 0
     frames: []
