@@ -158,27 +158,45 @@ public class DiceOutcomeLook
 }
 
 /// <summary>
-/// The big cinematic text at the end of a turn: LOST / PASSED / HOPE. The turn ends -> <see cref="delay"/> ->
-/// the text is on, at once, with its sfx -> <see cref="hold"/> -> the turn hands back (the round end's fade to
-/// black and the outcome dialogue follow, see <see cref="FuneralGameManager"/>).
+/// The big cinematic frames at the end of a turn. The turn ends -> <see cref="delay"/> -> the outcome frame
+/// (LOST / PASSED / HOPE) cuts in with its sfx -> <see cref="hold"/> -> the title frame (the level's title, e.g.
+/// MOTHER) cuts in -> <see cref="titleHold"/> -> the turn hands back (the round end's fade to black and the outcome
+/// dialogue follow, see <see cref="FuneralGameManager"/>).
 /// </summary>
 [Serializable]
 public class DiceOutcomeSpotlight
 {
-    [Tooltip("The big text. Keep it out of the Table Root (hidden as the turn hands back) and above the " +
-             "FadeImageController's image to keep it readable over the black. Empty: no spotlight - the turn " +
-             "hands back after Finish Delay, as before.")]
+    [Tooltip("The outcome frame: the text and its background, shown and hidden as one. Keep it out of the Table " +
+             "Root and above the FadeImageController's image to keep it readable over the black. Empty: the " +
+             "Text's own object.")]
+    public GameObject root;
+    [Tooltip("The big outcome text. Empty: no spotlight - the turn hands back after Finish Delay, as before.")]
     public TextMeshProUGUI text;
-    [Tooltip("Seconds after the turn's result before the text appears.")]
+    [Tooltip("Seconds after the turn's result before the outcome frame appears.")]
     [Min(0f)] public float delay = 0.4f;
-    [Tooltip("Seconds the text stays up before the turn hands back (and the fade to black starts).")]
+    [Tooltip("Seconds the outcome frame stays up before the title frame (or, without one, the turn hands back).")]
     [Min(0f)] public float hold = 1.2f;
-    [Tooltip("Seconds the text fades out over once it's hidden (the black has covered the screen). 0: off at once.")]
+    [Tooltip("Seconds the frame fades out over once it's hidden (the black has covered the screen). 0: off at once.")]
     [Min(0f)] public float fadeOut = 0.3f;
 
     public DiceOutcomeLook lost = new DiceOutcomeLook("LOST", new Color(0.9f, 0.15f, 0.15f, 1f));
     public DiceOutcomeLook passed = new DiceOutcomeLook("PASSED", Color.white);
     public DiceOutcomeLook hope = new DiceOutcomeLook("HOPE", new Color(0.35f, 0.9f, 0.4f, 1f));
+
+    [Header("Title frame")]
+    [Tooltip("The second frame: the level's title and its background, shown and hidden as one. Same placement " +
+             "rules as Root. Empty: the Title Text's own object.")]
+    public GameObject titleRoot;
+    [Tooltip("The level's title (Level's Spotlight Title, else its Name). Empty: no title frame.")]
+    public TextMeshProUGUI titleText;
+    [Tooltip("Seconds the title frame stays up before the turn hands back (and the fade to black starts).")]
+    [Min(0f)] public float titleHold = 1.2f;
+    [Tooltip("Played as the title frame cuts in. Empty: silent.")]
+    public AudioClip titleSfx;
+    [Range(0f, 1f)] public float titleVolume = 1f;
+
+    public GameObject Root => root ? root : text ? text.gameObject : null;
+    public GameObject TitleRoot => titleRoot ? titleRoot : titleText ? titleText.gameObject : null;
 
     public DiceOutcomeLook For(DiceOutcome outcome) => outcome switch
     {
@@ -481,6 +499,8 @@ public class DiceManager : MonoBehaviour
     public UnityEvent<int> onRoundFinished = new UnityEvent<int>();
     /// <summary>The turn's total score (every round added up).</summary>
     public UnityEvent<int> onTurnFinished = new UnityEvent<int>();
+    /// <summary>The outcome spotlight frame cut in (with its sfx).</summary>
+    public UnityEvent<DiceOutcome> onSpotlight = new UnityEvent<DiceOutcome>();
 
     public bool TurnActive { get; private set; }
     /// <summary>The round being played, 1-based (0 before the turn's first round).</summary>
@@ -541,6 +561,9 @@ public class DiceManager : MonoBehaviour
     // The turn's rounds so far; the last one is added (not yet banked) as it finishes.
     private readonly List<DiceRoundResult> roundResults = new List<DiceRoundResult>();
     private DiceTurnResult pendingResult;
+    // The running turn's spotlight title, and whether its table waits for HideTable (see StartTurn).
+    private string turnSpotlightTitle;
+    private bool turnKeepsTableUp;
     private Tween finishTween;
     private readonly List<Tween> popupTweens = new List<Tween>();
     private float nextPopupTime;
@@ -676,10 +699,14 @@ public class DiceManager : MonoBehaviour
         }
         if (tableRoot) tableRoot.SetActive(false);
         if (resultText) resultText.gameObject.SetActive(false);
-        if (spotlight.text) spotlight.text.gameObject.SetActive(false);
-        if (spotlight.text && hideTableOnFinish && tableRoot && spotlight.text.transform.IsChildOf(tableRoot.transform))
-            h.Out($"DiceManager: the spotlight text '{spotlight.text.name}' is inside the Table Root - it's hidden " +
-                  "with the table before the fade. Move it out.");
+        foreach (GameObject frame in new[] { spotlight.Root, spotlight.TitleRoot })
+        {
+            if (!frame) continue;
+            frame.SetActive(false);
+            if (hideTableOnFinish && tableRoot && frame.transform.IsChildOf(tableRoot.transform))
+                h.Out($"DiceManager: the spotlight frame '{frame.name}' is inside the Table Root - it's hidden " +
+                      "with the table. Move it out.");
+        }
     }
 
     /// <summary>
@@ -867,9 +894,11 @@ public class DiceManager : MonoBehaviour
     /// <summary>
     /// Opens the table for a turn of <see cref="roundsPerTurn"/> rounds against <paramref name="target"/>
     /// with <paramref name="ownedCards"/>' bonuses. <paramref name="onFinished"/> gets the result once the
-    /// last round's has been shown.
+    /// last round's has been shown. <paramref name="spotlightTitle"/>: the spotlight's title frame (empty: none).
+    /// <paramref name="keepTableUp"/>: the table stays up after the turn, until <see cref="HideTable"/>.
     /// </summary>
-    public void StartTurn(int target, IReadOnlyList<CardInstance> ownedCards, Action<DiceTurnResult> onFinished)
+    public void StartTurn(int target, IReadOnlyList<CardInstance> ownedCards, Action<DiceTurnResult> onFinished,
+        string spotlightTitle = null, bool keepTableUp = false)
     {
         Initialize();
 
@@ -883,6 +912,8 @@ public class DiceManager : MonoBehaviour
         Target = target;
         cards = ownedCards ?? Array.Empty<CardInstance>();
         turnCallback = onFinished;
+        turnSpotlightTitle = spotlightTitle;
+        turnKeepsTableUp = keepTableUp;
         RoundsInTurn = Mathf.Max(1, roundsPerTurn);
         CurrentRound = 0;
         BankedScore = 0;
@@ -1303,50 +1334,99 @@ public class DiceManager : MonoBehaviour
         else AfterDelay(finishDelay, manager => manager.CompleteTurn());
     }
 
-    /// <summary>The big outcome text, on at once with its sfx; the turn hands back after <see cref="DiceOutcomeSpotlight.hold"/>.</summary>
+    /// <summary>The outcome frame, on at once with its sfx; the title frame follows after <see cref="DiceOutcomeSpotlight.hold"/>.</summary>
     private void SpotlightOutcome()
     {
         if (!TurnActive || pendingResult == null) return;
 
         ShowSpotlight(pendingResult.Outcome);
-        AfterDelay(spotlight.hold, manager => manager.CompleteTurn());
+        AfterDelay(spotlight.hold, manager => manager.SpotlightTitle());
+    }
+
+    /// <summary>The title frame cuts in over the outcome frame; the turn hands back after <see cref="DiceOutcomeSpotlight.titleHold"/>.</summary>
+    private void SpotlightTitle()
+    {
+        if (!TurnActive || pendingResult == null) return;
+
+        if (!spotlight.titleText || string.IsNullOrEmpty(turnSpotlightTitle))
+        {
+            CompleteTurn();
+            return;
+        }
+
+        spotlight.titleText.text = turnSpotlightTitle;
+        ShowFrame(spotlight.TitleRoot, spotlight.titleText, spotlight.Root);
+        if (spotlight.titleSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(spotlight.titleSfx, spotlight.titleVolume);
+        AfterDelay(spotlight.titleHold, manager => manager.CompleteTurn());
     }
 
     private Tween spotlightTween;
 
-    /// <summary>Shows the spotlight text for <paramref name="outcome"/> (with its sfx), instantly.</summary>
+    /// <summary>Shows the outcome frame for <paramref name="outcome"/> (with its sfx), instantly.</summary>
     public void ShowSpotlight(DiceOutcome outcome)
     {
         TextMeshProUGUI text = spotlight.text;
         if (!text) return;
 
         DiceOutcomeLook look = spotlight.For(outcome);
-        spotlightTween.Stop();
         text.text = look.text;
         text.color = look.color;
-        text.gameObject.SetActive(true);
+        ShowFrame(spotlight.Root, text, spotlight.TitleRoot);
 
         if (look.sfx && SFXManager.Instance) SFXManager.Instance.PlayClip(look.sfx, look.volume);
+        onSpotlight?.Invoke(outcome);
     }
 
-    /// <summary>Takes the spotlight text away: over <see cref="DiceOutcomeSpotlight.fadeOut"/>, or at once.</summary>
+    /// <summary>
+    /// Hard cut to <paramref name="frame"/> (back at full alpha), <paramref name="other"/> off - unless
+    /// <paramref name="text"/> lives on or inside it (one frame or one text for both): then it's up too.
+    /// </summary>
+    private void ShowFrame(GameObject frame, TextMeshProUGUI text, GameObject other)
+    {
+        spotlightTween.Stop();
+        if (other)
+        {
+            if (text && text.transform.IsChildOf(other.transform)) ShowObject(other);
+            else other.SetActive(false);
+        }
+        if (frame) ShowObject(frame);
+    }
+
+    private static void ShowObject(GameObject target)
+    {
+        if (target.TryGetComponent(out CanvasGroup group)) group.alpha = 1f;
+        target.SetActive(true);
+    }
+
+    /// <summary>Takes the spotlight frame away: over <see cref="DiceOutcomeSpotlight.fadeOut"/>, or at once.</summary>
     public void HideSpotlight(bool instant = false)
     {
-        TextMeshProUGUI text = spotlight.text;
-        if (!text) return;
-
         spotlightTween.Stop();
-        if (!text.gameObject.activeInHierarchy) return;
+        GameObject outcomeFrame = spotlight.Root;
+        GameObject titleFrame = spotlight.TitleRoot;
+        GameObject shown = titleFrame && titleFrame.activeSelf ? titleFrame
+            : outcomeFrame && outcomeFrame.activeSelf ? outcomeFrame : null;
 
-        if (instant || spotlight.fadeOut <= 0f)
+        if (!shown || instant || spotlight.fadeOut <= 0f)
         {
-            text.gameObject.SetActive(false);
+            if (outcomeFrame) outcomeFrame.SetActive(false);
+            if (titleFrame) titleFrame.SetActive(false);
             return;
         }
 
+        // An outcome frame inside the shown one (or the same text) fades with it.
+        if (outcomeFrame && !outcomeFrame.transform.IsChildOf(shown.transform)) outcomeFrame.SetActive(false);
+        // The frame fades as one (text and background together).
+        if (!shown.TryGetComponent(out CanvasGroup group)) group = shown.AddComponent<CanvasGroup>();
         // Unscaled, like the round end's fades around it.
-        spotlightTween = Tween.Alpha(text, 0f, spotlight.fadeOut, useUnscaledTime: true)
-            .OnComplete(text, t => t.gameObject.SetActive(false));
+        spotlightTween = Tween.Alpha(group, 0f, spotlight.fadeOut, useUnscaledTime: true)
+            .OnComplete(shown, s => s.SetActive(false));
+    }
+
+    /// <summary>Hides the table of a turn started with keepTableUp (see <see cref="StartTurn"/>), once it's over.</summary>
+    public void HideTable()
+    {
+        if (!TurnActive && hideTableOnFinish && tableRoot) tableRoot.SetActive(false);
     }
 
     /// <summary>
@@ -1476,7 +1556,8 @@ public class DiceManager : MonoBehaviour
         turnCallback = null;
         TurnActive = false;
         finishing = false;
-        if (hideTableOnFinish && tableRoot) tableRoot.SetActive(false);
+        // Kept up: the caller hides it once the screen is covered.
+        if (hideTableOnFinish && tableRoot && !turnKeepsTableUp) tableRoot.SetActive(false);
 
         onRoundFinished?.Invoke(result.rounds[result.rounds.Count - 1].score.total);
         onTurnFinished?.Invoke(result.total);

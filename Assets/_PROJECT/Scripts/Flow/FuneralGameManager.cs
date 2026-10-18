@@ -56,8 +56,11 @@ public class FuneralGameManager : MonoBehaviour
     [Tooltip("Everyone has been called: the hero calls his father. \"I love you, dad.\"")]
     [SerializeField] private VisualNovelDialogueContainer goodEndingDialogue;
     [Tooltip("The gun, his eyes, black, the shot - and \"You understand that it's not the only way out, right?\" " +
-             "Nothing plays it by itself any more: call BadEnding.")]
+             "Nothing plays it by itself any more: call BadEnding. Unused when a Death Cutscene is set.")]
     [SerializeField] private VisualNovelDialogueContainer badEndingDialogue;
+    [Tooltip("Played by BadEnding instead of the Bad Ending Dialogue: its dialogue, the black and the shot, then " +
+             "the restart / quit fork. Optional.")]
+    [SerializeField] private DeathCutscene deathCutscene;
     [Tooltip("Seconds the music fades out over when the good ending starts. Negative: it keeps playing.")]
     [SerializeField] private float songFadeOnGoodEnding = 3f;
     [Tooltip("Finishing the final level (picked from the phone's level list) plays the good ending.")]
@@ -69,6 +72,8 @@ public class FuneralGameManager : MonoBehaviour
     [SerializeField] private bool fadeAroundRoundEnd = true;
     [Tooltip("Seconds the dice table fades to black over once the round is over.")]
     [SerializeField, Min(0f)] private float roundEndCoverDuration = 0.6f;
+    [Tooltip("Seconds the black holds over the dice table before the table is hidden and the round end goes on.")]
+    [SerializeField, Min(0f)] private float tableHideDelay = 0.3f;
     [Tooltip("Seconds the black fades away over, revealing the win / loss dialogue.")]
     [SerializeField, Min(0f)] private float dialogueRevealDuration = 0.6f;
     [Tooltip("Seconds the screen fades to black over once the win / loss dialogue is over.")]
@@ -167,7 +172,19 @@ public class FuneralGameManager : MonoBehaviour
 
     private void Start()
     {
+        if (Dice) Dice.onSpotlight.AddListener(OnSpotlight);
         if (startOnPlay) StartGame();
+    }
+
+    private void OnDestroy()
+    {
+        if (diceManager) diceManager.onSpotlight.RemoveListener(OnSpotlight);
+    }
+
+    /// <summary>The round's outcome spotlight hits: the music cuts to muffled at once.</summary>
+    private void OnSpotlight(DiceOutcome outcome)
+    {
+        if (CurrentPhase == Phase.Dice && Levels) Levels.CutMusic();
     }
 
     // ---------------------------------------------------------------------
@@ -319,14 +336,16 @@ public class FuneralGameManager : MonoBehaviour
         else Levels.BeginLevel();
 
         int pointsToPass = Levels ? Levels.PointsToPass : 0;
+        string title = Levels ? Levels.Current?.SpotlightTitle : null;
         // Showcases stay clickable during the round; its outcome dialogue waits for one still open.
+        // The table stays up until the round end's black has covered it (see EndCall).
         Dice.StartTurn(pointsToPass, Cards ? Cards.PermanentCards : null, result =>
         {
             // The risky goal reached: the card pick after this call offers upgraded cards.
             if (result.riskyPassed && Cards) Cards.UpgradeNextChoice = true;
             bool passed = Levels ? Levels.Passes(result.total) : result.passed;
             AfterShowcase(() => EndCall(contact, passed, passed && result.riskyPassed));
-        });
+        }, title, keepTableUp: true);
     }
 
     /// <summary>Runs <paramref name="action"/> now, or once the open showcase (and its dialogue) is gone.</summary>
@@ -351,7 +370,11 @@ public class FuneralGameManager : MonoBehaviour
     /// <param name="risky">The risky goal was reached too: the level's hopeful dialogue plays.</param>
     private void EndCall(ContactData contact, bool passed, bool risky = false)
     {
-        if (CurrentPhase == Phase.Ending) return;
+        if (CurrentPhase == Phase.Ending)
+        {
+            if (Dice) Dice.HideTable();
+            return;
+        }
 
         // A debug round (LevelManager's level keys) has no contact.
         if (contact)
@@ -368,14 +391,20 @@ public class FuneralGameManager : MonoBehaviour
         roundEndFading = true;
         bool hasOutcome = outcome && outcome.nodes != null && outcome.nodes.Count > 0;
 
-        // The music muffles as the black comes in (LevelManager's Outcome calls - music).
-        if (hasOutcome && Levels) Levels.MuffleMusicForCall(roundEndCoverDuration);
+        // The music muffles as the black comes in (LevelManager's Outcome calls - music) - unless the
+        // spotlight already cut it.
+        if (hasOutcome && Levels && !Levels.MusicMuffled) Levels.MuffleMusicForCall(roundEndCoverDuration);
 
-        // (The dice table's LOST / PASSED / HOPE spotlight is up -) black over the dice table -> the phone rings
-        // on the black -> the black fades away into the outcome dialogue -> black again -> the card pick, revealed.
-        RoundEndFade(true, roundEndCoverDuration, id, () =>
+        // (The dice table's outcome and title spotlight frames are up -) black over the dice table -> a beat ->
+        // the table is hidden -> the phone rings on the black -> the black fades away into the outcome dialogue ->
+        // black again -> the card pick, revealed.
+        RoundEndFade(true, roundEndCoverDuration, id, () => RoundEndDelay(tableHideDelay, id, () =>
         {
-            if (Dice) Dice.HideSpotlight();
+            if (Dice)
+            {
+                Dice.HideTable();
+                Dice.HideSpotlight();
+            }
 
             // No dialogue (none assigned, or an empty one): straight from the black to the card pick.
             if (!hasOutcome)
@@ -404,7 +433,7 @@ public class FuneralGameManager : MonoBehaviour
                     });
                 }, hideStage: false);
             });
-        });
+        }));
     }
 
     // Bumped by every round end (and by what cuts one off): a fade callback only runs while its round end is current.
@@ -474,7 +503,11 @@ public class FuneralGameManager : MonoBehaviour
             Levels.StopOutcomeRing();
             Levels.RestoreMusic(cardsRevealDuration);
         }
-        if (Dice) Dice.HideSpotlight(instant: true);
+        if (Dice)
+        {
+            Dice.HideTable();
+            Dice.HideSpotlight(instant: true);
+        }
         if (!roundEndFading) return;
 
         roundEndFading = false;
@@ -553,7 +586,9 @@ public class FuneralGameManager : MonoBehaviour
         if (DialPanel) DialPanel.Hide();
 
         onBadEnding?.Invoke();
-        Dialogues.InterruptAndPlay(badEndingDialogue, QuitGame);
+        // The cutscene cuts off whatever dialogue is playing itself, and ends the game (restart or quit) on its own.
+        if (deathCutscene) deathCutscene.Play();
+        else Dialogues.InterruptAndPlay(badEndingDialogue, QuitGame);
     }
 
     private void QuitGame()

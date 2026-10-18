@@ -89,16 +89,17 @@ public class HubDialogueRunner : MonoBehaviour
 
     /// <summary>
     /// Cuts off whatever is playing and plays <paramref name="dialogue"/> once the stage is free - for
-    /// an ending that must start no matter what the player was in the middle of.
+    /// an ending that must start no matter what the player was in the middle of. <paramref name="hideStage"/>:
+    /// as in <see cref="Play"/>.
     /// </summary>
-    public void InterruptAndPlay(VisualNovelDialogueContainer dialogue, Action onFinished = null)
+    public void InterruptAndPlay(VisualNovelDialogueContainer dialogue, Action onFinished = null, bool hideStage = true)
     {
         Interrupt();
         if (interruptRoutine != null) StopCoroutine(interruptRoutine);
-        interruptRoutine = StartCoroutine(InterruptRoutine(dialogue, onFinished));
+        interruptRoutine = StartCoroutine(InterruptRoutine(dialogue, onFinished, hideStage));
     }
 
-    private IEnumerator InterruptRoutine(VisualNovelDialogueContainer dialogue, Action onFinished)
+    private IEnumerator InterruptRoutine(VisualNovelDialogueContainer dialogue, Action onFinished, bool hideStage)
     {
         // The talkable may still be staging its first node (the manager has no dialogue yet), so keep
         // ending until it lets go.
@@ -110,6 +111,6 @@ public class HubDialogueRunner : MonoBehaviour
         }
 
         interruptRoutine = null;
-        Play(dialogue, onFinished);
+        Play(dialogue, onFinished, hideStage);
     }
 }

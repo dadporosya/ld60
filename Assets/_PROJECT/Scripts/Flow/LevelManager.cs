@@ -15,6 +15,8 @@ public class Level
 {
     [Tooltip("Shown on the phone's level list, and in the logs.")]
     public string name = "Level";
+    [Tooltip("The dice table's spotlight title frame after the round (e.g. MOTHER, CHILDHOOD FRIEND). Empty: the Name.")]
+    public string spotlightTitle;
     [Tooltip("Can only be started from the phone once every other level is completed.")]
     public bool isFinal;
     [Tooltip("Final levels: played over the phone's list when the level is picked before every other level is " +
@@ -60,6 +62,9 @@ public class Level
             default: return neutralCardTitles;
         }
     }
+
+    /// <summary><see cref="spotlightTitle"/>, else <see cref="name"/>.</summary>
+    public string SpotlightTitle => string.IsNullOrEmpty(spotlightTitle) ? name : spotlightTitle;
 
     public static LevelOutcome OutcomeFor(bool passed, bool risky) =>
         !passed ? LevelOutcome.Bad : risky ? LevelOutcome.Hopeful : LevelOutcome.Neutral;
@@ -449,11 +454,32 @@ public class LevelManager : MonoBehaviour
     private float savedPitch;
     private Tween lowPassOffTween;
 
+    /// <summary>The music is muffled (<see cref="MuffleMusicForCall"/> / <see cref="CutMusic"/>) until <see cref="RestoreMusic"/>.</summary>
+    public bool MusicMuffled => musicSaved;
+
     /// <summary>The screen fades to black before an outcome dialogue: the music's low-pass sweeps to <see cref="blackLowPassCutoff"/>.</summary>
     public void MuffleMusicForCall(float duration)
     {
+        SongManager songs = SaveMusic();
+        if (!songs) return;
+
+        // A filter that was off starts sweeping from fully open, not from its stored cutoff.
+        if (!songs.lowPass.enabled) songs.TweenLowPassCutoff(GlobalLowPass.OpenCutoff, 0f);
+        songs.TweenLowPassCutoff(blackLowPassCutoff, duration);
+    }
+
+    /// <summary>The round's outcome spotlight hits: the music's low-pass shuts all the way, at once.</summary>
+    public void CutMusic()
+    {
+        SongManager songs = SaveMusic();
+        if (songs) songs.TweenLowPassCutoff(GlobalLowPass.MinCutoff, 0f);
+    }
+
+    /// <summary>Remembers the music's low-pass and pitch for <see cref="RestoreMusic"/> (once). Null: leave the music be.</summary>
+    private SongManager SaveMusic()
+    {
         SongManager songs = SongManager.Instance;
-        if (!modulateMusic || !songs) return;
+        if (!modulateMusic || !songs) return null;
 
         lowPassOffTween.Stop();
         if (!musicSaved)
@@ -463,10 +489,7 @@ public class LevelManager : MonoBehaviour
             savedPitch = songs.pitch;
             musicSaved = true;
         }
-
-        // A filter that was off starts sweeping from fully open, not from its stored cutoff.
-        if (!songs.lowPass.enabled) songs.TweenLowPassCutoff(GlobalLowPass.OpenCutoff, 0f);
-        songs.TweenLowPassCutoff(blackLowPassCutoff, duration);
+        return songs;
     }
 
     /// <summary>The black fades away: the music's low-pass and pitch go to the dialogue's, over <see cref="revealDuration"/>.</summary>
