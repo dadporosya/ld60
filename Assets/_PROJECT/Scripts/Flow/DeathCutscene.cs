@@ -6,7 +6,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -21,8 +20,7 @@ using UnityEngine.UI;
 /// <item>A delay, then <see cref="afterAmbient"/> fades in and the plain text box dialogue
 /// (<see cref="afterDialogue"/>, played by the <see cref="DialogueManager"/>) runs over the black.</item>
 /// <item>The fork: clickable lines in the middle of the screen (<see cref="fork"/>, Yes / No by default), each
-/// playing its own dialogue and then ending the game its own way - reloading the scene (the game starts over) or
-/// closing it.</item>
+/// playing its own dialogue. Whichever was picked, the game closes after it.</item>
 /// </list>
 ///
 /// <para>Put it on its OWN GameObject (or a prefab): <see cref="CutSceneBase.Run"/> clones the whole GameObject
@@ -35,25 +33,13 @@ using UnityEngine.UI;
 /// </summary>
 public class DeathCutscene : CutSceneBase
 {
-    /// <summary>How the game ends once a fork option's dialogue is over.</summary>
-    public enum ForkEnding
-    {
-        [Tooltip("Reloads the scene: the game starts over.")]
-        Restart,
-        [Tooltip("Closes the game.")]
-        Quit,
-    }
-
-    /// <summary>One clickable line of the fork: what it says, what it plays, and how it ends the game.</summary>
+    /// <summary>One clickable line of the fork, and what it plays once clicked.</summary>
     [Serializable]
     public class ForkOption
     {
         public string title = "Yes";
         [Tooltip("Played (text box) once the line is clicked. Optional.")]
         public DialogueContainer dialogue;
-        [Tooltip("What happens once its dialogue is over: Restart reloads the scene (the game starts over), " +
-                 "Quit closes the game.")]
-        public ForkEnding ending = ForkEnding.Restart;
     }
 
     [Header("1. Visual novel dialogue")]
@@ -98,15 +84,15 @@ public class DeathCutscene : CutSceneBase
     [Header("4. Forks")]
     [Tooltip("Seconds after a dialogue's last node before a fork comes up (lets the text box close).")]
     [SerializeField, Min(0f)] private float forkDelay = 0.5f;
-    [Tooltip("Shown after the text box dialogue: each line plays its own dialogue, then ends the game its own way. " +
-             "Empty: the scene reloads straight away.")]
+    [Tooltip("Shown after the text box dialogue: each line plays its own dialogue, and the game closes after it. " +
+             "Empty: the game closes straight away.")]
     [FormerlySerializedAs("firstFork")]
     [SerializeField] private List<ForkOption> fork = new List<ForkOption>
     {
-        new ForkOption { title = "Yes", ending = ForkEnding.Restart },
-        new ForkOption { title = "No", ending = ForkEnding.Quit },
+        new ForkOption { title = "Yes" },
+        new ForkOption { title = "No" },
     };
-    [Tooltip("Seconds the ambients fade out over before the scene reloads or the game closes.")]
+    [Tooltip("Seconds the ambients fade out over before the game closes.")]
     [SerializeField, Min(0f)] private float endFadeOut = 1.5f;
 
     [Header("Fork look")]
@@ -275,25 +261,21 @@ public class DeathCutscene : CutSceneBase
 
     private IEnumerator ForkStep()
     {
-        ForkEnding ending = ForkEnding.Restart;
-
         if (fork.Count > 0)
         {
             yield return WaitForTextBox();
             yield return ShowFork(fork);
             ForkOption picked = fork[forkPick];
-            if (picked != null) ending = picked.ending;
             yield return PlayTextDialogue(picked?.dialogue);
             yield return WaitForTextBox();
         }
-        else h.Out("DeathCutscene: no fork options, the scene reloads.");
+        else h.Out("DeathCutscene: no fork options, the game closes.");
 
         FadeOutLoop(darkSource, endFadeOut);
         FadeOutLoop(afterSource, endFadeOut);
         if (endFadeOut > 0f) yield return new WaitForSecondsRealtime(endFadeOut);
 
-        if (ending == ForkEnding.Restart) RestartGame();
-        else QuitGame();
+        QuitGame();
     }
 
     // ---------------------------------------------------------------------
@@ -601,28 +583,6 @@ public class DeathCutscene : CutSceneBase
     // ---------------------------------------------------------------------
     // The end
     // ---------------------------------------------------------------------
-
-    /// <summary>Reloads the active scene: the game starts over.</summary>
-    private static void RestartGame()
-    {
-        Time.timeScale = 1f;
-        Scene scene = SceneManager.GetActiveScene();
-        h.Out($"DeathCutscene: restarting '{scene.name}'.");
-
-        if (scene.buildIndex >= 0)
-        {
-            SceneManager.LoadScene(scene.buildIndex);
-            return;
-        }
-
-#if UNITY_EDITOR
-        // Not in Build Settings: the editor can still load it by path.
-        UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(scene.path,
-            new LoadSceneParameters(LoadSceneMode.Single));
-#else
-        h.Out($"DeathCutscene: '{scene.name}' isn't in Build Settings, can't restart.");
-#endif
-    }
 
     private static void QuitGame()
     {
