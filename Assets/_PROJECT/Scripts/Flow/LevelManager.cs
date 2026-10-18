@@ -153,6 +153,9 @@ public class LevelManager : MonoBehaviour
              "(the phone ringing while the black fades away). Empty: no ringing.")]
     [SerializeField] private AudioClip callStartLoop;
     [SerializeField, Range(0f, 1f)] private float callStartVolume = 1f;
+    [Tooltip("Seconds the screen stays black and quiet after a round, once the dice table is hidden, before the " +
+             "phone starts ringing.")]
+    [SerializeField, Min(0f)] private float silentBlackHold = 1f;
     [Tooltip("Seconds the screen stays black with the phone ringing before the outcome dialogue starts fading in.")]
     [SerializeField, Min(0f)] private float blackHold = 3.33f;
     [Tooltip("Seconds the black fades away over, revealing the outcome dialogue; its first line starts once it's " +
@@ -498,6 +501,9 @@ public class LevelManager : MonoBehaviour
     // ---------------------------------------------------------------------
 
     private AudioSource ringSource;
+
+    /// <summary>Seconds of quiet black after a round before <see cref="StartOutcomeRing"/>.</summary>
+    public float SilentBlackHold => silentBlackHold;
 
     /// <summary>
     /// Starts looping <see cref="callStartLoop"/> until the next dialogue line starts typing (or

@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a41d21fc66d36464987736c980b2be7e, type: 3}
-  m_Name: 17 Odd Dice
+  m_Name: 17 Even Dice
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  goodTitle: "Odd Dice"
-  badTitle: "Odd Dice"
-  description: "Each odd die grants +{0} bonus multiplier"
+  goodTitle: "Even Dice"
+  badTitle: "Even Dice"
+  description: "Each even die grants +{0} bonus multiplier"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
@@ -23,13 +23,13 @@ MonoBehaviour:
     type: 8
     operation: 1
     amount: 0
-    multiplier: 0.2
+    multiplier: 0.15
     nextRoundRerolls: 0
     combination: 1
     otherCombinations: []
     faceValue: 6
     pattern: ""
-    parity: 0
+    parity: 1
     rerollCost: 0
     flipFace: 5
   immediate:

@@ -83,6 +83,8 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     private Tween outlineTween;
     private Outline outline;
     private bool hovered;
+    // This die told the cursor it's over a button (SetCursorHover).
+    private bool cursorHover;
     private bool outlineShown;
     private Color outlineColor;
 
@@ -139,6 +141,7 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
         hovered = true;
         RefreshOutline();
         if (manager) manager.SetDieHovered(this, true);
+        if (!IsRemoved) SetCursorHover(true);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -152,6 +155,16 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     {
         hovered = false;
         if (manager) manager.SetDieHovered(this, false);
+        SetCursorHover(false);
+    }
+
+    /// <summary>The cursor shows its button icon (and plays its hover sound) while over the die.</summary>
+    private void SetCursorHover(bool on)
+    {
+        // The cursor counts its hovers: each die only ever adds one, and takes back only its own.
+        if (cursorHover == on) return;
+        cursorHover = on;
+        if (CursorIconManager.Instance) CursorIconManager.Instance.SetButtonHover(on);
     }
 
     /// <summary>

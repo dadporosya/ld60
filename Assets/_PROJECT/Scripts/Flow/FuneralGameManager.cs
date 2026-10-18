@@ -442,26 +442,30 @@ public class FuneralGameManager : MonoBehaviour
             if (!endingAfter && Levels && Levels.AfterLevelBgmTiming == LevelManager.AfterLevelBgm.BeforeDialogue)
                 PlayRoundTrack();
 
-            // Rings until the dialogue's first line starts typing (LevelManager's Call Start Loop).
-            float blackHold = Levels ? Levels.StartOutcomeRing() : 0f;
-            RoundEndDelay(blackHold, id, () =>
+            // A quiet beat on the black first (LevelManager's Silent Black Hold), then it rings until the
+            // dialogue's first line starts typing (LevelManager's Call Start Loop).
+            RoundEndDelay(Levels ? Levels.SilentBlackHold : 0f, id, () =>
             {
-                // The stage starts covered and fades in from its own black (LevelManager's Reveal Duration),
-                // while the music eases into the dialogue's filter and pitch.
-                if (Levels) Levels.TuneMusicForDialogue();
-                // Revealed first: a dialogue that can't play calls back at once, and its cover then takes over.
-                RoundEndFade(false, dialogueRevealDuration, id, null);
-                // The stage stays up until the black covers it, so the dice table doesn't flash in between.
-                Dialogues.Play(outcome, () =>
+                float blackHold = Levels ? Levels.StartOutcomeRing() : 0f;
+                RoundEndDelay(blackHold, id, () =>
                 {
-                    if (Levels) Levels.StopOutcomeRing();
-                    RoundEndFade(true, dialogueCoverDuration, id, () =>
+                    // The stage starts covered and fades in from its own black (LevelManager's Reveal Duration),
+                    // while the music eases into the dialogue's filter and pitch.
+                    if (Levels) Levels.TuneMusicForDialogue();
+                    // Revealed first: a dialogue that can't play calls back at once, and its cover then takes over.
+                    RoundEndFade(false, dialogueRevealDuration, id, null);
+                    // The stage stays up until the black covers it, so the dice table doesn't flash in between.
+                    Dialogues.Play(outcome, () =>
                     {
-                        Dialogues.HideStage();
-                        if (endingAfter) EndingAfterCall(contact, passed);
-                        else OfferCardRevealed(contact, passed, mood, id);
-                    });
-                }, hideStage: false);
+                        if (Levels) Levels.StopOutcomeRing();
+                        RoundEndFade(true, dialogueCoverDuration, id, () =>
+                        {
+                            Dialogues.HideStage();
+                            if (endingAfter) EndingAfterCall(contact, passed);
+                            else OfferCardRevealed(contact, passed, mood, id);
+                        });
+                    }, hideStage: false);
+                });
             });
         }));
     }

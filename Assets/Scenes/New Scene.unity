@@ -495,15 +495,16 @@ MonoBehaviour:
   pointsByRound: 
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
-  badCross: {fileID: 203810107663653706, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
+  badCross: {fileID: 6609834010356484862, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
   neutralCross: {fileID: 6609834010356484862, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
-  hopefulCross: {fileID: -4658385511006654831, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
+  hopefulCross: {fileID: 6609834010356484862, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
   approvalSign: {fileID: 4539565550077499270, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
   playerTalkable: {fileID: 2120501552}
   playerSpeakerId: 1
   otherSpeakerId: 2
   callStartLoop: {fileID: 8300000, guid: 0ef97fee35ac1d840aa45b695b54ea51, type: 3}
   callStartVolume: 1
+  silentBlackHold: 1
   blackHold: 3.33
   revealDuration: 2
   ringFadeOut: 0.25
@@ -4786,10 +4787,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 1743218968}
   - {fileID: 2052019987}
   - {fileID: 1901275428}
   - {fileID: 244570388}
+  - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -5755,7 +5756,7 @@ MonoBehaviour:
   sfxVolume: 1
   defaultIcon:
     texture: {fileID: 2800000, guid: 841b3e9f3f736c4498aa90dfdf0e2b04, type: 3}
-    normalizedHotspot: {x: 0, y: 0}
+    normalizedHotspot: {x: 0.5, y: 0}
     useCenterHotspot: 0
     animate: 0
     frames: []
@@ -5763,7 +5764,7 @@ MonoBehaviour:
   clickSound: {fileID: 0}
   clickIcon:
     texture: {fileID: 2800000, guid: 5169a94f51537254097db2c79d205cfb, type: 3}
-    normalizedHotspot: {x: 0, y: 0}
+    normalizedHotspot: {x: 0.5, y: 0}
     useCenterHotspot: 0
     animate: 0
     frames: []
@@ -5777,14 +5778,14 @@ MonoBehaviour:
     frames: []
     gapBetweenFrames: 0.2
   buttonIcon:
-    texture: {fileID: 0}
+    texture: {fileID: 2800000, guid: 2bb6b0b94b7d7944aaf406d01cc51d29, type: 3}
     normalizedHotspot: {x: 0, y: 0}
     useCenterHotspot: 0
     animate: 0
     frames: []
     gapBetweenFrames: 0.2
   buttonClickIcon:
-    texture: {fileID: 0}
+    texture: {fileID: 2800000, guid: 1aef20e9075275a47a5964785f0d2a94, type: 3}
     normalizedHotspot: {x: 0, y: 0}
     useCenterHotspot: 0
     animate: 0
@@ -5793,8 +5794,8 @@ MonoBehaviour:
   buttonHoverSound: {fileID: 8300000, guid: 256e3c89b222b3042a2e3b4bc5bc97fc, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 9ac8c6d872d71cb47bc10ad7ed576459, type: 3}
   buttonClickPitchRange: {x: 0.9, y: 1.1}
-  shakeOnButtonHover: 0
-  buttonShakeStrength: 3
+  shakeOnButtonHover: 1
+  buttonShakeStrength: 1.06
   buttonShakeDuration: 0
   buttonShakeFrequency: 30
   softwareCursorWhileShaking: 1
@@ -8918,6 +8919,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 54964d20f85547b9889534891c70d1f0, type: 2}
   - {fileID: 11400000, guid: f5904b633c944101ba013d24dbaf2035, type: 2}
   - {fileID: 11400000, guid: b3cd92b1986d4cb2a7c6491bf224aa11, type: 2}
+  - {fileID: 11400000, guid: 6ed1825621624087987123c4a80cacc3, type: 2}
   cardPrefab: {fileID: 8211534820775114999, guid: 18ecd4166aa7d224ba714c034fe6bcc3, type: 3}
   defaultChoiceCount: 3
   allowOwnedPermanentCards: 1
@@ -9674,6 +9676,8 @@ MonoBehaviour:
   warningShakeStrength: 3
   warningShakeSpeed: 25
   warningSortingOrder: 1000
+  warningCamera: {fileID: 0}
+  warningPlaneDistance: 1
   warningFont: {fileID: 0}
   warningFontSize: 48
   warningColor: {r: 1, g: 1, b: 1, a: 1}

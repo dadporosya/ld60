@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a41d21fc66d36464987736c980b2be7e, type: 3}
   m_Name: 10 Street
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  goodTitle: "Street"
-  badTitle: "Street"
+  goodTitle: "Straight"
+  badTitle: "Straight"
   description: "A straight grants +{0} multiplier"
   icon: 
   viewPrefab: {fileID: 0}
@@ -23,7 +23,7 @@ MonoBehaviour:
     type: 1
     operation: 1
     amount: 0
-    multiplier: 1
+    multiplier: 1.67
     nextRoundRerolls: 0
     combination: 4
     otherCombinations: 

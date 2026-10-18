@@ -105,6 +105,8 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     private Vector3 hoverBase = Vector3.one;
     private Tween hoverTween;
     private bool hovered;
+    // This card told the cursor it's over a button (SetCursorHover).
+    private bool cursorHover;
 
     public void Bind(CardInstance card, Action<CardView> clicked = null)
     {
@@ -261,7 +263,17 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     public void StopHover()
     {
         hovered = false;
+        SetCursorHover(false);
         hoverTween.Stop();
+    }
+
+    /// <summary>The cursor shows its button icon (and plays its hover sound) while over the card.</summary>
+    private void SetCursorHover(bool on)
+    {
+        // The cursor counts its hovers: each card only ever adds one, and takes back only its own.
+        if (cursorHover == on) return;
+        cursorHover = on;
+        if (CursorIconManager.Instance) CursorIconManager.Instance.SetButtonHover(on);
     }
 
     private void OnDisable() => StopHover();
@@ -278,6 +290,7 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         if (!canHover) return;
 
         hovered = true;
+        SetCursorHover(true);
         // Drawn over its neighbours while it's bigger (order only - its position is set by whoever placed it).
         if (BringToFrontOnHover) transform.SetAsLastSibling();
         ScaleTo(HoverScaleOverride > 0f ? HoverScaleOverride : hoverScale);
@@ -286,6 +299,7 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        SetCursorHover(false);
         if (!hovered) return;
         hovered = false;
         ScaleTo(1f);

@@ -39,6 +39,12 @@ public class IntroCutscene : CutSceneBase
     [SerializeField, Min(0f)] private float warningShakeSpeed = 25f;
     [Tooltip("Sorting order of the warning's runtime canvas. Keep it above everything else.")]
     [SerializeField] private int warningSortingOrder = 1000;
+    [Tooltip("The camera the warning's Screen Space - Camera canvas renders through, so post-processing applies to " +
+             "it like the rest of the UI. Empty: the main camera. No camera at all: an overlay canvas, unprocessed.")]
+    [SerializeField] private Camera warningCamera;
+    [Tooltip("How far in front of the camera the warning's canvas sits. Keep it closer than the other " +
+             "Screen Space - Camera canvases.")]
+    [SerializeField, Min(0.01f)] private float warningPlaneDistance = 1f;
     [Tooltip("Empty: TextMeshPro's default font.")]
     [SerializeField] private TMP_FontAsset warningFont;
     [SerializeField, Min(1f)] private float warningFontSize = 48f;
@@ -135,7 +141,8 @@ public class IntroCutscene : CutSceneBase
     }
 
     /// <summary>
-    /// A screen-space overlay canvas on this cutscene: full-screen black, the warning text centred on it, shaking.
+    /// A Screen Space - Camera canvas on this cutscene (post-processed like the rest of the UI): full-screen black,
+    /// the warning text centred on it, shaking.
     /// <paramref name="textGroup"/> fades the text alone; the returned group fades the whole screen.
     /// </summary>
     private CanvasGroup MakeWarning(out CanvasGroup textGroup)
@@ -144,8 +151,20 @@ public class IntroCutscene : CutSceneBase
             typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup));
         go.transform.SetParent(transform, false);
 
+        // Through the camera, so the post-processing volumes apply to it too.
         Canvas canvas = go.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        Camera cam = warningCamera ? warningCamera : Camera.main;
+        if (cam)
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = cam;
+            canvas.planeDistance = Mathf.Max(warningPlaneDistance, cam.nearClipPlane + 0.01f);
+        }
+        else
+        {
+            h.Out("IntroCutscene: no camera for the warning, it's drawn as an overlay without post-processing.");
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        }
         canvas.sortingOrder = warningSortingOrder;
 
         CanvasScaler scaler = go.GetComponent<CanvasScaler>();
