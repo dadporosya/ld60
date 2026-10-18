@@ -53,7 +53,7 @@ public partial class CardManager
         {
             if (index >= 0 && index < offer.Count)
             {
-                table.ReplaceRandomDefaultDie(offer[index].kind, offer[index].tint);
+                table.ReplaceRandomDefaultDie(offer[index]);
                 onDiceChosen?.Invoke(offer[index].kind);
             }
             chosen?.Invoke();

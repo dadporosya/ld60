@@ -93,8 +93,11 @@ public class HintPaper : MonoBehaviour
     [SerializeField] private string combinationLine = "{0} - {1}";
     [Tooltip("Put between a combination's dice icons. Empty: the icons touch (spacing then comes from the sprite asset's glyph advance).")]
     [SerializeField] private string iconGap = "";
-    [Tooltip("Leave out combinations worth no points (Nothing).")]
+    [Tooltip("Leave out combinations worth no points (Nothing). Single One is always listed - it saves a reroll from busting.")]
     [SerializeField] private bool skipZeroPoints = true;
+    [Tooltip("Single One's line: it is worth no points, it only saves a reroll from busting. Same placeholders as " +
+             "Combination Line. Empty: Combination Line.")]
+    [SerializeField] private string singleOneLine = "{0} - no bust";
 
     [Header("Audio")]
     [SerializeField] private AudioClip openSfx;
@@ -186,12 +189,15 @@ public class HintPaper : MonoBehaviour
         System.Text.StringBuilder text = new System.Text.StringBuilder();
         foreach (CombinationScore entry in dice.Combinations)
         {
-            if (entry == null || !entry.enabled || (skipZeroPoints && entry.points == 0)) continue;
+            if (entry == null || !entry.enabled) continue;
+            bool singleOne = entry.combination == PokerDiceCombination.SingleOne;
+            if (skipZeroPoints && entry.points == 0 && !singleOne) continue;
             string icons = DiceIcons.Combination(entry.combination, iconGap ?? "");
             if (icons.Length == 0) continue;
 
+            string line = singleOne && !string.IsNullOrEmpty(singleOneLine) ? singleOneLine : combinationLine;
             if (text.Length > 0) text.Append('\n');
-            text.AppendFormat(combinationLine, icons, entry.points, entry.displayName);
+            text.AppendFormat(line, icons, entry.points, entry.displayName);
         }
         combinationsText.text = text.ToString();
     }

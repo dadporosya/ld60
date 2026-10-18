@@ -128,6 +128,9 @@ public partial class CardManager : MonoBehaviour
 
     public int DefaultChoiceCount => defaultChoiceCount;
 
+    /// <summary>The card's look, for cards shown elsewhere (a special die's info card).</summary>
+    public CardView CardPrefab => cardPrefab;
+
     /// <summary>Extra share of points an upgraded card grants (0.5 = 50% more).</summary>
     public float UpgradeBonus => upgradeBonus;
 

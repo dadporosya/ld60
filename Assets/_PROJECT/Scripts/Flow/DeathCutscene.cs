@@ -22,6 +22,9 @@ using UnityEngine.UI;
 /// playing its own dialogue. Whichever was picked, the game closes after it.</item>
 /// </list>
 ///
+/// <para>Optionally the music crossfades into <see cref="bgm"/>, either as the cutscene starts or after the shot
+/// (<see cref="bgmStart"/>).</para>
+///
 /// <para>Put it on its OWN GameObject (or a prefab): <see cref="CutSceneBase.Run"/> clones the whole GameObject
 /// it sits on. <see cref="FuneralGameManager.BadEnding"/> plays it through <see cref="Play"/>; with
 /// <c>runOnStart</c> it plays by itself instead. Everything runs on unscaled time.</para>
@@ -40,6 +43,22 @@ public class DeathCutscene : CutSceneBase
         [Tooltip("Played (text box) once the line is clicked. Optional.")]
         public DialogueContainer dialogue;
     }
+
+    /// <summary>When <see cref="bgm"/> starts.</summary>
+    public enum BgmStart
+    {
+        /// <summary>With the cutscene, under the visual novel dialogue; it fades out with the black like any music.</summary>
+        OnStart,
+        /// <summary>With the new ambient, after the shot; it fades out with the ambients before the game closes.</summary>
+        AfterShot,
+    }
+
+    [Header("Music")]
+    [Tooltip("Crossfaded to during the cutscene (see Bgm Start). Empty: no new music.")]
+    [SerializeField] private BGMObject bgm;
+    [SerializeField] private BgmStart bgmStart = BgmStart.OnStart;
+    [Tooltip("Seconds the new music crossfades in over.")]
+    [SerializeField, Min(0f)] private float bgmFade = 1.5f;
 
     [Header("1. Visual novel dialogue")]
     [SerializeField] private VisualNovelDialogueContainer vnDialogue;
@@ -148,6 +167,8 @@ public class DeathCutscene : CutSceneBase
 
     private IEnumerator DialogueStep()
     {
+        if (bgmStart == BgmStart.OnStart) PlayBgm();
+
         HubDialogueRunner runner = HubDialogueRunner.Instance;
         if (!runner || !vnDialogue) yield break;
 
@@ -194,6 +215,7 @@ public class DeathCutscene : CutSceneBase
             if (swapAmbients) FadeOutLoop(darkSource, afterAmbientFadeIn);
             PlayLoop(ref afterSource, afterAmbient, afterAmbientVolume, afterAmbientFadeIn);
         }
+        if (bgmStart == BgmStart.AfterShot) PlayBgm();
 
         if (afterDialogueDelay > 0f) yield return new WaitForSecondsRealtime(afterDialogueDelay);
         yield return PlayTextDialogue(afterDialogue);
@@ -213,6 +235,7 @@ public class DeathCutscene : CutSceneBase
 
         FadeOutLoop(darkSource, endFadeOut);
         FadeOutLoop(afterSource, endFadeOut);
+        if (bgm && bgmStart == BgmStart.AfterShot) FadeOutMusic(endFadeOut);
         if (endFadeOut > 0f) yield return new WaitForSecondsRealtime(endFadeOut);
 
         QuitGame();
@@ -317,10 +340,8 @@ public class DeathCutscene : CutSceneBase
     {
         HashSet<AudioSource> handled = new HashSet<AudioSource>();
 
-        BGMManager bgm = BGMManager.Instance;
-        if (SongManager.Instance) SongManager.Instance.Stop(duration);
-        else if (bgm) bgm.FadeOutMusic(duration);
-        if (bgm) handled.UnionWith(bgm.MusicSources);
+        FadeOutMusic(duration);
+        if (BGMManager.Instance) handled.UnionWith(BGMManager.Instance.MusicSources);
 
         foreach (AmbientNoise noise in FindObjectsByType<AmbientNoise>(FindObjectsSortMode.None))
         {
@@ -346,6 +367,23 @@ public class DeathCutscene : CutSceneBase
                 s.volume = volume;
             });
         }
+    }
+
+    /// <summary>Crossfades the music into <see cref="bgm"/> (through the <see cref="SongManager"/> when there is one).</summary>
+    private void PlayBgm()
+    {
+        if (!bgm) return;
+
+        if (SongManager.Instance) SongManager.Instance.Play(bgm, bgmFade);
+        else if (BGMManager.Instance) BGMManager.Instance.PlayBGMAsNewDefault(bgm, bgmFade);
+        else h.Out($"DeathCutscene: no SongManager / BGMManager to play {bgm.name}.");
+    }
+
+    /// <summary>Fades the music (<see cref="SongManager"/> / <see cref="BGMManager"/>) out over <paramref name="duration"/>.</summary>
+    private static void FadeOutMusic(float duration)
+    {
+        if (SongManager.Instance) SongManager.Instance.Stop(duration);
+        else if (BGMManager.Instance) BGMManager.Instance.FadeOutMusic(duration);
     }
 
     private AudioSource MakeSource(string sourceName, bool loop)

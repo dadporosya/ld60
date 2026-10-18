@@ -35,6 +35,9 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     /// <summary>What the die does (a plain die, or one won in the dice choice). The manager picks its faces by it.</summary>
     public DiceKind Kind { get; private set; } = DiceKind.Default;
 
+    /// <summary>The card a special die shows while hovered long enough (null for a plain die).</summary>
+    public CardFace Info { get; private set; }
+
     /// <summary>Destroyed by a card for the rest of the round: off the table, not scored.</summary>
     public bool IsRemoved { get; private set; }
 
@@ -127,7 +130,7 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     private void OnDisable()
     {
         StopTweens();
-        hovered = false;
+        Unhover();
         HideOutlineNow();
     }
 
@@ -135,12 +138,20 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     {
         hovered = true;
         RefreshOutline();
+        if (manager) manager.SetDieHovered(this, true);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        hovered = false;
+        Unhover();
         RefreshOutline();
+    }
+
+    /// <summary>The pointer is gone (or the die is): its info card goes too.</summary>
+    private void Unhover()
+    {
+        hovered = false;
+        if (manager) manager.SetDieHovered(this, false);
     }
 
     /// <summary>
@@ -326,11 +337,15 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
     private Color kindTint = Color.white;
 
-    /// <summary>Makes it a <paramref name="kind"/> die, colored <paramref name="tint"/> (over the Image's own color).</summary>
-    public void SetKind(DiceKind kind, Color tint)
+    /// <summary>
+    /// Makes it a <paramref name="kind"/> die, colored <paramref name="tint"/> (over the Image's own color), showing
+    /// <paramref name="info"/> while hovered.
+    /// </summary>
+    public void SetKind(DiceKind kind, Color tint, CardFace info = null)
     {
         Kind = kind;
         kindTint = tint;
+        Info = info;
         if (!initialized) return;
 
         baseColor = defaultColor * tint;
@@ -371,7 +386,7 @@ public class Dice : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
     public void Remove()
     {
         IsRemoved = true;
-        hovered = false;
+        Unhover();
         HideOutlineNow();
         if (lockedIndicator) lockedIndicator.SetActive(false);
 

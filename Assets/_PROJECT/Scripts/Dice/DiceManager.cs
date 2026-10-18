@@ -499,6 +499,21 @@ public class DiceManager : MonoBehaviour
     [Header("Popups")]
     public DicePopups popups = new DicePopups();
 
+    [Header("Die Info Card")]
+    [Tooltip("Resting the mouse on a special die shows its card (what it does).")]
+    [SerializeField] private bool showDieInfo = true;
+    [Tooltip("Seconds the mouse rests on the die before its card shows.")]
+    [SerializeField, Min(0f)] private float dieInfoDelay = 0.6f;
+    [Tooltip("The card. Empty: the CardManager's Card Prefab.")]
+    [SerializeField] private CardView dieInfoPrefab;
+    [Tooltip("Where the card is shown, drawn over the dice. Empty: the Table Root (so it hides with the table).")]
+    [SerializeField] private RectTransform dieInfoParent;
+    [Tooltip("The card's centre, from the die's (UI units of the parent). It is kept inside the parent's rect.")]
+    [SerializeField] private Vector2 dieInfoOffset = new Vector2(0f, 220f);
+    [Tooltip("Size of the card relative to the prefab.")]
+    [SerializeField, Min(0.01f)] private float dieInfoScale = 0.6f;
+    [SerializeField, Min(0f)] private float dieInfoFadeDuration = 0.15f;
+
     [Header("Outcome Spotlight")]
     [Tooltip("The big LOST / PASSED / HOPE text once the turn is over, before the fade to the outcome dialogue.")]
     public DiceOutcomeSpotlight spotlight = new DiceOutcomeSpotlight();
@@ -785,13 +800,15 @@ public class DiceManager : MonoBehaviour
     // ---------------------------------------------------------------------
 
     /// <summary>
-    /// Turns a random plain die of the table into a <paramref name="kind"/> die, tinted <paramref name="tint"/> -
-    /// or, when none is plain any more, a random one. It keeps its face unless the kind doesn't allow it.
-    /// Returns the die (null without dice).
+    /// Turns a random plain die of the table into <paramref name="offer"/>'s kind of die, in its tint and showing its
+    /// card when hovered - or, when none is plain any more, a random one. It keeps its face unless the kind doesn't
+    /// allow it. Returns the die (null without dice).
     /// </summary>
-    public Dice ReplaceRandomDefaultDie(DiceKind kind, Color tint)
+    public Dice ReplaceRandomDefaultDie(DiceKindOffer offer)
     {
         Initialize();
+        if (offer == null) return null;
+        DiceKind kind = offer.kind;
 
         // The table's dice: the start dice, plus the ones Extra Dice cards brought.
         int count = Mathf.Min(dice.Count, Mathf.Max(diceInTurn, startDiceCount));
@@ -812,7 +829,7 @@ public class DiceManager : MonoBehaviour
         }
 
         Dice replaced = pool[UnityEngine.Random.Range(0, pool.Count)];
-        replaced.SetKind(kind, tint);
+        replaced.SetKind(kind, offer.tint, offer.Face);
         if (!DiceKinds.Allows(kind, replaced.Value)) replaced.ShowFace(DiceKinds.RandomFace(kind));
         h.Out($"DiceManager: '{replaced.name}' is now a {kind} die.");
         return replaced;
@@ -824,6 +841,134 @@ public class DiceManager : MonoBehaviour
         Initialize();
         foreach (Dice die in dice)
             if (die) die.SetKind(DiceKind.Default, Color.white);
+        HideDieInfo();
+    }
+
+    // ---------------------------------------------------------------------
+    // Die info card (hovering a special die)
+    // ---------------------------------------------------------------------
+
+    // The die the mouse rests on, waiting for the delay; the one whose card is up.
+    private Dice infoPending;
+    private Dice infoShown;
+    private Tween infoDelayTween;
+    private CardView infoCard;
+    private Vector3 infoCardScale;
+
+    /// <summary>The mouse came onto / left <paramref name="die"/>: a special die's card shows after <see cref="dieInfoDelay"/>.</summary>
+    public void SetDieHovered(Dice die, bool hovered)
+    {
+        if (!hovered)
+        {
+            if (die == infoPending || die == infoShown) HideDieInfo();
+            return;
+        }
+
+        if (die == infoPending || die == infoShown) return;
+        HideDieInfo();
+        if (!showDieInfo || !die || die.Kind == DiceKind.Default || die.Info == null) return;
+
+        infoPending = die;
+        if (dieInfoDelay > 0f)
+            infoDelayTween = Tween.Delay(this, dieInfoDelay, manager => manager.ShowDieInfo(), useUnscaledTime: true);
+        else ShowDieInfo();
+    }
+
+    private void ShowDieInfo()
+    {
+        Dice die = infoPending;
+        infoPending = null;
+        if (!InPlay(die) || die.Info == null) return;
+
+        CardView card = DieInfoCard();
+        if (!card) return;
+
+        infoShown = die;
+        Tween.StopAll(card.Group);
+        Tween.StopAll(card.transform);
+        card.gameObject.SetActive(true);
+        card.Bind(die.Info);
+        card.transform.SetAsLastSibling();
+        PlaceDieInfo();
+
+        if (dieInfoFadeDuration > 0f)
+        {
+            card.Group.alpha = 0f;
+            card.transform.localScale = infoCardScale * 0.9f;
+            Tween.Alpha(card.Group, 1f, dieInfoFadeDuration, useUnscaledTime: true);
+            Tween.Scale(card.transform, infoCardScale, dieInfoFadeDuration, Ease.OutBack, useUnscaledTime: true);
+        }
+        else
+        {
+            card.Group.alpha = 1f;
+            card.transform.localScale = infoCardScale;
+        }
+    }
+
+    private void HideDieInfo()
+    {
+        infoDelayTween.Stop();
+        infoPending = null;
+        if (!infoShown) return;
+        infoShown = null;
+        if (!infoCard) return;
+
+        Tween.StopAll(infoCard.Group);
+        Tween.StopAll(infoCard.transform);
+        if (dieInfoFadeDuration > 0f && infoCard.isActiveAndEnabled)
+            Tween.Alpha(infoCard.Group, 0f, dieInfoFadeDuration, useUnscaledTime: true)
+                .OnComplete(infoCard, card => card.gameObject.SetActive(false));
+        else infoCard.gameObject.SetActive(false);
+    }
+
+    /// <summary>The info card, made on first use. It never takes the mouse, so the die under it stays hovered.</summary>
+    private CardView DieInfoCard()
+    {
+        if (infoCard) return infoCard;
+
+        CardView prefab = dieInfoPrefab ? dieInfoPrefab : CardManager.Instance ? CardManager.Instance.CardPrefab : null;
+        RectTransform parent = dieInfoParent ? dieInfoParent : tableRoot ? tableRoot.transform as RectTransform : Area;
+        if (!prefab || !parent)
+        {
+            h.Out(!prefab ? "DiceManager: no card prefab for the die info card (Die Info Prefab, or the CardManager's)."
+                          : "DiceManager: nowhere to show the die info card (Die Info Parent).");
+            return null;
+        }
+
+        infoCard = Instantiate(prefab, parent);
+        infoCard.name = "Die Info Card";
+        infoCardScale = infoCard.transform.localScale * dieInfoScale;
+        infoCard.Group.blocksRaycasts = false;
+        infoCard.Group.interactable = false;
+        infoCard.Rect.anchorMin = infoCard.Rect.anchorMax = new Vector2(0.5f, 0.5f);
+        infoCard.gameObject.SetActive(false);
+        return infoCard;
+    }
+
+    /// <summary>Puts the card at the die + <see cref="dieInfoOffset"/>, kept inside its parent's rect.</summary>
+    private void PlaceDieInfo()
+    {
+        if (!infoCard || !infoShown || !(infoCard.transform.parent is RectTransform parent)) return;
+
+        Vector2 spot = (Vector2)parent.InverseTransformPoint(infoShown.transform.position) + dieInfoOffset;
+
+        RectTransform rect = infoCard.Rect;
+        Vector2 size = Vector2.Scale(rect.rect.size, new Vector2(Mathf.Abs(infoCardScale.x), Mathf.Abs(infoCardScale.y)));
+        Rect bounds = parent.rect;
+        float xMin = bounds.xMin + size.x * rect.pivot.x, xMax = bounds.xMax - size.x * (1f - rect.pivot.x);
+        float yMin = bounds.yMin + size.y * rect.pivot.y, yMax = bounds.yMax - size.y * (1f - rect.pivot.y);
+        if (xMin <= xMax) spot.x = Mathf.Clamp(spot.x, xMin, xMax);
+        if (yMin <= yMax) spot.y = Mathf.Clamp(spot.y, yMin, yMax);
+
+        rect.localPosition = new Vector3(spot.x, spot.y, 0f);
+    }
+
+    // The card follows its die while it rolls.
+    private void LateUpdate()
+    {
+        if (!infoShown) return;
+        if (InPlay(infoShown)) PlaceDieInfo();
+        else HideDieInfo();
     }
 
     // ---------------------------------------------------------------------
@@ -1658,6 +1803,7 @@ public class DiceManager : MonoBehaviour
     public void CancelTurn()
     {
         if (!TurnActive) return;
+        HideDieInfo();
 
         finishTween.Stop();
         firstRollTween.Stop();
@@ -1736,6 +1882,7 @@ public class DiceManager : MonoBehaviour
 
     private void CompleteTurn()
     {
+        HideDieInfo();
         DiceTurnResult result = pendingResult;
         Action<DiceTurnResult> callback = turnCallback;
 
