@@ -419,8 +419,9 @@ public class CursorIconManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Raycasts the UI at the pointer and reports whether an interactable <see cref="Selectable"/>
-    /// (Button, Toggle, Slider, ...) is under it.
+    /// Raycasts the UI at the pointer and reports whether the topmost thing under it belongs to an interactable
+    /// <see cref="Selectable"/> (Button, Toggle, Slider, ...). Like a click, a button covered by something else
+    /// (a fade to black, a panel) doesn't count.
     /// </summary>
     private bool IsPointerOverButton(out Selectable hovered)
     {
@@ -439,12 +440,11 @@ public class CursorIconManager : MonoBehaviour
             GameObject go = raycastResults[i].gameObject;
             if (go == null) continue;
 
+            // Only the topmost hit: it's the one a click would reach.
             Selectable selectable = go.GetComponentInParent<Selectable>();
-            if (selectable && selectable.isActiveAndEnabled && selectable.interactable)
-            {
-                hovered = selectable;
-                return true;
-            }
+            if (!selectable || !selectable.isActiveAndEnabled || !selectable.interactable) return false;
+            hovered = selectable;
+            return true;
         }
 
         return false;

@@ -449,8 +449,8 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Next time, before making new ones, ask me for help first! I'll definitely
-      come up with something award-winning, or... I dunno
+    text: Next time, before making new ones, ask me for help first! Together we'll
+      definitely come up with something award-winning, or... I dunno
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -500,7 +500,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Oh, yeah, sure...
+    text: Yeah, sure...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -525,7 +525,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: When will you come back?
+    text: And by the way, when will you come back?
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -550,7 +550,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: I will...
+    text: ...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}

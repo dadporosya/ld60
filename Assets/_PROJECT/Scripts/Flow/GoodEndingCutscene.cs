@@ -89,6 +89,8 @@ public class GoodEndingCutscene : CutSceneBase
     [SerializeField, Min(0f)] private float endFadeOut = 3f;
     [Tooltip("Close the game once everything has faded out. Off: the screen just stays black.")]
     [SerializeField] private bool quitAtEnd = true;
+    [Tooltip("The last frame before the game closes (Quit At End): the credits on black.")]
+    [SerializeField] private CreditsFrame credits = new CreditsFrame();
 
     private AudioSource ringSource;
     private AudioSource sfxSource;
@@ -207,7 +209,9 @@ public class GoodEndingCutscene : CutSceneBase
         FadeOutOtherSounds(endFadeOut);
         if (endFadeOut > 0f) yield return new WaitForSecondsRealtime(endFadeOut);
 
-        if (quitAtEnd) QuitGame();
+        if (!quitAtEnd) yield break;
+        yield return credits.Play(transform);
+        QuitGame();
     }
 
     // ---------------------------------------------------------------------

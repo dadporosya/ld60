@@ -300,7 +300,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Can I still ask you something?
+    text: The riddles... they would have led you to where I was...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -325,7 +325,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Babe
+    text: Don't you find this very selfish?
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -346,11 +346,11 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - nodeId: 13
-    speakerId: 2
+    speakerId: 1
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Just know that I still love you
+    text: I do...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -371,11 +371,11 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - nodeId: 14
-    speakerId: 2
+    speakerId: 1
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: No matter what
+    text: Can I still ask you something?
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -400,7 +400,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Please come back
+    text: Babe
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -425,7 +425,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Everyone is so worried about you
+    text: Just know that I still love you
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -450,7 +450,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Hope you are doing okay
+    text: No matter what
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -471,6 +471,81 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - nodeId: 18
+    speakerId: 2
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Please come back
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 1, g: 1, b: 1, a: 1}
+    autoSkip: 0
+    autoSkipDelay: 2
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 19
+    speakerId: 2
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Everyone is so worried about you
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 1, g: 1, b: 1, a: 1}
+    autoSkip: 0
+    autoSkipDelay: 2
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 20
+    speakerId: 2
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: Hope you are doing okay
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 1, g: 1, b: 1, a: 1}
+    autoSkip: 0
+    autoSkipDelay: 2
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 21
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -866,6 +941,114 @@ MonoBehaviour:
     foregroundMaterial: {fileID: 0}
     clearForeground: 0
     stretchForeground: 1
+    textBox: 0
+    transitionDuration: 1
+    fadeColor: {r: 0, g: 0, b: 0, a: 1}
+    holdOnColor: 0
+    blurRadius: 1
+    waitForTransition: 1
+    textBoxDelay: 0
+    music: 0
+    bgm: {fileID: 0}
+    bgmClip: {fileID: 0}
+    musicVolume: 1
+    musicFade: 1.5
+    musicFadeIn: -1
+    ambience: 0
+    ambienceClip: {fileID: 0}
+    ambienceVolume: 1
+    ambienceFade: 1.5
+    voice: 0
+    voiceClips: []
+    voiceVolume: 1
+    overrideVoicePitch: 0
+    voicePitchRange: {x: 0.98, y: 1.02}
+    cuesAfterTransition: 1
+    sfx: []
+    startEffects: []
+    keepPreviousSustainedEffects: 0
+    sustainedEffects: []
+  - transition: 0
+    background: {fileID: 0}
+    backgroundMaterial: {fileID: 0}
+    clearBackground: 0
+    stretchBackground: 0
+    foreground: {fileID: 0}
+    foregroundMaterial: {fileID: 0}
+    clearForeground: 0
+    stretchForeground: 0
+    textBox: 2
+    transitionDuration: 1
+    fadeColor: {r: 0, g: 0, b: 0, a: 1}
+    holdOnColor: 0
+    blurRadius: 1
+    waitForTransition: 1
+    textBoxDelay: 0
+    music: 0
+    bgm: {fileID: 0}
+    bgmClip: {fileID: 0}
+    musicVolume: 1
+    musicFade: 1.5
+    musicFadeIn: -1
+    ambience: 0
+    ambienceClip: {fileID: 0}
+    ambienceVolume: 1
+    ambienceFade: 1.5
+    voice: 0
+    voiceClips: []
+    voiceVolume: 1
+    overrideVoicePitch: 0
+    voicePitchRange: {x: 0.98, y: 1.02}
+    cuesAfterTransition: 1
+    sfx: []
+    startEffects: []
+    keepPreviousSustainedEffects: 0
+    sustainedEffects: []
+  - transition: 1
+    background: {fileID: 0}
+    backgroundMaterial: {fileID: 0}
+    clearBackground: 0
+    stretchBackground: 0
+    foreground: {fileID: 2657533006051199070, guid: b053c75e837250846ac98b23d90421ae, type: 3}
+    foregroundMaterial: {fileID: 0}
+    clearForeground: 0
+    stretchForeground: 0
+    textBox: 0
+    transitionDuration: 0
+    fadeColor: {r: 0, g: 0, b: 0, a: 1}
+    holdOnColor: 0
+    blurRadius: 1
+    waitForTransition: 1
+    textBoxDelay: 0
+    music: 0
+    bgm: {fileID: 0}
+    bgmClip: {fileID: 0}
+    musicVolume: 1
+    musicFade: 1.5
+    musicFadeIn: -1
+    ambience: 0
+    ambienceClip: {fileID: 0}
+    ambienceVolume: 1
+    ambienceFade: 1.5
+    voice: 0
+    voiceClips: []
+    voiceVolume: 1
+    overrideVoicePitch: 0
+    voicePitchRange: {x: 0.98, y: 1.02}
+    cuesAfterTransition: 1
+    sfx: []
+    startEffects: []
+    keepPreviousSustainedEffects: 0
+    sustainedEffects: []
+  - transition: 1
+    background: {fileID: 0}
+    backgroundMaterial: {fileID: 0}
+    clearBackground: 0
+    stretchBackground: 0
+    foreground: {fileID: -7716695629669418368, guid: bbc82425e1d1b96468ed444259c299f7, type: 3}
+    foregroundMaterial: {fileID: 0}
+    clearForeground: 0
+    stretchForeground: 0
     textBox: 0
     transitionDuration: 1
     fadeColor: {r: 0, g: 0, b: 0, a: 1}

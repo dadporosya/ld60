@@ -21,7 +21,7 @@ using UnityEngine.UI;
 /// <item>A delay, then <see cref="afterAmbient"/> fades in and the plain text box dialogue
 /// (<see cref="afterDialogue"/>, played by the <see cref="DialogueManager"/>) runs over the black.</item>
 /// <item>The fork: clickable lines in the middle of the screen (<see cref="fork"/>, Yes / No by default), each
-/// playing its own dialogue. Whichever was picked, the game closes after it.</item>
+/// playing its own dialogue. Whichever was picked, the <see cref="credits"/> frame follows and the game closes.</item>
 /// </list>
 ///
 /// <para>Optionally the music crossfades into <see cref="bgm"/>: with the opening black, as the visual novel
@@ -132,6 +132,8 @@ public class DeathCutscene : CutSceneBase
     };
     [Tooltip("Seconds the ambients fade out over before the game closes.")]
     [SerializeField, Min(0f)] private float endFadeOut = 1.5f;
+    [Tooltip("The last frame, after everything has faded out: the credits on black, then the game closes.")]
+    [SerializeField] private CreditsFrame credits = new CreditsFrame();
 
     [Header("Fork look")]
     [Tooltip("Where the fork lines go (centred in it). Empty: a screen-space overlay canvas made at runtime.")]
@@ -289,6 +291,7 @@ public class DeathCutscene : CutSceneBase
         if (bgm && bgmStart == BgmStart.AfterShot) FadeOutMusic(endFadeOut);
         if (endFadeOut > 0f) yield return new WaitForSecondsRealtime(endFadeOut);
 
+        yield return credits.Play(transform);
         QuitGame();
     }
 

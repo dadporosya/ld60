@@ -981,6 +981,9 @@ MonoBehaviour:
   onSpotlight:
     m_PersistentCalls:
       m_Calls: []
+  onBust:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &118505316
 GameObject:
   m_ObjectHideFlags: 0
@@ -4077,7 +4080,20 @@ MonoBehaviour:
     dialogue: {fileID: 11400000, guid: 30a2d4594a745ae4ab40ef06b23142de, type: 2}
   - title: No
     dialogue: {fileID: 11400000, guid: 04c9c845e159bae4f853c5e9a77bd923, type: 2}
-  endFadeOut: 1.5
+  endFadeOut: 3
+  credits:
+    show: 1
+    text: Game by II-P
+    delay: 0
+    duration: 6.7
+    shakeStrength: 3
+    shakeSpeed: 25
+    font: {fileID: 0}
+    fontSize: 72
+    color: {r: 1, g: 1, b: 1, a: 1}
+    sortingOrder: 2000
+    renderCamera: {fileID: 0}
+    planeDistance: 1
   forkParent: {fileID: 494122839}
   forkSortingOrder: 100
   lineTemplate: {fileID: 7359380057371781580, guid: 1ee482884eede524dbc70ba9fe0263d8, type: 3}
@@ -5675,6 +5691,7 @@ MonoBehaviour:
   image: {fileID: 1818620954}
   enableStartFadeOut: 1
   startFadeDurationOut: 1
+  blockPointerAlpha: 0.5
 --- !u!1 &1073361886
 GameObject:
   m_ObjectHideFlags: 0
@@ -5981,8 +5998,21 @@ MonoBehaviour:
   hangUpSfx: {fileID: 0}
   hangUpVolume: 1
   endHold: 3
-  endFadeOut: 3
+  endFadeOut: 0
   quitAtEnd: 1
+  credits:
+    show: 1
+    text: Game by II-P
+    delay: 0
+    duration: 6.7
+    shakeStrength: 3
+    shakeSpeed: 25
+    font: {fileID: 0}
+    fontSize: 72
+    color: {r: 1, g: 1, b: 1, a: 1}
+    sortingOrder: 2000
+    renderCamera: {fileID: 0}
+    planeDistance: 1
 --- !u!1 &1150933096
 GameObject:
   m_ObjectHideFlags: 0
@@ -8976,14 +9006,14 @@ MonoBehaviour:
   - enabled: 1
     kind: 1
     title: Blue Die
-    description: Always rolls odd.
+    description: Always rolls odd (1, 3, 5).
     tint: {r: 0.35, g: 0.55, b: 1, a: 1}
     iconSprite: odd
     weight: 1
   - enabled: 1
     kind: 2
     title: Yellow Die
-    description: Always rolls even.
+    description: Always rolls even (2, 4, 6).
     tint: {r: 1, g: 0.88, b: 0.3, a: 1}
     iconSprite: even
     weight: 1

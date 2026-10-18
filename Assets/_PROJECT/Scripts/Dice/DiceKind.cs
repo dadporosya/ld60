@@ -110,8 +110,8 @@ public class DiceKindOffer
 
     public static List<DiceKindOffer> Defaults() => new List<DiceKindOffer>
     {
-        new DiceKindOffer(DiceKind.Blue, "Blue Die", "Always rolls odd.", new Color(0.35f, 0.55f, 1f, 1f), "odd"),
-        new DiceKindOffer(DiceKind.Yellow, "Yellow Die", "Always rolls even.", new Color(1f, 0.88f, 0.3f, 1f), "even"),
+        new DiceKindOffer(DiceKind.Blue, "Blue Die", "Always rolls odd (1, 3, 5).", new Color(0.35f, 0.55f, 1f, 1f), "odd"),
+        new DiceKindOffer(DiceKind.Yellow, "Yellow Die", "Always rolls even (2, 4, 6).", new Color(1f, 0.88f, 0.3f, 1f), "even"),
         new DiceKindOffer(DiceKind.Pink, "Pink Die", "Never rolls 1, 2 or 3.", new Color(1f, 0.55f, 0.8f, 1f), "6"),
         new DiceKindOffer(DiceKind.Green, "Green Die", "Rolls the value most of your dice show.", new Color(0.4f, 0.9f, 0.4f, 1f), "x"),
         new DiceKindOffer(DiceKind.Cyan, "Cyan Die", "Right click to turn it to 1, once per round.", new Color(0.35f, 0.95f, 0.95f, 1f), "1"),
