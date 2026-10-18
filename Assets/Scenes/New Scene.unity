@@ -892,8 +892,8 @@ MonoBehaviour:
     root: {fileID: 118505316}
     text: {fileID: 1531122480}
     delay: 0.72
-    hold: 1.71
-    fadeOut: 1.9
+    hold: 2.19
+    fadeOut: 2.7
     lost:
       text: ALONE
       color: {r: 0.9, g: 0.15, b: 0.15, a: 1}
@@ -1023,7 +1023,7 @@ GameObject:
   - component: {fileID: 119591261}
   - component: {fileID: 119591262}
   m_Layer: 0
-  m_Name: After Daeth
+  m_Name: After Daeth Talkbale
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2063,6 +2063,7 @@ Transform:
   m_Children:
   - {fileID: 1148301526}
   - {fileID: 689042683}
+  - {fileID: 2072675786}
   m_Father: {fileID: 291783876}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &354913509
@@ -3202,6 +3203,41 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 115}
   m_SizeDelta: {x: -153.72, y: 117.18}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &494122838
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 494122839}
+  m_Layer: 0
+  m_Name: FORK
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &494122839
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 494122838}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1262622157}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &515364393
 GameObject:
   m_ObjectHideFlags: 0
@@ -3937,44 +3973,42 @@ MonoBehaviour:
   runOnStart: 0
   customDestroy: 0
   vnDialogue: {fileID: 11400000, guid: 2e616d7fe376bc34396be7d593eafb38, type: 2}
-  blackFadeDuration: 1.5
+  blackFadeDuration: 5.4
   blackFadeEase: 1
   soundsFadeOut: 2
   darkAmbient: {fileID: 8300000, guid: 9508b1c4a5a4639419a83ca23102e2a2, type: 3}
   darkAmbientVolume: 0.6
-  darkAmbientFadeIn: 2
-  deathSfxDelay: 3
+  darkAmbientFadeIn: 0.1
+  deathSfxDelay: 6.36
   deathSfx: {fileID: 8300000, guid: 4bbc455256eb348419afe3e4f55b7ccf, type: 3}
   deathSfxVolume: 1
-  afterShotDelay: 3
+  darkAmbientFadeOutOnShot: 0.86
+  afterShotDelay: 8.64
   afterAmbient: {fileID: 8300000, guid: f4d87dfd69329ea4ab245f7cba2ac000, type: 3}
   afterAmbientVolume: 0.6
-  afterAmbientFadeIn: 3
+  afterAmbientFadeIn: 0
   swapAmbients: 1
   afterDialogueDelay: 1
   afterDialogue: {fileID: 11400000, guid: 70a0940c959895148a4e90f901153b1e, type: 2}
-  speaker: {fileID: 0}
-  forkDelay: 0.5
-  firstFork:
+  speaker: {fileID: 119591262}
+  forkDelay: 0.54
+  fork:
   - title: Yes
-    dialogue: {fileID: 11400000, guid: 04c9c845e159bae4f853c5e9a77bd923, type: 2}
-  - title: No
     dialogue: {fileID: 11400000, guid: 30a2d4594a745ae4ab40ef06b23142de, type: 2}
-  restartOption:
-    title: Yes
-    dialogue: {fileID: 0}
-  quitOption:
-    title: No
-    dialogue: {fileID: 0}
+    ending: 0
+  - title: No
+    dialogue: {fileID: 11400000, guid: 04c9c845e159bae4f853c5e9a77bd923, type: 2}
+    ending: 1
   endFadeOut: 1.5
-  forkParent: {fileID: 0}
+  forkParent: {fileID: 494122839}
   forkSortingOrder: 100
-  lineTemplate: {fileID: 0}
+  lineTemplate: {fileID: 7359380057371781580, guid: 1ee482884eede524dbc70ba9fe0263d8, type: 3}
   font: {fileID: 0}
   fontSize: 56
   lineColor: {r: 1, g: 1, b: 1, a: 1}
   lineHoverColor: {r: 0.55, g: 0.04, b: 0.04, a: 1}
-  lineSpacing: 24
+  forkWidth: 1200
+  hitPadding: 16
   forkOffset: {x: 0, y: 0}
   forkFadeDuration: 0.35
   lineHoverSfx: {fileID: 0}
@@ -4674,8 +4708,8 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 244570388}
   - {fileID: 2052019987}
+  - {fileID: 244570388}
   - {fileID: 1901275428}
   - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
@@ -5786,10 +5820,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f7c40a3748db2f46b589fd0280379bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutSceneManager
-  currentCutScene: {fileID: 0}
+  currentCutScene: {fileID: 689042684}
   currentCutScenePath: 
   defaultLabel: Cutscenes/
-  runOnStart: 0
+  runOnStart: 1
 --- !u!1 &1150933096
 GameObject:
   m_ObjectHideFlags: 0
@@ -6453,6 +6487,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 494122839}
   - {fileID: 394222761}
   - {fileID: 346760857}
   m_Father: {fileID: 1161153468}
@@ -9368,6 +9403,58 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2056738852}
   m_CullTransparentMesh: 1
+--- !u!1 &2072675785
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2072675786}
+  - component: {fileID: 2072675787}
+  m_Layer: 0
+  m_Name: IntroCutscene
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2072675786
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2072675785}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 353301000}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2072675787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2072675785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c1ef27ee6a0eb441a65bd032c5db6aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IntroCutscene
+  runOnStart: 0
+  customDestroy: 0
+  dialogue: {fileID: 11400000, guid: 08252676bbf69b94e90a1dca397e6bea, type: 2}
+  fadeInDuration: 3.78
+  blackHoldDuration: 0.5
+  fadeOutDuration: 3.26
+  fadeInEase: 1
+  fadeOutEase: 1
 --- !u!1 &2120501552
 GameObject:
   m_ObjectHideFlags: 0

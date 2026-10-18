@@ -516,7 +516,7 @@ MonoBehaviour:
   startColor: {r: 0, g: 0, b: 0, a: 1}
   fadeToColorOnEnd: 1
   endColor: {r: 0, g: 0, b: 0, a: 1}
-  endFadeDuration: 1
+  endFadeDuration: 6.06
   musicOnEnd: 0
   endMusicFade: 1.5
   stopAmbienceOnEnd: 1

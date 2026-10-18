@@ -5,7 +5,9 @@ using PrimeTween;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
@@ -14,12 +16,13 @@ using UnityEngine.UI;
 /// <item>The visual novel dialogue (<see cref="vnDialogue"/>), cutting off whatever dialogue was playing.</item>
 /// <item>The <see cref="FadeImageController"/> covers the screen with black, every other sound (music, ambients,
 /// whatever still plays) fades out, and <see cref="darkAmbient"/> loops in. After <see cref="deathSfxDelay"/>
-/// the <see cref="deathSfx"/> plays once.</item>
+/// the <see cref="deathSfx"/> plays once, and the dark ambient may start going with it
+/// (<see cref="darkAmbientFadeOutOnShot"/>).</item>
 /// <item>A delay, then <see cref="afterAmbient"/> fades in and the plain text box dialogue
 /// (<see cref="afterDialogue"/>, played by the <see cref="DialogueManager"/>) runs over the black.</item>
-/// <item>A fork: clickable lines in the middle of the screen (<see cref="firstFork"/>, Yes / No by default), each
-/// playing its own dialogue. Then a second fork: <see cref="restartOption"/> reloads the scene,
-/// <see cref="quitOption"/> closes the game.</item>
+/// <item>The fork: clickable lines in the middle of the screen (<see cref="fork"/>, Yes / No by default), each
+/// playing its own dialogue and then ending the game its own way - reloading the scene (the game starts over) or
+/// closing it.</item>
 /// </list>
 ///
 /// <para>Put it on its OWN GameObject (or a prefab): <see cref="CutSceneBase.Run"/> clones the whole GameObject
@@ -32,13 +35,25 @@ using UnityEngine.UI;
 /// </summary>
 public class DeathCutscene : CutSceneBase
 {
-    /// <summary>One clickable line of a fork, and what it plays once clicked.</summary>
+    /// <summary>How the game ends once a fork option's dialogue is over.</summary>
+    public enum ForkEnding
+    {
+        [Tooltip("Reloads the scene: the game starts over.")]
+        Restart,
+        [Tooltip("Closes the game.")]
+        Quit,
+    }
+
+    /// <summary>One clickable line of the fork: what it says, what it plays, and how it ends the game.</summary>
     [Serializable]
     public class ForkOption
     {
         public string title = "Yes";
         [Tooltip("Played (text box) once the line is clicked. Optional.")]
         public DialogueContainer dialogue;
+        [Tooltip("What happens once its dialogue is over: Restart reloads the scene (the game starts over), " +
+                 "Quit closes the game.")]
+        public ForkEnding ending = ForkEnding.Restart;
     }
 
     [Header("1. Visual novel dialogue")]
@@ -59,6 +74,9 @@ public class DeathCutscene : CutSceneBase
     [Tooltip("Played once over the black (e.g. the shot). Empty: nothing.")]
     [SerializeField] private AudioClip deathSfx;
     [SerializeField, Range(0f, 1f)] private float deathSfxVolume = 1f;
+    [Tooltip("Seconds the dark ambient fades out over, starting the moment the death sound plays. " +
+             "Negative: it keeps playing until the new ambient swaps it out (Swap Ambients).")]
+    [SerializeField] private float darkAmbientFadeOutOnShot = -1f;
 
     [Header("3. After the shot")]
     [Tooltip("Seconds after the death sound before the new ambient fades in.")]
@@ -80,16 +98,14 @@ public class DeathCutscene : CutSceneBase
     [Header("4. Forks")]
     [Tooltip("Seconds after a dialogue's last node before a fork comes up (lets the text box close).")]
     [SerializeField, Min(0f)] private float forkDelay = 0.5f;
-    [Tooltip("The first fork, shown after the text box dialogue: each line plays its dialogue, then the second fork comes up.")]
-    [SerializeField] private List<ForkOption> firstFork = new List<ForkOption>
+    [Tooltip("Shown after the text box dialogue: each line plays its own dialogue, then ends the game its own way. " +
+             "Empty: the scene reloads straight away.")]
+    [FormerlySerializedAs("firstFork")]
+    [SerializeField] private List<ForkOption> fork = new List<ForkOption>
     {
-        new ForkOption { title = "Yes" },
-        new ForkOption { title = "No" },
+        new ForkOption { title = "Yes", ending = ForkEnding.Restart },
+        new ForkOption { title = "No", ending = ForkEnding.Quit },
     };
-    [Tooltip("Second fork: plays its dialogue (optional), then reloads the scene - the game starts over.")]
-    [SerializeField] private ForkOption restartOption = new ForkOption { title = "Yes" };
-    [Tooltip("Second fork: plays its dialogue (optional), then closes the game.")]
-    [SerializeField] private ForkOption quitOption = new ForkOption { title = "No" };
     [Tooltip("Seconds the ambients fade out over before the scene reloads or the game closes.")]
     [SerializeField, Min(0f)] private float endFadeOut = 1.5f;
 
@@ -105,8 +121,12 @@ public class DeathCutscene : CutSceneBase
     [SerializeField, Min(1f)] private float fontSize = 56f;
     [SerializeField] private Color lineColor = Color.white;
     [SerializeField] private Color lineHoverColor = new Color(0.55f, 0.04f, 0.04f, 1f);
-    [SerializeField, Min(0f)] private float lineSpacing = 24f;
-    [Tooltip("Offset of the lines from the centre of the screen (UI units).")]
+    [Tooltip("Width (UI units) the lines are spread across, side by side: each gets an equal share, its text centred " +
+             "in it (two lines: ---Yes------No---).")]
+    [SerializeField, Min(0f)] private float forkWidth = 1200f;
+    [Tooltip("Extra room (UI units) around each line's text that still counts as hovering it.")]
+    [SerializeField, Min(0f)] private float hitPadding = 16f;
+    [Tooltip("Offset of the lines from the centre of the Fork Parent / screen (UI units).")]
     [SerializeField] private Vector2 forkOffset = Vector2.zero;
     [Tooltip("Seconds the lines fade in / out over.")]
     [SerializeField, Min(0f)] private float forkFadeDuration = 0.35f;
@@ -124,6 +144,7 @@ public class DeathCutscene : CutSceneBase
     private readonly List<TextMeshProUGUI> forkLines = new List<TextMeshProUGUI>();
     private bool forkOpen;
     private int forkPick = -1;
+    private int hoveredLine = -1;
     private bool cursorOnLine;
 
     /// <summary>Runs the cutscene. It never hands control back: it ends by reloading the scene or closing the game.</summary>
@@ -142,6 +163,57 @@ public class DeathCutscene : CutSceneBase
     private void OnDestroy()
     {
         SetCursorOnLine(false);
+    }
+
+    /// <summary>
+    /// Hover and click on the fork lines, read straight from the mouse against each line's text - so no other
+    /// canvas's raycast target can swallow them.
+    /// </summary>
+    private void Update()
+    {
+        if (!forkOpen) return;
+
+        Mouse mouse = Mouse.current;
+        if (mouse == null) return;
+
+        Vector2 pointer = mouse.position.ReadValue();
+        int hovered = -1;
+        for (int i = 0; i < forkLines.Count; i++)
+            if (IsOver(forkLines[i], pointer))
+            {
+                hovered = i;
+                break;
+            }
+
+        if (hovered != hoveredLine)
+        {
+            if (hoveredLine >= 0 && hoveredLine < forkLines.Count && forkLines[hoveredLine])
+                forkLines[hoveredLine].color = lineColor;
+            hoveredLine = hovered;
+            if (hovered >= 0)
+            {
+                forkLines[hovered].color = lineHoverColor;
+                PlayUiSfx(lineHoverSfx);
+            }
+            SetCursorOnLine(hovered >= 0);
+        }
+
+        if (hovered >= 0 && mouse.leftButton.wasPressedThisFrame) PickLine(forkLines[hovered], hovered);
+    }
+
+    /// <summary>Whether <paramref name="screen"/> is on <paramref name="line"/>'s text (plus <see cref="hitPadding"/>).</summary>
+    private bool IsOver(TextMeshProUGUI line, Vector2 screen)
+    {
+        if (!line || !line.canvas) return false;
+
+        Canvas canvas = line.canvas.rootCanvas;
+        Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(line.rectTransform, screen, cam, out Vector2 local))
+            return false;
+
+        Bounds bounds = line.textBounds;
+        bounds.Expand(new Vector3(hitPadding * 2f, hitPadding * 2f, 0f));
+        return local.x >= bounds.min.x && local.x <= bounds.max.x && local.y >= bounds.min.y && local.y <= bounds.max.y;
     }
 
     // ---------------------------------------------------------------------
@@ -182,6 +254,9 @@ public class DeathCutscene : CutSceneBase
             if (!sfxSource) sfxSource = MakeSource("Death SFX", false);
             sfxSource.PlayOneShot(deathSfx, deathSfxVolume);
         }
+
+        // The shot takes the room with it: the dark ambient goes from here, not when the next one comes in.
+        if (darkAmbientFadeOutOnShot >= 0f) FadeOutLoop(darkSource, darkAmbientFadeOutOnShot);
     }
 
     private IEnumerator AfterShotStep()
@@ -200,26 +275,24 @@ public class DeathCutscene : CutSceneBase
 
     private IEnumerator ForkStep()
     {
-        if (firstFork.Count > 0)
+        ForkEnding ending = ForkEnding.Restart;
+
+        if (fork.Count > 0)
         {
             yield return WaitForTextBox();
-            yield return ShowFork(firstFork);
-            ForkOption picked = firstFork[forkPick];
+            yield return ShowFork(fork);
+            ForkOption picked = fork[forkPick];
+            if (picked != null) ending = picked.ending;
             yield return PlayTextDialogue(picked?.dialogue);
+            yield return WaitForTextBox();
         }
-
-        yield return WaitForTextBox();
-        List<ForkOption> last = new List<ForkOption> { restartOption, quitOption };
-        yield return ShowFork(last);
-        bool restart = forkPick == 0;
-
-        yield return PlayTextDialogue(last[forkPick]?.dialogue);
+        else h.Out("DeathCutscene: no fork options, the scene reloads.");
 
         FadeOutLoop(darkSource, endFadeOut);
         FadeOutLoop(afterSource, endFadeOut);
         if (endFadeOut > 0f) yield return new WaitForSecondsRealtime(endFadeOut);
 
-        if (restart) RestartGame();
+        if (ending == ForkEnding.Restart) RestartGame();
         else QuitGame();
     }
 
@@ -301,16 +374,12 @@ public class DeathCutscene : CutSceneBase
             TextMeshProUGUI line = MakeLine(container);
             line.text = option != null ? option.title : "";
             line.color = lineColor;
-            line.raycastTarget = true;
+            // Hover and click are read in Update; the lines block nothing.
+            line.raycastTarget = false;
             forkLines.Add(line);
-
-            ShowcaseClickTarget target = line.GetComponent<ShowcaseClickTarget>();
-            if (!target) target = line.gameObject.AddComponent<ShowcaseClickTarget>();
-            int index = i;
-            target.onClick = () => PickLine(line, index);
-            target.onHover = hovered => HoverLine(line, hovered);
         }
 
+        hoveredLine = -1;
         forkOpen = true;
         forkGroup.blocksRaycasts = true;
         Tween.StopAll(forkGroup);
@@ -320,14 +389,6 @@ public class DeathCutscene : CutSceneBase
             Tween.Alpha(forkGroup, 1f, forkFadeDuration, useUnscaledTime: true);
         }
         else forkGroup.alpha = 1f;
-    }
-
-    private void HoverLine(TextMeshProUGUI line, bool hovered)
-    {
-        if (!forkOpen || !line) return;
-        line.color = hovered ? lineHoverColor : lineColor;
-        SetCursorOnLine(hovered);
-        if (hovered) PlayUiSfx(lineHoverSfx);
     }
 
     private void PickLine(TextMeshProUGUI line, int index)
@@ -344,6 +405,7 @@ public class DeathCutscene : CutSceneBase
     private void ClearFork()
     {
         forkOpen = false;
+        hoveredLine = -1;
         SetCursorOnLine(false);
         foreach (TextMeshProUGUI line in forkLines)
             if (line) Destroy(line.gameObject);
@@ -356,29 +418,33 @@ public class DeathCutscene : CutSceneBase
         }
     }
 
-    /// <summary>The centred vertical stack the lines go into (made once).</summary>
+    /// <summary>
+    /// The centred row the lines go into (made once): <see cref="forkWidth"/> wide, split into equal cells, one
+    /// per line, each text centred in its cell.
+    /// </summary>
     private RectTransform ForkContainer()
     {
         if (forkContainer) return forkContainer;
 
         RectTransform parent = forkParent ? forkParent : ForkCanvas();
         GameObject go = new GameObject("Death Fork", typeof(RectTransform), typeof(CanvasGroup),
-            typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
         forkContainer = (RectTransform)go.transform;
         forkContainer.SetParent(parent, false);
         forkContainer.anchorMin = forkContainer.anchorMax = forkContainer.pivot = new Vector2(0.5f, 0.5f);
         forkContainer.anchoredPosition = forkOffset;
+        forkContainer.sizeDelta = new Vector2(forkWidth, 0f);
 
-        VerticalLayoutGroup layout = go.GetComponent<VerticalLayoutGroup>();
+        HorizontalLayoutGroup layout = go.GetComponent<HorizontalLayoutGroup>();
         layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.spacing = lineSpacing;
+        layout.spacing = 0f;
         layout.childControlWidth = true;
         layout.childControlHeight = true;
-        layout.childForceExpandWidth = false;
+        layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
 
         ContentSizeFitter fitter = go.GetComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         forkGroup = go.GetComponent<CanvasGroup>();
@@ -428,6 +494,13 @@ public class DeathCutscene : CutSceneBase
         }
 
         line.alignment = TextAlignmentOptions.Center;
+
+        // Every cell exactly as wide, whatever its text: the row splits evenly.
+        LayoutElement cell = line.GetComponent<LayoutElement>();
+        if (!cell) cell = line.gameObject.AddComponent<LayoutElement>();
+        cell.minWidth = 0f;
+        cell.preferredWidth = 0f;
+        cell.flexibleWidth = 1f;
         return line;
     }
 
