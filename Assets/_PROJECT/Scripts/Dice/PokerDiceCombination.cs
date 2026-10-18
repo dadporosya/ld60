@@ -24,9 +24,10 @@ public static class PokerDiceEvaluator
     /// <summary>
     /// Every hand <paramref name="values"/> (1..6) contains - a full house also counts as a pair and
     /// three of a kind, so a card boosting a lower hand can still make it the best choice.
-    /// <see cref="PokerDiceCombination.Nothing"/> is always included.
+    /// <see cref="PokerDiceCombination.Nothing"/> is always included. A straight may skip up to
+    /// <paramref name="straightGaps"/> missing faces (1: 1 2 4 5 6 is a large straight, 1 2 4 5 a small one).
     /// </summary>
-    public static List<PokerDiceCombination> Contained(IReadOnlyList<int> values)
+    public static List<PokerDiceCombination> Contained(IReadOnlyList<int> values, int straightGaps = 0)
     {
         int[] counts = new int[Faces + 1];
         foreach (int v in values)
@@ -43,7 +44,7 @@ public static class PokerDiceEvaluator
             if (counts[f] == 2) hasTwo = true;
         }
 
-        int run = LongestRun(counts);
+        int run = LongestRun(counts, straightGaps);
 
         List<PokerDiceCombination> result = new List<PokerDiceCombination> { PokerDiceCombination.Nothing };
         if (max >= 2) result.Add(PokerDiceCombination.OnePair);
@@ -58,13 +59,20 @@ public static class PokerDiceEvaluator
         return result;
     }
 
-    private static int LongestRun(int[] counts)
+    /// <summary>The most faces shown in a row, skipping at most <paramref name="gaps"/> missing faces inside it.</summary>
+    private static int LongestRun(int[] counts, int gaps)
     {
-        int best = 0, current = 0;
-        for (int f = 1; f <= Faces; f++)
+        int best = 0;
+        for (int start = 1; start <= Faces; start++)
         {
-            current = counts[f] > 0 ? current + 1 : 0;
-            if (current > best) best = current;
+            if (counts[start] == 0) continue;
+            int shown = 0, missing = 0;
+            for (int f = start; f <= Faces; f++)
+            {
+                if (counts[f] > 0) shown++;
+                else if (++missing > gaps) break;
+                if (shown > best) best = shown;
+            }
         }
         return best;
     }

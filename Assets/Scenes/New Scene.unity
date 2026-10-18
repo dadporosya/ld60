@@ -443,6 +443,9 @@ MonoBehaviour:
     badDialogue: {fileID: 11400000, guid: 9465432a46924a76a42d3b706bf7b17e, type: 2}
     neutralDialogue: {fileID: 11400000, guid: 4891c4a3cd5e46c49a6b35b94d7369f1, type: 2}
     hopefulDialogue: {fileID: 11400000, guid: de9e043ffccf48d7a024373af4ba6e33, type: 2}
+    badCardTitles: []
+    neutralCardTitles: []
+    hopefulCardTitles: []
   - name: Girlfriend
     isFinal: 0
     lockedDialogue: {fileID: 0}
@@ -451,6 +454,9 @@ MonoBehaviour:
     badDialogue: {fileID: 11400000, guid: 2e2618256eb441ca942b21dd451f291a, type: 2}
     neutralDialogue: {fileID: 11400000, guid: ab50986ea33f48ef82260cba2e198061, type: 2}
     hopefulDialogue: {fileID: 11400000, guid: 06ceddb89ed3428389c0e0c4c67db6fa, type: 2}
+    badCardTitles: []
+    neutralCardTitles: []
+    hopefulCardTitles: []
   - name: Mother
     isFinal: 0
     lockedDialogue: {fileID: 0}
@@ -459,6 +465,9 @@ MonoBehaviour:
     badDialogue: {fileID: 11400000, guid: 34584f99b83f4345b60df89bbd3496b6, type: 2}
     neutralDialogue: {fileID: 11400000, guid: 804765010d1b4a6ea2ce204f09e0ede2, type: 2}
     hopefulDialogue: {fileID: 11400000, guid: 5cbec6ae373c4d95926430fcd14d339f, type: 2}
+    badCardTitles: []
+    neutralCardTitles: []
+    hopefulCardTitles: []
   - name: Father
     isFinal: 1
     lockedDialogue: {fileID: 0}
@@ -467,6 +476,9 @@ MonoBehaviour:
     badDialogue: {fileID: 11400000, guid: 04c6ff0519d746f48f75bcbb656782fe, type: 2}
     neutralDialogue: {fileID: 11400000, guid: fe7cd64ce4be426faddf2e88cd89353b, type: 2}
     hopefulDialogue: {fileID: 11400000, guid: 5e79cd3e6cfd4a84bd6407d8dc2bf395, type: 2}
+    badCardTitles: []
+    neutralCardTitles: []
+    hopefulCardTitles: []
   pointsByRound: ad000000250100007d0100004a020000
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
@@ -475,8 +487,14 @@ MonoBehaviour:
   otherSpeakerId: 2
   callStartLoop: {fileID: 8300000, guid: 0ef97fee35ac1d840aa45b695b54ea51, type: 3}
   callStartVolume: 1
-  ringHold: 1.5
+  blackHold: 3.33
+  revealDuration: 2
   ringFadeOut: 0.25
+  modulateMusic: 1
+  blackLowPassCutoff: 10
+  dialogueLowPassCutoff: 1500
+  dialoguePitch: 1
+  restoreMusicAfter: 1
   debugKeys: 1
   onLevelStarted:
     m_PersistentCalls:
@@ -819,7 +837,7 @@ MonoBehaviour:
   targetSwitchPunch: 0.2
   riskyTargetText: {fileID: 0}
   riskyTargetFormat: Risky {0}
-  roundText: {fileID: 0}
+  roundText: {fileID: 1568147705}
   roundFormat: '{0}/{1}'
   scoreText: {fileID: 1617046775}
   scoreFormat: '{0}'
@@ -867,24 +885,24 @@ MonoBehaviour:
     roundScoreColor: {r: 1, g: 0.9, b: 0.45, a: 1}
     roundStartColor: {r: 1, g: 1, b: 1, a: 1}
   spotlight:
-    text: {fileID: 0}
-    delay: 0.4
-    hold: 1.2
-    fadeOut: 0.3
+    text: {fileID: 1531122480}
+    delay: 0.72
+    hold: 1.71
+    fadeOut: 1.9
     lost:
-      text: LOST
+      text: ALONE
       color: {r: 0.9, g: 0.15, b: 0.15, a: 1}
-      sfx: {fileID: 0}
+      sfx: {fileID: 8300000, guid: 9508b1c4a5a4639419a83ca23102e2a2, type: 3}
       volume: 1
     passed:
       text: PASSED
       color: {r: 1, g: 1, b: 1, a: 1}
-      sfx: {fileID: 0}
+      sfx: {fileID: 8300000, guid: 9508b1c4a5a4639419a83ca23102e2a2, type: 3}
       volume: 1
     hope:
       text: HOPE
       color: {r: 0.35, g: 0.9, b: 0.4, a: 1}
-      sfx: {fileID: 0}
+      sfx: {fileID: 8300000, guid: 9508b1c4a5a4639419a83ca23102e2a2, type: 3}
       volume: 1
   debugKeys: 1
   debugLoseKey: 37
@@ -4378,10 +4396,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
+  - {fileID: 2052019987}
+  - {fileID: 1743218968}
   - {fileID: 1901275428}
   - {fileID: 244570388}
-  - {fileID: 1743218968}
-  - {fileID: 2052019987}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -5122,7 +5140,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -464.42996, y: 446.99997}
+  m_AnchoredPosition: {x: -464.42996, y: 447}
   m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364
@@ -5571,6 +5589,7 @@ RectTransform:
   - {fileID: 1859262028}
   - {fileID: 788155893}
   - {fileID: 210451665}
+  - {fileID: 1531122479}
   - {fileID: 1818620956}
   m_Father: {fileID: 1161153468}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6792,6 +6811,174 @@ Transform:
   - {fileID: 1154309076}
   m_Father: {fileID: 291783876}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1531122478
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1531122479}
+  - component: {fileID: 1531122481}
+  - component: {fileID: 1531122480}
+  - component: {fileID: 1531122482}
+  m_Layer: 0
+  m_Name: IMPACT FRAME
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1531122479
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531122478}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1.3333, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1152190594}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1531122480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531122478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 'CHILDHOO
+
+    FRIEND'
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 00604d11578add94aa7857da48d3ba69, type: 2}
+  m_sharedMaterial: {fileID: -800732366874278159, guid: 00604d11578add94aa7857da48d3ba69, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 241.55
+  m_fontSizeBase: 36
+  m_fontWeight: 400
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 18
+  m_fontSizeMax: 797.65
+  m_fontStyle: 0
+  m_HorizontalAlignment: 16
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &1531122481
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531122478}
+  m_CullTransparentMesh: 1
+--- !u!114 &1531122482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531122478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba17233c34e02024e9e4c50f01335076, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TextAnimation
+  animationTarget: 3
+  animations: 01000000
+  cleaned: 0
+  shakeStrength: 3
+  shakeSpeed: 25
+  waveAmplitude: 6
+  waveFrequency: 2
+  waveSpread: 0.3
+  bounceHeight: 8
+  bounceFrequency: 2
+  bounceSpread: 0.2
+  fadeMinAlpha: 0
+  fadeMaxAlpha: 1
+  fadeSpeed: 1.5
+  _tmp: {fileID: 0}
+  _isDirty: 1
 --- !u!1 &1562042180
 GameObject:
   m_ObjectHideFlags: 0
@@ -6979,7 +7166,7 @@ MonoBehaviour:
   cleaned: 0
   shakeStrength: 3
   shakeSpeed: 25
-  waveAmplitude: 6.7
+  waveAmplitude: 10.5
   waveFrequency: 0.2
   waveSpread: 0.88
   bounceHeight: 8
@@ -7019,8 +7206,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 67108863
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.011764706}
+    rgba: 83886079
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0.015686275}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -8111,6 +8298,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0802dbf4764d13a4b93d837601567caf, type: 2}
   levelFade: 1.5
   volume: 0.607
+  pitch: 1
   lowPass:
     enabled: 1
     cutoff: 9984
@@ -8259,6 +8447,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 03f1ce308c2c4a3aa578d8c51a0db947, type: 2}
   - {fileID: 11400000, guid: 8aa99602762f40c281bccbcd6a8e4d31, type: 2}
   - {fileID: 11400000, guid: 54964d20f85547b9889534891c70d1f0, type: 2}
+  - {fileID: 11400000, guid: f5904b633c944101ba013d24dbaf2035, type: 2}
+  - {fileID: 11400000, guid: b3cd92b1986d4cb2a7c6491bf224aa11, type: 2}
   cardPrefab: {fileID: 8211534820775114999, guid: 18ecd4166aa7d224ba714c034fe6bcc3, type: 3}
   defaultChoiceCount: 3
   allowOwnedPermanentCards: 1

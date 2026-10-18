@@ -1139,7 +1139,7 @@ public class DiceManager : MonoBehaviour
     /// <summary>Whether <paramref name="values"/> make any hand that counts as a combination.</summary>
     private bool MakesHand(IReadOnlyList<int> values)
     {
-        foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values))
+        foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values, StraightGapsFor(cards)))
             if (CountsAsCombination(hand)) return true;
         return false;
     }
@@ -1529,7 +1529,7 @@ public class DiceManager : MonoBehaviour
         foreach (int v in values) diceSum += v;
 
         DiceScore best = null;
-        foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values))
+        foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values, StraightGapsFor(ownedCards)))
         {
             // No hand, no points: the dice only score through a combination.
             if (noPointsWithoutCombination && hand == PokerDiceCombination.Nothing) continue;
@@ -1624,6 +1624,19 @@ public class DiceManager : MonoBehaviour
             else if (effect.type == CardEffectType.ExtraDice) rerolls -= Mathf.Max(0, effect.rerollCost);
         }
         return Mathf.Max(0, rerolls);
+    }
+
+    /// <summary>Missing faces a straight may skip: the most any owned Gap Straight card allows.</summary>
+    private static int StraightGapsFor(IReadOnlyList<CardInstance> ownedCards)
+    {
+        int gaps = 0;
+        if (ownedCards == null) return gaps;
+        foreach (CardInstance card in ownedCards)
+        {
+            CardEffect effect = card?.Effect;
+            if (effect != null && effect.type == CardEffectType.GapStraight) gaps = Mathf.Max(gaps, card.Amount);
+        }
+        return gaps;
     }
 
     /// <summary>Dice on the table this turn: <see cref="startDiceCount"/> + Extra Dice cards.</summary>

@@ -99,7 +99,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Yeah, I am just about to ask...'
+    text: 'Yeah, I was just about to ask...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -124,7 +124,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'All we was thinking like so lol'
+    text: 'We all thought so, lol'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -149,7 +149,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Your mom even came in front of ma doors in tears asking about you'
+    text: 'Your mom even came to my door in tears, asking about you'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -174,7 +174,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Yeah... Lets not talk about this...'
+    text: 'Yeah... Let''s not talk about this...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -199,7 +199,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'I want to ask you something?'
+    text: 'Can I ask you something?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -224,7 +224,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'What would do, if I died?'
+    text: 'What would you do if I died?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -299,7 +299,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Seriously'
+    text: 'Seriously.'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -324,7 +324,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'What I soppoused to answer?'
+    text: 'What am I supposed to answer?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -349,7 +349,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'I dont know. The first thing on your mind.'
+    text: 'I don''t know. The first thing that comes to mind.'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -399,7 +399,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'But i would be really sad about you...'
+    text: 'But I would be really sad...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -424,7 +424,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Is everything good with you?'
+    text: 'Is everything okay with you?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -499,7 +499,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Riddles? These that you have left before dissapearence?'
+    text: 'Riddles? The ones you left before you disappeared?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -524,7 +524,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Gosh, actually, no, they are too hard to be honest...'
+    text: 'Gosh, actually, no, they''re too hard, to be honest...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -549,7 +549,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: '<i>(you didnt even try)</i>'
+    text: '<i>(You didn''t even try)</i>'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -1363,7 +1363,7 @@ MonoBehaviour:
     - clip: {fileID: 8300000, guid: 60cf361695d4e884b92937654cb88c9d, type: 3}
       volume: 1
       delay: 0
-      timing: 0
+      timing: 2
       transitionPoint: 0.5
     startEffects: []
     keepPreviousSustainedEffects: 0

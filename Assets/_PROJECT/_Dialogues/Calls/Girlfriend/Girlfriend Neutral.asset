@@ -24,7 +24,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Hi Honey'
+    text: 'Hi, honey'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -99,7 +99,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Honey, dont be mad, I just want you ask ask something...'
+    text: 'Honey, don''t be mad, I just want to ask you something...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -124,7 +124,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Dont be mad?'
+    text: 'Don''t be mad?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -149,7 +149,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Nobody havent seen you for 1 month, and now you calling me out of nothere to "ask me something"?'
+    text: 'Nobody has seen you for a whole month, and now you call me out of nowhere to "ask me something"?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -224,7 +224,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'you dissapeard like you havent existed at all,'
+    text: 'You disappeared like you had never existed at all,'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -249,7 +249,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'And the only thing that left from you was a bunch of stupid riddles...'
+    text: 'And the only thing you left behind was a bunch of stupid riddles...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -299,7 +299,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'can i still ask you something?'
+    text: 'Can I still ask you something?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -374,7 +374,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'What would you do, if i died?'
+    text: 'What would you do if I died?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -424,7 +424,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'We can discuss it, when you finally come back'
+    text: 'We can discuss it when you finally come back'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -474,7 +474,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: '<i>(it better be a lie)</i>'
+    text: '<i>(It''d better be a lie)</i>'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -1144,7 +1144,7 @@ MonoBehaviour:
     - clip: {fileID: 8300000, guid: 60cf361695d4e884b92937654cb88c9d, type: 3}
       volume: 1
       delay: 0
-      timing: 0
+      timing: 2
       transitionPoint: 0.5
     startEffects: []
     keepPreviousSustainedEffects: 0

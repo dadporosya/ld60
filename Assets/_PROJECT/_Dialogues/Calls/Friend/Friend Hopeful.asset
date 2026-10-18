@@ -99,7 +99,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Yeah, I am just about to ask...'
+    text: 'Yeah, I was just about to ask...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -124,7 +124,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'All we was thinking like so lol'
+    text: 'We all thought so, lol'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -149,7 +149,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Your mom even came in front of ma doors in tears asking about you'
+    text: 'Your mom even came to my door in tears, asking about you'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -174,7 +174,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Yeah... Lets not talk about this...'
+    text: 'Yeah... Let''s not talk about this...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -199,7 +199,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Gosh, what we should talk about in this case?'
+    text: 'Gosh, what should we talk about then?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -274,7 +274,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'The riddles you left before you dissapear'
+    text: 'The riddles you left before you disappeared'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -324,7 +324,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Yeah, I tried really hard on them'
+    text: 'Yeah, I tried really hard to solve them'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -399,7 +399,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'They looks impossible!'
+    text: 'They look impossible!'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -449,7 +449,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Next time before creating new ones ask me for help first! I will definitelly create some thing award winning or i dunno.'
+    text: 'Next time, before making new ones, ask me for help first! I''ll definitely come up with something award-winning or, I dunno.'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -474,7 +474,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'I there are any competitions for riddles and puzzles of course...'
+    text: 'If there are any competitions for riddles and puzzles, of course...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -1363,7 +1363,7 @@ MonoBehaviour:
     - clip: {fileID: 8300000, guid: 60cf361695d4e884b92937654cb88c9d, type: 3}
       volume: 1
       delay: 0
-      timing: 0
+      timing: 2
       transitionPoint: 0.5
     startEffects: []
     keepPreviousSustainedEffects: 0

@@ -48,6 +48,8 @@ public enum CardEffectType
     DestroyFace = 12,
     [Tooltip("Right click a die showing Face Value to turn it into Flip Face, and back - as often as the player likes.")]
     FlipFace = 13,
+    [Tooltip("Straights may skip Amount missing faces: 1 2 4 5 6 is a large straight, 1 2 4 5 a small one.")]
+    GapStraight = 14,
 }
 
 /// <summary>
@@ -90,7 +92,7 @@ public class CardEffect
     public CardEffectType type = CardEffectType.Always;
     [Tooltip("Scoring cards (Always, Combination, Face Value, Pattern, Parity, All Parity): what they do to the score.")]
     public ScoreOperation operation = ScoreOperation.AddPoints;
-    [Tooltip("Points (Add Points), rerolls (Extra Rerolls, Destroy Face) or dice (Extra Dice).")]
+    [Tooltip("Points (Add Points), rerolls (Extra Rerolls, Destroy Face), dice (Extra Dice) or gaps (Gap Straight).")]
     public int amount = 3;
     [Tooltip("Mult added (Add Mult, Destroy Face) or what mult / points are multiplied by (Multiply Mult / Points).")]
     [Min(0f)] public float multiplier = 1.5f;
@@ -240,6 +242,7 @@ public class CardEffect
                 string text = $"Right click a {faceValue} to destroy it: +{value} {(amount == 1 ? "reroll" : "rerolls")}";
                 return multiplier > 0f ? text + $", +{MultValue()} mult" : text;
             case CardEffectType.FlipFace: return $"Right click a {faceValue} to flip it to {flipFace} and back, any number of times";
+            case CardEffectType.GapStraight: return $"Straights may have {value} {(amount == 1 ? "gap" : "gaps")}";
             default: return "";
         }
     }
@@ -370,12 +373,15 @@ public class CardInstance
     public CardMood mood;
     [Tooltip("Extra share of points an upgraded card grants: 0.5 = 50% more. 0: not upgraded.")]
     public float upgradeBonus;
+    [Tooltip("The title shown instead of the card's own (one from the level's list for how the round went). Empty: the card's own.")]
+    public string title;
 
-    public CardInstance(CardData data, CardMood mood, float upgradeBonus = 0f)
+    public CardInstance(CardData data, CardMood mood, float upgradeBonus = 0f, string title = null)
     {
         this.data = data;
         this.mood = mood;
         this.upgradeBonus = Mathf.Max(0f, upgradeBonus);
+        this.title = title;
     }
 
     public bool IsPermanent => data && data.IsPermanent;
@@ -394,7 +400,7 @@ public class CardInstance
     /// <summary>The effect's multiplier, upgrade included.</summary>
     public float Multiplier => Effect != null ? Effect.MultiplierFor(PointsScale) : 1f;
 
-    public string Title => data ? data.Title(mood) : "";
+    public string Title => !string.IsNullOrEmpty(title) ? title : data ? data.Title(mood) : "";
     public string Description => data ? data.Description(PointsScale) : "";
     public string Icon => data ? data.Icon : "";
 

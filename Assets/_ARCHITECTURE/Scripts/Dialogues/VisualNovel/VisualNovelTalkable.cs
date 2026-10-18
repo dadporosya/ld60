@@ -24,6 +24,7 @@ using UnityEngine.InputSystem;
 /// FadeThroughBlur / CrossfadeBlur transition (running ones pause for it). SFX timed by the
 /// transition (VisualNovelSfxCue.timing) play part-way through it instead.</item>
 /// <item>The text starts typing once the transition and any blocking start effect are done.</item>
+/// <item>SFX timed After Text play once the text is fully shown (typed out, or cut short).</item>
 /// </list>
 ///
 /// Keep this component (and the ambience) OUTSIDE <see cref="root"/>: the dialogue-end fade runs
@@ -449,6 +450,13 @@ public class VisualNovelTalkable : MonoBehaviour
 
         if (HasBlockingEffect(s))
             while (!run.finished) yield return null;
+    }
+
+    /// <summary>The node's text is fully on the text box (typed out, or cut short): its After Text sounds play.</summary>
+    public void OnNodeTextShown(VisualNovelDialogueContainer dialogue, DialogueNode node)
+    {
+        VisualNovelNodeSettings s = dialogue.SettingsFor(node.nodeId);
+        if (s != null) PlaySfx(s, VisualNovelSfxTiming.AfterText, 0f);
     }
 
     /// <summary>Tells <see cref="PlayNode"/> when the node's blocking cues are done (or were cancelled).</summary>

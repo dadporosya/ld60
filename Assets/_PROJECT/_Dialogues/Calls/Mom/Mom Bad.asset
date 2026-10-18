@@ -24,7 +24,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'hi mom...'
+    text: 'Hi, Mom...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -49,7 +49,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Oh god, darling, where are you missing for so long?'
+    text: 'Oh God, darling, where have you been for so long?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -99,7 +99,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'What would you do, if I died?'
+    text: 'What would you do if I died?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -124,7 +124,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Oh god, darling, you are scaring me!'
+    text: 'Oh God, darling, you are scaring me!'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -149,7 +149,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'You dissapeared for 1 whole month, and now you are asking such wierd question!'
+    text: 'You disappeared for a whole month, and now you are asking such a weird question!'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -199,7 +199,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Darling, please, stop all this "games"'
+    text: 'Darling, please, stop all these "games"'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -224,7 +224,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Please, come back home. Dad and I are really worrying about you!'
+    text: 'Please come back home. Dad and I are really worried about you!'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -349,7 +349,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Now,l she hates me too...'
+    text: 'Now she hates me too...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -803,7 +803,7 @@ MonoBehaviour:
     - clip: {fileID: 8300000, guid: 60cf361695d4e884b92937654cb88c9d, type: 3}
       volume: 1
       delay: 0
-      timing: 0
+      timing: 2
       transitionPoint: 0.5
     startEffects: []
     keepPreviousSustainedEffects: 0

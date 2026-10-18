@@ -494,7 +494,9 @@ public class FuneralGameManager : MonoBehaviour
 
         // The CardManager applies the pick itself (keeps a permanent card, fires an immediate one).
         SetPhase(Phase.CardDraft);
-        if (!Cards.ChooseCards(Cards.DefaultChoiceCount, mood, _ => AfterCall())) AfterCall();
+        // Titled from the played level's list for how its round went (empty: the cards' own titles).
+        IReadOnlyList<string> titles = Levels ? Levels.LastCardTitles : null;
+        if (!Cards.ChooseCards(Cards.DefaultChoiceCount, mood, _ => AfterCall(), titles)) AfterCall();
     }
 
     private void AfterCall()

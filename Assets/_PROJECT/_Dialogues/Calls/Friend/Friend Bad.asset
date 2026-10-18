@@ -99,7 +99,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Yeah, I am just about to ask...'
+    text: 'Yeah, I was just about to ask...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -124,7 +124,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'All we was thinking like so lol'
+    text: 'We all thought so, lol'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -149,7 +149,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Your mom even came in front of ma doors in tears asking about you'
+    text: 'Your mom even came to my door in tears, asking about you'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -174,7 +174,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Yeah... Lets not talk about this...'
+    text: 'Yeah... Let''s not talk about this...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -199,7 +199,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'I want to ask you something?'
+    text: 'Can I ask you something?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -224,7 +224,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'You call me only when you are in trouble, rgiht?'
+    text: 'You only call me when you are in trouble, right?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -274,7 +274,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'What would do, if I died?'
+    text: 'What would you do if I died?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -349,7 +349,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Seriously'
+    text: 'Seriously.'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -374,7 +374,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'I dunno. Maybe play fortnite as ussualy. Why do you asking?'
+    text: 'I dunno. Maybe play Fortnite as usual. Why are you asking?'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -399,7 +399,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: 'Nevermind...'
+    text: 'Never mind...'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -997,7 +997,7 @@ MonoBehaviour:
     - clip: {fileID: 8300000, guid: 60cf361695d4e884b92937654cb88c9d, type: 3}
       volume: 1
       delay: 0
-      timing: 0
+      timing: 2
       transitionPoint: 0.5
     startEffects: []
     keepPreviousSustainedEffects: 0

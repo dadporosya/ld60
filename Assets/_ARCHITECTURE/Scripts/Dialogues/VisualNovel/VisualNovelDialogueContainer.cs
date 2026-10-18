@@ -88,6 +88,9 @@ public enum VisualNovelSfxTiming
     [Tooltip("Transition Point of the way through the node's transition (0.5 = its middle), whatever " +
              "Cues After Transition says. Plays at once when the node has no transition.")]
     Transition,
+    // Appended: enums serialize as ints.
+    [Tooltip("Once the node's text is fully on the text box - typed out, or cut short by the player.")]
+    AfterText,
 }
 
 [Serializable]
@@ -385,10 +388,13 @@ public class VisualNovelDialogueContainer : DialogueContainer, IMultiObjectDialo
     }
 
     /// <summary>
-    /// Nothing to stop here: OnNodeEnd fires when the text finishes typing, but a node's background
-    /// and sustained effects last until the NEXT node starts.
+    /// Fires when the node's text is fully shown (typed out, or cut short by the player): its After Text
+    /// sounds play. Nothing stops here - a node's background and sustained effects last until the NEXT node starts.
     /// </summary>
-    public void OnNodeEnd(DialogueNode node) { }
+    public void OnNodeEnd(DialogueNode node)
+    {
+        if (bound && node != null) bound.OnNodeTextShown(this, node);
+    }
 
     public void OnDialogueEnd()
     {

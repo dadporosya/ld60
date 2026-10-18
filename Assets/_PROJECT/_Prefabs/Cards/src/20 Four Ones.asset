@@ -10,25 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a41d21fc66d36464987736c980b2be7e, type: 3}
-  m_Name: 20 Four of a Kind
+  m_Name: 20 Four Ones
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  goodTitle: "Four of a Kind"
-  badTitle: "Four of a Kind"
-  description: "Four of a Kind grants {0} bonus points"
+  goodTitle: "Four Ones"
+  badTitle: "Four Ones"
+  description: "1 1 1 1 grants additional {0} points"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0
   effect:
-    type: 1
+    type: 6
     operation: 0
-    amount: 167
+    amount: 200
     multiplier: 1
     nextRoundRerolls: 0
-    combination: 7
+    combination: 1
     otherCombinations: []
     faceValue: 6
-    pattern: ""
+    pattern: "1 1 1 1"
     parity: 0
     rerollCost: 0
     flipFace: 5

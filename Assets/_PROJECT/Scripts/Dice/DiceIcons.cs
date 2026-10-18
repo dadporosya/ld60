@@ -88,6 +88,9 @@ public static class DiceIcons
             case CardEffectType.AllParity:
                 return Parity(effect.parity);
 
+            case CardEffectType.GapStraight:
+                return Row(FaceIcons(1, 2, 4, 5, 6));
+
             case CardEffectType.ExtraDice:
                 return "+" + Repeat(X, effect.amount);
 

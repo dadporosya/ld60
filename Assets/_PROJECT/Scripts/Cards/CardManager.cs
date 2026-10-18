@@ -182,11 +182,14 @@ public class CardManager : MonoBehaviour
     public void ChooseCards() => ChooseCards(defaultChoiceCount);
 
     /// <summary>
-    /// Opens the choice: <paramref name="count"/> different cards showing their <paramref name="mood"/> title.
-    /// <paramref name="chosen"/> gets the picked card once the menu has closed - or null right away when there
-    /// is nothing to offer. Returns false (and never calls back) when a choice is already open.
+    /// Opens the choice: <paramref name="count"/> different cards showing their <paramref name="mood"/> title -
+    /// or, with <paramref name="titles"/> (the level's list for how the round went), a title drawn from it at
+    /// random, a different one per card while the list lasts. <paramref name="chosen"/> gets the picked card once
+    /// the menu has closed - or null right away when there is nothing to offer. Returns false (and never calls
+    /// back) when a choice is already open.
     /// </summary>
-    public bool ChooseCards(int count, CardMood mood = CardMood.Hope, Action<CardInstance> chosen = null)
+    public bool ChooseCards(int count, CardMood mood = CardMood.Hope, Action<CardInstance> chosen = null,
+        IReadOnlyList<string> titles = null)
     {
         Initialize();
 
@@ -215,13 +218,14 @@ public class CardManager : MonoBehaviour
         if (root) root.SetActive(true);
         FadeTo(fadeAlpha, fadeDuration);
 
+        List<string> titlePool = new List<string>();
         bool layout = chooseArea.GetComponent<LayoutGroup>();
         for (int i = 0; i < offer.Count; i++)
         {
             CardView view = Spawn(offer[i], chooseArea);
             if (!view) continue;
 
-            view.Bind(new CardInstance(offer[i], mood, upgrade), Pick);
+            view.Bind(new CardInstance(offer[i], mood, upgrade, DrawTitle(titles, titlePool)), Pick);
             view.Clickable = false;
             Vector3 scale = view.transform.localScale;
             view.SetHoverBase(scale);
@@ -553,6 +557,25 @@ public class CardManager : MonoBehaviour
             copies.RemoveAt(i);
         }
         return offer;
+    }
+
+    /// <summary>
+    /// A random title from <paramref name="titles"/> not drawn yet this choice (<paramref name="pool"/> holds the
+    /// ones left; refilled once they're all used). Null without titles: the card shows its own.
+    /// </summary>
+    private static string DrawTitle(IReadOnlyList<string> titles, List<string> pool)
+    {
+        if (titles == null) return null;
+
+        if (pool.Count == 0)
+            foreach (string title in titles)
+                if (!string.IsNullOrWhiteSpace(title)) pool.Add(title);
+        if (pool.Count == 0) return null;
+
+        int i = UnityEngine.Random.Range(0, pool.Count);
+        string drawn = pool[i];
+        pool.RemoveAt(i);
+        return drawn;
     }
 
     private CardView Spawn(CardData data, Transform parent)

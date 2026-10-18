@@ -34,11 +34,43 @@ public class Level
     [Tooltip("Hopeful: played when the round reaches the risky goal. Empty = the Neutral Dialogue.")]
     public VisualNovelDialogueContainer hopefulDialogue;
 
+    [Header("Card titles")]
+    [Tooltip("Bad: the titles the cards offered after a lost round show, one per card, drawn at random. " +
+             "Empty = the cards' own titles.")]
+    public List<string> badCardTitles = new List<string>();
+    [Tooltip("Neutral: the card titles after a round that reached the points it needs, but not the risky goal. " +
+             "Empty = the cards' own titles.")]
+    public List<string> neutralCardTitles = new List<string>();
+    [Tooltip("Hopeful: the card titles after a round that reached the risky goal. Empty = the Neutral Card Titles.")]
+    public List<string> hopefulCardTitles = new List<string>();
+
     public VisualNovelDialogueContainer DialogueFor(bool passed, bool risky)
     {
         if (!passed) return badDialogue;
         return risky && hopefulDialogue ? hopefulDialogue : neutralDialogue;
     }
+
+    /// <summary>The card titles for <paramref name="outcome"/> (the hopeful ones fall back to the neutral ones).</summary>
+    public List<string> CardTitlesFor(LevelOutcome outcome)
+    {
+        switch (outcome)
+        {
+            case LevelOutcome.Bad: return badCardTitles;
+            case LevelOutcome.Hopeful: return hopefulCardTitles is { Count: > 0 } ? hopefulCardTitles : neutralCardTitles;
+            default: return neutralCardTitles;
+        }
+    }
+
+    public static LevelOutcome OutcomeFor(bool passed, bool risky) =>
+        !passed ? LevelOutcome.Bad : risky ? LevelOutcome.Hopeful : LevelOutcome.Neutral;
+}
+
+/// <summary>How a level's round went: lost, passed, or passed with the risky goal reached too.</summary>
+public enum LevelOutcome
+{
+    Bad,
+    Neutral,
+    Hopeful,
 }
 
 /// <summary>
@@ -147,6 +179,23 @@ public class LevelManager : MonoBehaviour
     /// <summary>Whether the last played round (<see cref="LastPlayedIndex"/>) was won.</summary>
     public bool LastPlayedPassed { get; private set; }
 
+    /// <summary>How the last played round (<see cref="LastPlayedIndex"/>) went.</summary>
+    public LevelOutcome LastOutcome { get; private set; }
+
+    /// <summary>
+    /// The titles for the cards offered after the last played round: that level's list for how it went
+    /// (<see cref="Level.CardTitlesFor"/>). Null before any round, or when the list is empty.
+    /// </summary>
+    public IReadOnlyList<string> LastCardTitles
+    {
+        get
+        {
+            if (LastPlayedIndex < 0 || LastPlayedIndex >= levels.Count) return null;
+            List<string> titles = levels[LastPlayedIndex].CardTitlesFor(LastOutcome);
+            return titles is { Count: > 0 } ? titles : null;
+        }
+    }
+
     public IReadOnlyList<Level> Levels => levels;
 
     /// <summary>The level the next (or running) round plays; the last one once the list has run out.</summary>
@@ -243,6 +292,7 @@ public class LevelManager : MonoBehaviour
         LevelsLost = 0;
         LastPlayedIndex = -1;
         LastPlayedPassed = false;
+        LastOutcome = LevelOutcome.Bad;
         completed.Clear();
     }
 
@@ -272,6 +322,7 @@ public class LevelManager : MonoBehaviour
         if (index >= 0 && (passed || !onlyWinsComplete)) completed.Add(index);
         LastPlayedIndex = index;
         LastPlayedPassed = passed;
+        LastOutcome = Level.OutcomeFor(passed, risky);
         CurrentIndex++;
 
         if (passed) onLevelWon?.Invoke(index);
