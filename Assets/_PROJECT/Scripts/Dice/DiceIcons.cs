@@ -51,6 +51,26 @@ public static class DiceIcons
         }
     }
 
+    /// <summary>
+    /// Like <see cref="Combination"/>, but with real faces instead of "x" / "y": a full house "5 5 5 3 3", a pair
+    /// "4 4"... For the hint paper, where an example reads easier than letters.
+    /// </summary>
+    public static string Example(PokerDiceCombination combination, string gap = null)
+    {
+        gap ??= Gap;
+        switch (combination)
+        {
+            case PokerDiceCombination.OnePair: return Join(gap, FaceIcons(4, 4));
+            case PokerDiceCombination.TwoPair: return Join(gap, FaceIcons(2, 2, 5, 5));
+            case PokerDiceCombination.ThreeOfAKind: return Join(gap, FaceIcons(6, 6, 6));
+            case PokerDiceCombination.FullHouse: return Join(gap, FaceIcons(5, 5, 5, 3, 3));
+            case PokerDiceCombination.FourOfAKind: return Join(gap, FaceIcons(2, 2, 2, 2));
+            case PokerDiceCombination.FiveOfAKind: return Join(gap, FaceIcons(6, 6, 6, 6, 6));
+            case PokerDiceCombination.TwoThreeOfAKind: return Join(gap, FaceIcons(4, 4, 4, 1, 1, 1));
+            default: return Combination(combination, gap);
+        }
+    }
+
     /// <summary>A pattern's faces, e.g. "1 1 1" or "1 6". Anything but 1..6 is skipped.</summary>
     public static string Pattern(string pattern)
     {

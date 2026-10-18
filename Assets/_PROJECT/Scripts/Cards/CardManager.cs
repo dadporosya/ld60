@@ -100,6 +100,9 @@ public partial class CardManager : MonoBehaviour
 
     [Header("Audio")]
     [SerializeField] private AudioClip appearSfx;
+    [Tooltip("The mouse came onto a card that can be picked (or a kept card, when those are hoverable).")]
+    [SerializeField] private AudioClip hoverSfx;
+    [Tooltip("A card (or a die in the dice choice) was picked.")]
     [SerializeField] private AudioClip pickSfx;
     [SerializeField] private AudioClip burnSfx;
 
@@ -701,6 +704,7 @@ public partial class CardManager : MonoBehaviour
 
         CardView view = Instantiate(prefab, parent);
         view.gameObject.SetActive(true);
+        view.Hovered = _ => PlaySfx(hoverSfx);
         return view;
     }
 

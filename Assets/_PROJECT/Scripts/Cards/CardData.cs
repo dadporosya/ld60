@@ -107,6 +107,8 @@ public class CardEffect
     [Range(1, 6)] public int faceValue = 6;
     [Tooltip("Pattern cards: the faces the dice must show, e.g. \"1 1\" (two 1s), \"6 6 6\", \"1 6\" (a 1 and a 6).")]
     public string pattern = "1 1";
+    [Tooltip("Pattern cards: count once for each time the dice show the pattern (\"2 2\" twice for 2 2 2 2), not just once.")]
+    public bool eachPattern;
     [Tooltip("Parity cards: which dice count.")]
     public DiceParity parity = DiceParity.Odd;
     [Tooltip("Extra Dice: rerolls lost every round.")]
@@ -131,7 +133,8 @@ public class CardEffect
 
     /// <summary>
     /// How many times the card counts for <paramref name="values"/> making <paramref name="hand"/>: once or not at
-    /// all, or once per matching die for Face Value and Parity. 0 for cards that don't score.
+    /// all, or once per matching die for Face Value and Parity (once per copy of the pattern for Each Pattern cards).
+    /// 0 for cards that don't score.
     /// </summary>
     public int TimesIn(IReadOnlyList<int> values, PokerDiceCombination hand)
     {
@@ -139,7 +142,7 @@ public class CardEffect
         {
             case CardEffectType.Always: return 1;
             case CardEffectType.Combination: return Matches(hand) ? 1 : 0;
-            case CardEffectType.Pattern: return PatternIn(values) ? 1 : 0;
+            case CardEffectType.Pattern: return eachPattern ? PatternCount(values) : PatternIn(values) ? 1 : 0;
             case CardEffectType.FaceValue:
             case CardEffectType.Parity:
                 int count = 0;
@@ -170,7 +173,10 @@ public class CardEffect
     public bool IsOfParity(int face) => parity == DiceParity.Odd ? face % 2 == 1 : face % 2 == 0;
 
     /// <summary>Pattern cards: whether <paramref name="values"/> show every face of <see cref="pattern"/> (as many times as it has it).</summary>
-    public bool PatternIn(IReadOnlyList<int> values)
+    public bool PatternIn(IReadOnlyList<int> values) => PatternCount(values) > 0;
+
+    /// <summary>Pattern cards: how many times <paramref name="values"/> show <see cref="pattern"/>, no die used twice.</summary>
+    public int PatternCount(IReadOnlyList<int> values)
     {
         int[] need = new int[PokerDiceEvaluator.Faces + 1];
         bool any = false;
@@ -181,14 +187,15 @@ public class CardEffect
             need[face]++;
             any = true;
         }
-        if (!any) return false;
+        if (!any) return 0;
 
         int[] have = new int[PokerDiceEvaluator.Faces + 1];
         foreach (int v in values)
             if (v >= 1 && v <= PokerDiceEvaluator.Faces) have[v]++;
+        int times = int.MaxValue;
         for (int f = 1; f <= PokerDiceEvaluator.Faces; f++)
-            if (have[f] < need[f]) return false;
-        return true;
+            if (need[f] > 0) times = Mathf.Min(times, have[f] / need[f]);
+        return times;
     }
 
     /// <summary>Points with <paramref name="scale"/> applied (1.5 = 50% more), rounded half up.</summary>
@@ -230,7 +237,7 @@ public class CardEffect
             case CardEffectType.Always: return operationText;
             case CardEffectType.Combination: return $"{Combinations}: {operationText}";
             case CardEffectType.FaceValue: return $"{operationText} for each {faceValue}";
-            case CardEffectType.Pattern: return $"{pattern}: {operationText}";
+            case CardEffectType.Pattern: return eachPattern ? $"{operationText} for each {pattern}" : $"{pattern}: {operationText}";
             case CardEffectType.Parity: return $"{operationText} for each {Parity} die";
             case CardEffectType.AllParity: return $"{operationText} if every die is {Parity}";
             case CardEffectType.MostParity: return $"{operationText} if more dice are {Parity} than {OtherParity}";

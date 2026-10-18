@@ -8,7 +8,8 @@ using UnityEngine;
 /// <item>Clicked, it's shown up close like any showcase object, and its dialogue plays (the Dialogues list, in
 /// order, the last one repeating; none: straight to the list).</item>
 /// <item>Then the level list appears over it (<see cref="ShowcaseDialogueManager.ShowList(IReadOnlyList{Sprite}, IReadOnlyList{float}, bool, DialogueContainer, IReadOnlyList{ShowcaseDialogueManager.ListLine}, Action{int}, Action, Talkable)"/>),
-/// one line per <see cref="LevelManager"/> level; completed levels are struck through (keeping their color) and can't be picked.</item>
+/// one line per <see cref="LevelManager"/> level; completed levels are crossed out by their outcome's cross sprite
+/// (Hopeful ones with the approval sign beside them; no sprite: struck through), keep their color and can't be picked.</item>
 /// <item>Picking a level plays its picked dialogue with the list still on screen, then starts the level
 /// (<see cref="FuneralGameManager.PlayLevel"/>).</item>
 /// </list>
@@ -40,6 +41,9 @@ public class LevelPhoneInteractable : ShowcaseInteractable
     [SerializeField] private string levelFormat = "{0}";
     [Tooltip("{0} = level name.")]
     [SerializeField] private string completedFormat = "<s>{0}</s>";
+    [Tooltip("{0} = level name. A completed level with a cross sprite for its outcome (set in the LevelManager), " +
+             "used instead of Completed Format so the text isn't struck through under the cross.")]
+    [SerializeField] private string crossedFormat = "{0}";
     [Tooltip("{0} = level name. The final level while it's still locked.")]
     [SerializeField] private string lockedFinalFormat = "{0}";
 
@@ -75,7 +79,12 @@ public class LevelPhoneInteractable : ShowcaseInteractable
             bool completed = levels.IsCompleted(i);
             bool locked = !completed && levels.IsFinal(i) && !levels.FinalUnlocked;
 
-            string format = completed ? completedFormat : locked ? lockedFinalFormat : levelFormat;
+            // Crossed out by how its call went; a Hopeful one gets the approval sign beside it too.
+            bool played = levels.TryGetOutcome(i, out LevelOutcome outcome);
+            Sprite cross = completed && played ? levels.CrossFor(outcome) : null;
+            Sprite mark = completed && played && outcome == LevelOutcome.Hopeful ? levels.ApprovalSign : null;
+
+            string format = completed ? (cross ? crossedFormat : completedFormat) : locked ? lockedFinalFormat : levelFormat;
             DialogueContainer lockedDialogue = level.lockedDialogue ? level.lockedDialogue : finalLockedDialogue;
             lines.Add(new ShowcaseDialogueManager.ListLine
             {
@@ -87,6 +96,8 @@ public class LevelPhoneInteractable : ShowcaseInteractable
                 blocked = locked,
                 dialogue = locked ? lockedDialogue : null,
                 pickDialogue = locked ? null : PickedDialogueFor(i),
+                cross = cross,
+                mark = mark,
             });
         }
         return lines;

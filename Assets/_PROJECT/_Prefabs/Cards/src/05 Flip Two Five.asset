@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Flip Two Five"
   badTitle: "Flip Two Five"
-  description: "You can flip a 2 to 5 and vice versa (right click), any number of times"
+  description: "You can flip a 2 to a 5 and vice versa (right click), any number of times"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1

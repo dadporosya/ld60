@@ -180,7 +180,7 @@ MonoBehaviour:
     backgroundMaterial: {fileID: 0}
     clearBackground: 0
     stretchBackground: 0
-    foreground: {fileID: -7716695629669418368, guid: bbc82425e1d1b96468ed444259c299f7, type: 3}
+    foreground: {fileID: -3792012115360765371, guid: eec04f5d5ff528b4692c20f637268dc5, type: 3}
     foregroundMaterial: {fileID: 0}
     clearForeground: 0
     stretchForeground: 1
@@ -355,17 +355,17 @@ MonoBehaviour:
     startEffects: []
     keepPreviousSustainedEffects: 0
     sustainedEffects: []
-  - transition: 0
+  - transition: 1
     background: {fileID: 0}
     backgroundMaterial: {fileID: 0}
     clearBackground: 0
     stretchBackground: 0
-    foreground: {fileID: 0}
+    foreground: {fileID: -789923085587438313, guid: 5b2b22ce647ee16459b352fa5f94233c, type: 3}
     foregroundMaterial: {fileID: 0}
     clearForeground: 0
     stretchForeground: 0
-    textBox: 2
-    transitionDuration: 1
+    textBox: 0
+    transitionDuration: 0
     fadeColor: {r: 0, g: 0, b: 0, a: 1}
     holdOnColor: 0
     blurRadius: 1

@@ -125,6 +125,10 @@ public class DicePopups
     [Min(0f)] public float roundScoreScale = 1.6f;
     [Tooltip("Seconds the Round Score popup stays up before fading, on top of the usual hold.")]
     [Min(0f)] public float roundScoreExtraHold = 0.5f;
+    [Tooltip("Size of the next round's popup (Round Start Format), relative to the other popups.")]
+    [Min(0f)] public float roundStartScale = 1.8f;
+    [Tooltip("Seconds the next round's popup stays up before fading, on top of the usual hold.")]
+    [Min(0f)] public float roundStartExtraHold = 1.5f;
 
     [Header("Risky Goal Popup")]
     [Tooltip("Size of the risky goal popup, relative to the other popups.")]
@@ -1819,7 +1823,7 @@ public class DiceManager : MonoBehaviour
         // The intro keeps the Roll / Finish buttons off until the dice are thrown.
         PrepareRound();
         Popup(string.Format(popups.roundStartFormat, CurrentRound, RoundsInTurn), CombinationAnchor,
-            popups.combinationOffset, popups.roundStartColor);
+            popups.combinationOffset, popups.roundStartColor, popups.roundStartScale, popups.roundStartExtraHold);
         AfterDelay(nextRoundRollDelay, manager => manager.ThrowNextRound());
     }
 

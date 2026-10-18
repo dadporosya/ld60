@@ -97,6 +97,9 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     /// <summary>Moves to the end of its parent on hover so it's drawn on top. Off inside layout groups, where the order is the layout.</summary>
     public bool BringToFrontOnHover { get; set; }
 
+    /// <summary>Called when a hover starts (the card grows) - e.g. for a hover sound.</summary>
+    public Action<CardView> Hovered { get; set; }
+
     private CanvasGroup group;
     private Action<CardView> onClick;
     private Vector3 hoverBase = Vector3.one;
@@ -278,6 +281,7 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         // Drawn over its neighbours while it's bigger (order only - its position is set by whoever placed it).
         if (BringToFrontOnHover) transform.SetAsLastSibling();
         ScaleTo(HoverScaleOverride > 0f ? HoverScaleOverride : hoverScale);
+        Hovered?.Invoke(this);
     }
 
     public void OnPointerExit(PointerEventData eventData)

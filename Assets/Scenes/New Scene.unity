@@ -495,6 +495,10 @@ MonoBehaviour:
   pointsByRound: 
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
+  badCross: {fileID: 203810107663653706, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
+  neutralCross: {fileID: 6609834010356484862, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
+  hopefulCross: {fileID: -4658385511006654831, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
+  approvalSign: {fileID: 4539565550077499270, guid: e2429783ca595bd47aa18b61bd528660, type: 3}
   playerTalkable: {fileID: 2120501552}
   playerSpeakerId: 1
   otherSpeakerId: 2
@@ -762,7 +766,7 @@ MonoBehaviour:
   landSfx: {fileID: 8300000, guid: 9de58750eb52127408e569c699007d56, type: 3}
   lockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
   unlockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
-  hoverSfx: {fileID: 0}
+  hoverSfx: {fileID: 8300000, guid: 256e3c89b222b3042a2e3b4bc5bc97fc, type: 3}
   flipSfx: {fileID: 8300000, guid: 0dee433ca9ac0d5459e2ef1577f4253e, type: 3}
   destroySfx: {fileID: 8300000, guid: 7556b6b00941f184185c97ac403f3471, type: 3}
   bustSfx: {fileID: 0}
@@ -867,6 +871,8 @@ MonoBehaviour:
   riskyTargetFormat: Risky {0}
   roundText: {fileID: 1568147705}
   roundFormat: '{0}/{1}'
+  roundTextShake: 8
+  roundTextShakeDuration: 0.35
   scoreText: {fileID: 1617046775}
   scoreFormat: '{0}'
   scoreCounter: {fileID: 0}
@@ -906,6 +912,8 @@ MonoBehaviour:
     roundStartFormat: Round {0}
     roundScoreScale: 1.6
     roundScoreExtraHold: 0.5
+    roundStartScale: 1.8
+    roundStartExtraHold: 1.5
     riskyGoalScale: 1.15
     riskyGoalExtraHold: 1
     gainColor: {r: 0.45, g: 0.9, b: 0.45, a: 1}
@@ -3006,6 +3014,7 @@ MonoBehaviour:
   finalLockedDialogue: {fileID: 0}
   levelFormat: '{0}'
   completedFormat: <s>{0}</s>
+  crossedFormat: '{0}'
   lockedFinalFormat: '{0}'
 --- !u!1 &476436739
 GameObject:
@@ -4777,10 +4786,10 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
+  - {fileID: 1743218968}
   - {fileID: 2052019987}
   - {fileID: 1901275428}
   - {fileID: 244570388}
-  - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
   defaultFeather: 1
@@ -5521,7 +5530,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -464.42996, y: 446.99997}
+  m_AnchoredPosition: {x: -464.42996, y: 447}
   m_SizeDelta: {x: 625.25, y: 847.92993}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1046197364
@@ -5567,6 +5576,9 @@ MonoBehaviour:
   iconGap: 
   skipZeroPoints: 1
   safeFaceLine: '{0} - no bust'
+  exampleFaces: 1
+  bustLine: Bust - if the dice you rolled make no combination (and show no {0}),
+    you lose all your points.
   openSfx: {fileID: 0}
   closeSfx: {fileID: 0}
   onOpened:
@@ -5742,7 +5754,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CursorIconManager
   sfxVolume: 1
   defaultIcon:
-    texture: {fileID: 0}
+    texture: {fileID: 2800000, guid: 841b3e9f3f736c4498aa90dfdf0e2b04, type: 3}
     normalizedHotspot: {x: 0, y: 0}
     useCenterHotspot: 0
     animate: 0
@@ -5750,7 +5762,7 @@ MonoBehaviour:
     gapBetweenFrames: 0.2
   clickSound: {fileID: 0}
   clickIcon:
-    texture: {fileID: 0}
+    texture: {fileID: 2800000, guid: 5169a94f51537254097db2c79d205cfb, type: 3}
     normalizedHotspot: {x: 0, y: 0}
     useCenterHotspot: 0
     animate: 0
@@ -5893,7 +5905,7 @@ MonoBehaviour:
   currentCutScene: {fileID: 2072675787}
   currentCutScenePath: 
   defaultLabel: Cutscenes/
-  runOnStart: 0
+  runOnStart: 1
 --- !u!1 &1150178271
 GameObject:
   m_ObjectHideFlags: 0
@@ -7369,7 +7381,7 @@ MonoBehaviour:
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: -9.21
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
@@ -8934,7 +8946,8 @@ MonoBehaviour:
   flyEase: 7
   permanentAppearDuration: 0.3
   appearSfx: {fileID: 0}
-  pickSfx: {fileID: 0}
+  hoverSfx: {fileID: 0}
+  pickSfx: {fileID: 8300000, guid: 9ac8c6d872d71cb47bc10ad7ed576459, type: 3}
   burnSfx: {fileID: 0}
   debugKey: 1
   debugChooseKey: 31
@@ -9380,6 +9393,11 @@ MonoBehaviour:
   lineDisabledColor: {r: 1, g: 1, b: 1, a: 0.4}
   clickOutsideClosesList: 1
   listCloseButton: {fileID: 0}
+  crossOverhang: {x: 8, y: 0}
+  crossOffset: {x: 0, y: 0}
+  markSize: {x: 0, y: 0}
+  markGap: 10
+  markOffset: {x: 0, y: 0}
   appearSfx: {fileID: 0}
   lineHoverSfx: {fileID: 0}
   lineClickSfx: {fileID: 0}
@@ -9651,6 +9669,10 @@ MonoBehaviour:
   warningDuration: 6
   warningSkipLockout: 0.5
   warningFadeOut: 0.5
+  dialogueFadeIn: 1
+  dialogueFadeInEase: 1
+  warningShakeStrength: 3
+  warningShakeSpeed: 25
   warningSortingOrder: 1000
   warningFont: {fileID: 0}
   warningFontSize: 48

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Big Straight"
   badTitle: "Big Straight"
-  description: "Big straight grants additional {0} points"
+  description: "A big straight grants {0} additional points"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1

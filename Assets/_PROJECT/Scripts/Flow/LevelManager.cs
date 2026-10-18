@@ -130,6 +130,17 @@ public class LevelManager : MonoBehaviour
     [Tooltip("Played after a round when its level has no Bad / Neutral / Hopeful Dialogue for the outcome. Optional.")]
     [SerializeField] private VisualNovelDialogueContainer defaultEndDialogue;
 
+    [Header("Phone list marks")]
+    [Tooltip("Drawn over a completed level's line on the phone when its round was lost (Bad), stretched to the " +
+             "line's text. Empty: the line is only struck through (the phone's Completed Format).")]
+    [SerializeField] private Sprite badCross;
+    [Tooltip("Drawn over a completed level's line when its round reached the points it needs, but not the risky goal.")]
+    [SerializeField] private Sprite neutralCross;
+    [Tooltip("Drawn over a completed level's line when its round reached the risky goal. Empty: the Neutral Cross.")]
+    [SerializeField] private Sprite hopefulCross;
+    [Tooltip("Drawn to the right of a Hopeful level's line, after its cross.")]
+    [SerializeField] private Sprite approvalSign;
+
     [Header("Outcome calls")]
     [Tooltip("Speaker id \"1\" in the outcome dialogues (Player Speaker Id): the hero's Talkable - its voice " +
              "clips and text color.")]
@@ -263,6 +274,23 @@ public class LevelManager : MonoBehaviour
     public bool IsCompleted(int index) => completed.Contains(index);
 
     public bool IsFinal(int index) => index >= 0 && index < levels.Count && levels[index].isFinal;
+
+    /// <summary>How levels[<paramref name="index"/>]'s round went; false while it hasn't been played this game.</summary>
+    public bool TryGetOutcome(int index, out LevelOutcome outcome) => outcomes.TryGetValue(index, out outcome);
+
+    /// <summary>The sprite crossing out a completed level's phone line for <paramref name="outcome"/>; may be null.</summary>
+    public Sprite CrossFor(LevelOutcome outcome)
+    {
+        switch (outcome)
+        {
+            case LevelOutcome.Bad: return badCross;
+            case LevelOutcome.Hopeful: return hopefulCross ? hopefulCross : neutralCross;
+            default: return neutralCross;
+        }
+    }
+
+    /// <summary>Drawn to the right of a Hopeful level's phone line; may be null.</summary>
+    public Sprite ApprovalSign => approvalSign;
 
     /// <summary>True once every level in the list, the final one too, has been played and reached its risky goal (Hopeful).</summary>
     public bool AllHopeful

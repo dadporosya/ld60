@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Two Twos"
   badTitle: "Two Twos"
-  description: "2 2 grants +{0} bonus multiplier"
+  description: "Each 2 2 grants +{0} bonus multiplier"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
@@ -29,6 +29,7 @@ MonoBehaviour:
     otherCombinations: []
     faceValue: 6
     pattern: "2 2"
+    eachPattern: 1
     parity: 0
     rerollCost: 0
     flipFace: 5

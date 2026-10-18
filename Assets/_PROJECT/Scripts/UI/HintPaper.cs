@@ -98,6 +98,11 @@ public class HintPaper : MonoBehaviour
     [Tooltip("One or Three's line: it is worth no points, it only saves a reroll from busting. Same placeholders as " +
              "Combination Line. Empty: Combination Line.")]
     [SerializeField] private string safeFaceLine = "{0} - no bust";
+    [Tooltip("Show each combination with example faces (5 5 5 3 3 for a full house). Off: x / y icons.")]
+    [SerializeField] private bool exampleFaces = true;
+    [Tooltip("Written under the combinations, after an empty line. {0}: the faces that save a reroll (\"1 or 3\"). Empty: none.")]
+    [SerializeField, TextArea] private string bustLine =
+        "Bust - if the dice you rolled make no combination (and show no {0}), you lose all your points.";
 
     [Header("Audio")]
     [SerializeField] private AudioClip openSfx;
@@ -192,12 +197,20 @@ public class HintPaper : MonoBehaviour
             if (entry == null || !entry.enabled) continue;
             bool safeFace = entry.combination == PokerDiceCombination.SafeFace;
             if (skipZeroPoints && entry.points == 0 && !safeFace) continue;
-            string icons = DiceIcons.Combination(entry.combination, iconGap ?? "");
+            string icons = exampleFaces
+                ? DiceIcons.Example(entry.combination, iconGap ?? "")
+                : DiceIcons.Combination(entry.combination, iconGap ?? "");
             if (icons.Length == 0) continue;
 
             string line = safeFace && !string.IsNullOrEmpty(safeFaceLine) ? safeFaceLine : combinationLine;
             if (text.Length > 0) text.Append('\n');
             text.AppendFormat(line, icons, entry.points, entry.displayName);
+        }
+
+        if (!string.IsNullOrEmpty(bustLine))
+        {
+            if (text.Length > 0) text.Append("\n\n");
+            text.AppendFormat(bustLine, string.Join(" or ", PokerDiceEvaluator.SafeFaces));
         }
         combinationsText.text = text.ToString();
     }

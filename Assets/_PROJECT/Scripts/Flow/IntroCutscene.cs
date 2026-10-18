@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using PrimeTween;
 using TMPro;
 using UnityEngine;
@@ -7,7 +8,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
-/// The game's opening: a content warning on black (<see cref="showWarning"/>), the intro visual novel dialogue, then the <see cref="FadeImageController"/> covers
+/// The game's opening: a shaking content warning on black (<see cref="showWarning"/>) that fades out completely before
+/// the intro visual novel dialogue fades in, then the <see cref="FadeImageController"/> covers
 /// the stage with black and fades away again, revealing the hub.
 ///
 /// <para>Put it on its OWN GameObject (or a prefab): <see cref="CutSceneBase.Run"/> clones the whole
@@ -27,8 +29,14 @@ public class IntroCutscene : CutSceneBase
     [SerializeField, Min(0f)] private float warningDuration = 6f;
     [Tooltip("Seconds after the warning comes up before a key / click can skip it (so a stray press doesn't).")]
     [SerializeField, Min(0f)] private float warningSkipLockout = 0.5f;
-    [Tooltip("Seconds the warning fades away over, as the dialogue starts under it.")]
+    [Tooltip("Seconds the warning text fades away over. The screen stays black until it's gone.")]
     [SerializeField, Min(0f)] private float warningFadeOut = 0.5f;
+    [Tooltip("Seconds the black fades away over once the warning is gone, fading the dialogue in.")]
+    [SerializeField, Min(0f)] private float dialogueFadeIn = 1f;
+    [SerializeField] private Ease dialogueFadeInEase = Ease.Linear;
+    [Tooltip("Shake on the warning text (TextAnimation). 0: no shake.")]
+    [SerializeField, Min(0f)] private float warningShakeStrength = 3f;
+    [SerializeField, Min(0f)] private float warningShakeSpeed = 25f;
     [Tooltip("Sorting order of the warning's runtime canvas. Keep it above everything else.")]
     [SerializeField] private int warningSortingOrder = 1000;
     [Tooltip("Empty: TextMeshPro's default font.")]
@@ -52,6 +60,9 @@ public class IntroCutscene : CutSceneBase
     // Set on the running clone by Play; called once the hub is revealed.
     private Action onFinished;
 
+    // The warning's black screen, kept up (text faded out) until the dialogue starts under it.
+    private CanvasGroup warning;
+
     /// <summary>Runs the cutscene, then <paramref name="finished"/> once the hub is back on screen.</summary>
     public void Play(Action finished)
     {
@@ -73,7 +84,7 @@ public class IntroCutscene : CutSceneBase
     {
         if (!showWarning) yield break;
 
-        CanvasGroup warning = MakeWarning();
+        warning = MakeWarning(out CanvasGroup warningText);
 
         float elapsed = 0f;
         while (elapsed < warningDuration)
@@ -88,14 +99,25 @@ public class IntroCutscene : CutSceneBase
             elapsed += Time.unscaledDeltaTime;
         }
 
-        // The dialogue starts under the warning while it fades away (it goes with the cutscene if cut off).
+        // The text fades out completely on the black; the dialogue only starts (and fades in) after.
+        if (warningFadeOut <= 0f) warningText.alpha = 0f;
+        else yield return Tween.Alpha(warningText, 0f, warningFadeOut, Ease.Linear, useUnscaledTime: true)
+            .ToYieldInstruction();
+    }
+
+    /// <summary>Fades the warning's black away (the dialogue fading in under it), then removes it.</summary>
+    private void RevealDialogue()
+    {
+        if (!warning) return;
+
         GameObject warningObject = warning.gameObject;
-        if (warningFadeOut <= 0f)
+        if (dialogueFadeIn <= 0f)
         {
             Destroy(warningObject);
-            yield break;
+            return;
         }
-        Tween.Alpha(warning, 0f, warningFadeOut, Ease.Linear, useUnscaledTime: true)
+        // It goes with the cutscene if the dialogue gets cut off.
+        Tween.Alpha(warning, 0f, dialogueFadeIn, dialogueFadeInEase, useUnscaledTime: true)
             .OnComplete(warningObject, Destroy);
     }
 
@@ -112,8 +134,11 @@ public class IntroCutscene : CutSceneBase
         return gamepad != null && (gamepad.buttonSouth.wasPressedThisFrame || gamepad.startButton.wasPressedThisFrame);
     }
 
-    /// <summary>A screen-space overlay canvas on this cutscene: full-screen black, the warning text centred on it.</summary>
-    private CanvasGroup MakeWarning()
+    /// <summary>
+    /// A screen-space overlay canvas on this cutscene: full-screen black, the warning text centred on it, shaking.
+    /// <paramref name="textGroup"/> fades the text alone; the returned group fades the whole screen.
+    /// </summary>
+    private CanvasGroup MakeWarning(out CanvasGroup textGroup)
     {
         GameObject go = new GameObject("Warning Canvas", typeof(RectTransform), typeof(Canvas),
             typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup));
@@ -134,8 +159,10 @@ public class IntroCutscene : CutSceneBase
         Stretch((RectTransform)black.transform, Vector2.zero);
         black.GetComponent<Image>().color = Color.black;
 
-        GameObject textObject = new GameObject("Text", typeof(RectTransform));
+        // Faded through its own group: TextAnimation rewrites the vertex colors every frame.
+        GameObject textObject = new GameObject("Text", typeof(RectTransform), typeof(CanvasGroup));
         textObject.transform.SetParent(go.transform, false);
+        textGroup = textObject.GetComponent<CanvasGroup>();
         Stretch((RectTransform)textObject.transform, new Vector2(-200f, -200f));
         TextMeshProUGUI text = textObject.AddComponent<TextMeshProUGUI>();
         if (warningFont) text.font = warningFont;
@@ -144,6 +171,15 @@ public class IntroCutscene : CutSceneBase
         text.alignment = TextAlignmentOptions.Center;
         text.raycastTarget = false;
         text.text = warningText;
+
+        if (warningShakeStrength > 0f)
+        {
+            TextAnimation animation = textObject.AddComponent<TextAnimation>();
+            animation.animationTarget = TextAnimation.AnimationTarget.WholeText;
+            animation.animations = new List<TextAnimation.AnimationType> { TextAnimation.AnimationType.Shake };
+            animation.shakeStrength = warningShakeStrength;
+            animation.shakeSpeed = warningShakeSpeed;
+        }
 
         return go.GetComponent<CanvasGroup>();
     }
@@ -159,11 +195,16 @@ public class IntroCutscene : CutSceneBase
     private IEnumerator DialogueStep()
     {
         HubDialogueRunner runner = HubDialogueRunner.Instance;
-        if (!runner || !dialogue) yield break;
+        if (!runner || !dialogue)
+        {
+            RevealDialogue();
+            yield break;
+        }
 
         bool done = false;
         // The stage stays up so the black covers it, rather than the hub flashing in between.
         runner.Play(dialogue, () => done = true, hideStage: false);
+        RevealDialogue();
 
         // The stage's own end fade (Fade To Color On End) still runs after the dialogue is over: only a dropped
         // callback means it was cut off.

@@ -124,7 +124,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: The rifle is a lot heavier than I thought
+    text: ...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -149,7 +149,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: I'm shaking, I'm trying to hold it still
+    text: The rifle is a lot heavier than I thought
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -174,7 +174,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Tastes like iron...
+    text: I'm shaking, I'm trying to hold it still
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -199,7 +199,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: I don't want to die...
+    text: Tastes like iron...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -224,7 +224,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: ...
+    text: I don't want to die...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -274,7 +274,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: I suddenly thought again, what would others do if i died
+    text: ...
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -295,6 +295,31 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - nodeId: 11
+    speakerId: 1
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: I suddenly thought again, what would others do if i died
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 1, g: 1, b: 1, a: 1}
+    autoSkip: 0
+    autoSkipDelay: 2
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 12
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -321,7 +346,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 12
+  - nodeId: 13
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -348,7 +373,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 13
+  - nodeId: 14
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -375,7 +400,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 14
+  - nodeId: 15
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -402,7 +427,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 15
+  - nodeId: 16
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -429,7 +454,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 16
+  - nodeId: 17
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -456,7 +481,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 17
+  - nodeId: 18
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -488,7 +513,7 @@ MonoBehaviour:
     backgroundMaterial: {fileID: 0}
     clearBackground: 0
     stretchBackground: 0
-    foreground: {fileID: -7716695629669418368, guid: bbc82425e1d1b96468ed444259c299f7, type: 3}
+    foreground: {fileID: -3792012115360765371, guid: eec04f5d5ff528b4692c20f637268dc5, type: 3}
     foregroundMaterial: {fileID: 0}
     clearForeground: 0
     stretchForeground: 1
@@ -638,6 +663,42 @@ MonoBehaviour:
     stretchForeground: 0
     textBox: 2
     transitionDuration: 1
+    fadeColor: {r: 0, g: 0, b: 0, a: 1}
+    holdOnColor: 0
+    blurRadius: 1
+    waitForTransition: 1
+    textBoxDelay: 0
+    music: 0
+    bgm: {fileID: 0}
+    bgmClip: {fileID: 0}
+    musicVolume: 1
+    musicFade: 1.5
+    musicFadeIn: -1
+    ambience: 0
+    ambienceClip: {fileID: 0}
+    ambienceVolume: 1
+    ambienceFade: 1.5
+    voice: 0
+    voiceClips: []
+    voiceVolume: 1
+    overrideVoicePitch: 0
+    voicePitchRange: {x: 0.98, y: 1.02}
+    cuesAfterTransition: 1
+    sfx: []
+    startEffects: []
+    keepPreviousSustainedEffects: 0
+    sustainedEffects: []
+  - transition: 1
+    background: {fileID: 0}
+    backgroundMaterial: {fileID: 0}
+    clearBackground: 0
+    stretchBackground: 0
+    foreground: {fileID: -789923085587438313, guid: 5b2b22ce647ee16459b352fa5f94233c, type: 3}
+    foregroundMaterial: {fileID: 0}
+    clearForeground: 0
+    stretchForeground: 0
+    textBox: 0
+    transitionDuration: 0
     fadeColor: {r: 0, g: 0, b: 0, a: 1}
     holdOnColor: 0
     blurRadius: 1

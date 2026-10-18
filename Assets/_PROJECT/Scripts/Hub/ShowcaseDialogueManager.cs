@@ -36,6 +36,10 @@ public class ShowcaseDialogueManager : MonoBehaviour
         public bool keepColor;
         [Tooltip("Clicking never picks it: it only plays Dialogue (when set), and the list carries on.")]
         public bool blocked;
+        [Tooltip("Drawn over the line's text, stretched to it (e.g. a completed level's cross). Optional.")]
+        public Sprite cross;
+        [Tooltip("Drawn to the right of the line (after its cross, when it has one). Optional.")]
+        public Sprite mark;
     }
 
     public enum SpriteFit
@@ -90,6 +94,18 @@ public class ShowcaseDialogueManager : MonoBehaviour
     [SerializeField] private bool clickOutsideClosesList = true;
     [Tooltip("Optional button that closes the list.")]
     [SerializeField] private Button listCloseButton;
+
+    [Header("List marks")]
+    [Tooltip("How far a line's cross reaches past its text (UI units): x on the left and right, y above and below.")]
+    [SerializeField] private Vector2 crossOverhang = new Vector2(8f, 0f);
+    [Tooltip("Moves a line's cross off the middle of its text (UI units).")]
+    [SerializeField] private Vector2 crossOffset;
+    [Tooltip("Size of the mark to the right of a line, e.g. the approval sign (UI units). 0 on an axis: the text's height.")]
+    [SerializeField] private Vector2 markSize;
+    [Tooltip("Gap between a line's text (or its cross, when it has one) and its mark (UI units).")]
+    [SerializeField] private float markGap = 10f;
+    [Tooltip("Moves a line's mark off its spot to the right of the text (UI units).")]
+    [SerializeField] private Vector2 markOffset;
 
     [Header("Audio")]
     [SerializeField] private AudioClip appearSfx;
@@ -440,6 +456,7 @@ public class ShowcaseDialogueManager : MonoBehaviour
                 text.color = ColorOf(line);
                 listLines.Add(text);
                 listData.Add(line);
+                AddLineMarks(text, line);
 
                 ShowcaseClickTarget target = text.GetComponent<ShowcaseClickTarget>();
                 if (!target) target = text.gameObject.AddComponent<ShowcaseClickTarget>();
@@ -451,6 +468,61 @@ public class ShowcaseDialogueManager : MonoBehaviour
         Tween.StopAll(listGroup);
         listGroup.alpha = 0f;
         Tween.Alpha(listGroup, 1f, appearDuration, useUnscaledTime: true);
+    }
+
+    /// <summary>
+    /// The line's <see cref="ListLine.cross"/> over its text and <see cref="ListLine.mark"/> to the right of it, as
+    /// child images fitted to the text's bounds - refitted whenever the text's mesh is rebuilt (a resize, a font size).
+    /// </summary>
+    private void AddLineMarks(TextMeshProUGUI text, ListLine line)
+    {
+        if (!line.cross && !line.mark) return;
+
+        RectTransform cross = line.cross ? AddLineImage(text, "Cross", line.cross, preserveAspect: false) : null;
+        RectTransform mark = line.mark ? AddLineImage(text, "Mark", line.mark, preserveAspect: true) : null;
+
+        void Place()
+        {
+            if (!text) return;
+            Bounds bounds = text.textBounds;
+            float right = bounds.max.x;
+
+            if (cross)
+            {
+                cross.sizeDelta = new Vector2(bounds.size.x, bounds.size.y) + crossOverhang * 2f;
+                cross.localPosition = (Vector2)bounds.center + crossOffset;
+                right += crossOverhang.x;
+            }
+
+            if (mark)
+            {
+                Vector2 size = new Vector2(markSize.x > 0f ? markSize.x : bounds.size.y,
+                    markSize.y > 0f ? markSize.y : bounds.size.y);
+                mark.sizeDelta = size;
+                mark.localPosition = new Vector2(right + markGap + size.x * 0.5f, bounds.center.y) + markOffset;
+            }
+        }
+
+        text.ForceMeshUpdate();
+        Place();
+        text.OnPreRenderText += _ => Place();
+    }
+
+    private static RectTransform AddLineImage(TextMeshProUGUI text, string name, Sprite sprite, bool preserveAspect)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image));
+        RectTransform rect = (RectTransform)go.transform;
+        rect.SetParent(text.transform, false);
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+
+        Image image = go.GetComponent<Image>();
+        image.sprite = sprite;
+        // A sprite with borders stretches by its middle, keeping its ends.
+        image.type = sprite.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+        image.preserveAspect = preserveAspect;
+        // Clicks go to the line itself.
+        image.raycastTarget = false;
+        return rect;
     }
 
     private Color ColorOf(ListLine line) => line.interactable || line.keepColor ? lineColor : lineDisabledColor;
