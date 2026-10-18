@@ -32,6 +32,9 @@ public class SongManager : MonoBehaviour
     [Header("Effects")]
     [Tooltip("The music's overall volume, on top of the BGMManager's volume and fades (and dialogues' music volume).")]
     [Range(0f, 1f)] public float volume = 1f;
+    [Tooltip("The music's pitch (and speed: 0.5 is an octave down at half speed). Put on every music source. " +
+             "Off 1, a track with an intro drifts at its seam into the loop, scheduled for normal speed.")]
+    [Range(0.1f, 3f)] public float pitch = 1f;
     [Tooltip("Put on every music source, so it carries over crossfades and track changes. Editable in play mode.")]
     public LowPassSettings lowPass = new LowPassSettings();
     public HighPassSettings highPass = new HighPassSettings();
@@ -49,6 +52,7 @@ public class SongManager : MonoBehaviour
     private bool effectsDirty = true;
     private int filteredSources = -1;
     private Tween volumeTween;
+    private Tween pitchTween;
     private Tween lowPassTween;
     private Tween highPassTween;
     private Tween reverbTween;
@@ -66,6 +70,9 @@ public class SongManager : MonoBehaviour
         BGMManager bgm = Bgm;
         if (!bgm) return;
 
+        // Every frame: the BGMManager puts a pooled source back to pitch 1 whenever it reuses it.
+        foreach (AudioSource source in bgm.MusicSources) source.pitch = pitch;
+
         int count = bgm.MusicSourceCount;
         if (!effectsDirty && count == filteredSources) return;
         effectsDirty = false;
@@ -75,7 +82,7 @@ public class SongManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Puts <see cref="volume"/>, <see cref="lowPass"/>, <see cref="highPass"/> and <see cref="reverb"/> on
+    /// Puts <see cref="volume"/> (<see cref="pitch"/> goes on every frame in LateUpdate), <see cref="lowPass"/>, <see cref="highPass"/> and <see cref="reverb"/> on
     /// <paramref name="source"/>, adding each filter when first needed.
     /// </summary>
     private void ApplyEffects(AudioSource source)
@@ -116,6 +123,24 @@ public class SongManager : MonoBehaviour
 
     /// <summary>Sets the music's overall <see cref="volume"/> (0..1) at once. Convenient for UnityEvents.</summary>
     public void SetVolume(float target) => TweenVolume(target, 0f);
+
+    /// <summary>Slides the music's <see cref="pitch"/> to <paramref name="target"/> over <paramref name="duration"/> seconds.</summary>
+    public void TweenPitch(float target, float duration)
+    {
+        pitchTween.Stop();
+        target = Mathf.Clamp(target, 0.1f, 3f);
+
+        if (duration <= 0f || !isActiveAndEnabled)
+        {
+            pitch = target;
+            return;
+        }
+
+        pitchTween = Tween.Custom(this, pitch, target, duration, (manager, v) => manager.pitch = v);
+    }
+
+    /// <summary>Sets the music's <see cref="pitch"/> at once. Convenient for UnityEvents.</summary>
+    public void SetPitch(float target) => TweenPitch(target, 0f);
 
     /// <summary>Turns the music's high-pass on or off.</summary>
     public void SetHighPassEnabled(bool on)
