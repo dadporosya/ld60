@@ -102,7 +102,7 @@ public class HintPaper : MonoBehaviour
     [SerializeField] private bool exampleFaces = true;
     [Tooltip("Written under the combinations, after an empty line. {0}: the faces that save a reroll (\"1 or 3\"). Empty: none.")]
     [SerializeField, TextArea] private string bustLine =
-        "Bust - if the dice you rolled make no combination (and show no {0}), you lose all your points.";
+        "Bust - if the dice you rolled make no combination (and show no {0}), you lose all your points (locked dice don't count).";
     [Tooltip("The Bust Line's font size, as a fraction of the combinations' (0.5: half as big).")]
     [SerializeField, Range(0.1f, 2f)] private float bustLineScale = 0.5f;
 

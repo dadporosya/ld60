@@ -489,9 +489,9 @@ MonoBehaviour:
   - points: 200
     riskyPoints: 300
   - points: 350
-    riskyPoints: 500
+    riskyPoints: 550
   - points: 475
-    riskyPoints: 700
+    riskyPoints: 800
   pointsByRound: 
   onlyWinsComplete: 0
   defaultEndDialogue: {fileID: 0}
@@ -1975,7 +1975,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 28}
   m_SizeDelta: {x: -737.214, y: 231}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &346760858
@@ -5614,7 +5614,7 @@ MonoBehaviour:
   m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 1
-  m_FillAmount: 0.83
+  m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 1
   m_UseSpriteMesh: 0
@@ -6598,7 +6598,7 @@ MonoBehaviour:
   portraitAtlas: []
   material: {fileID: 0}
   useCustomTextColor: 1
-  textColor: {r: 0.740566, g: 0.7547816, b: 1, a: 1}
+  textColor: {r: 0.7028302, g: 0.99169683, b: 1, a: 1}
   voiceClips:
   - {fileID: 8300000, guid: 1d44c77ca969e0c4fb99255422c6ac67, type: 3}
   dialogueManager: {fileID: 0}

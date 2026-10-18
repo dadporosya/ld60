@@ -22,7 +22,7 @@ MonoBehaviour:
   effect:
     type: 1
     operation: 0
-    amount: 333
+    amount: 167
     multiplier: 1
     nextRoundRerolls: 0
     combination: 8

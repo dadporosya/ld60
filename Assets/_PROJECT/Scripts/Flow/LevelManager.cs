@@ -167,6 +167,10 @@ public class LevelManager : MonoBehaviour
     [Header("Outcome calls - music")]
     [Tooltip("Filter and pitch the music (SongManager) around the outcome dialogues.")]
     [SerializeField] private bool modulateMusic = true;
+    [Tooltip("Mute the music outright from the round's outcome spotlight (or the start of the fade to black) " +
+             "until the outcome dialogue fades in: the low-pass alone still lets a little through. It comes back " +
+             "with the dialogue's filter and pitch, over the Reveal Duration.")]
+    [SerializeField] private bool muteUntilDialogue = true;
     [Tooltip("Music low-pass cutoff (Hz) swept to while the screen fades to black after a round. " +
              "The lowest value all but silences the music.")]
     [SerializeField, Range(GlobalLowPass.MinCutoff, GlobalLowPass.OpenCutoff)]
@@ -554,11 +558,14 @@ public class LevelManager : MonoBehaviour
     // Music around an outcome dialogue
     // ---------------------------------------------------------------------
 
-    // The music's low-pass and pitch from before the outcome call, put back by RestoreMusic.
+    // The music's low-pass, pitch and volume from before the outcome call, put back by RestoreMusic.
     private bool musicSaved;
     private bool savedLowPassOn;
     private float savedCutoff;
     private float savedPitch;
+    private float savedVolume = 1f;
+    // Muted by MuteMusic, until TuneMusicForDialogue / RestoreMusic bring the volume back.
+    private bool musicMuted;
     private Tween lowPassOffTween;
 
     /// <summary>The music is muffled (<see cref="MuffleMusicForCall"/> / <see cref="CutMusic"/>) until <see cref="RestoreMusic"/>.</summary>
@@ -570,6 +577,7 @@ public class LevelManager : MonoBehaviour
         SongManager songs = SaveMusic();
         if (!songs) return;
 
+        MuteMusic(songs);
         // A filter that was off starts sweeping from fully open, not from its stored cutoff.
         if (!songs.lowPass.enabled) songs.TweenLowPassCutoff(GlobalLowPass.OpenCutoff, 0f);
         songs.TweenLowPassCutoff(blackLowPassCutoff, duration);
@@ -579,7 +587,32 @@ public class LevelManager : MonoBehaviour
     public void CutMusic()
     {
         SongManager songs = SaveMusic();
-        if (songs) songs.TweenLowPassCutoff(GlobalLowPass.MinCutoff, 0f);
+        if (!songs) return;
+
+        MuteMusic(songs);
+        songs.TweenLowPassCutoff(GlobalLowPass.MinCutoff, 0f);
+    }
+
+    /// <summary>Silences the music at once (<see cref="muteUntilDialogue"/>); its volume was saved by <see cref="SaveMusic"/>.</summary>
+    private void MuteMusic(SongManager songs)
+    {
+        if (!muteUntilDialogue || musicMuted) return;
+        musicMuted = true;
+        songs.SetVolume(0f);
+    }
+
+    /// <summary>Brings the music's volume back from its mute (<see cref="muteUntilDialogue"/>) over <paramref name="duration"/>.</summary>
+    public void UnmuteMusic(float duration)
+    {
+        SongManager songs = SongManager.Instance;
+        if (songs) UnmuteMusic(songs, duration);
+    }
+
+    private void UnmuteMusic(SongManager songs, float duration)
+    {
+        if (!musicMuted) return;
+        musicMuted = false;
+        songs.TweenVolume(savedVolume, duration);
     }
 
     /// <summary>Remembers the music's low-pass and pitch for <see cref="RestoreMusic"/> (once). Null: leave the music be.</summary>
@@ -594,6 +627,7 @@ public class LevelManager : MonoBehaviour
             savedLowPassOn = songs.lowPass.enabled;
             savedCutoff = songs.lowPass.cutoff;
             savedPitch = songs.pitch;
+            savedVolume = songs.volume;
             musicSaved = true;
         }
         return songs;
@@ -605,18 +639,22 @@ public class LevelManager : MonoBehaviour
         SongManager songs = SongManager.Instance;
         if (!modulateMusic || !songs) return;
 
+        UnmuteMusic(songs, revealDuration);
         songs.TweenLowPassCutoff(dialogueLowPassCutoff, revealDuration);
         songs.TweenPitch(dialoguePitch, revealDuration);
     }
 
-    /// <summary>Puts the music's low-pass and pitch back as they were before <see cref="MuffleMusicForCall"/>.</summary>
+    /// <summary>Puts the music's low-pass, pitch and volume back as they were before <see cref="MuffleMusicForCall"/>.</summary>
     public void RestoreMusic(float duration)
     {
         if (!musicSaved) return;
         musicSaved = false;
 
         SongManager songs = SongManager.Instance;
-        if (!restoreMusicAfter || !songs) return;
+        if (!songs) return;
+        // Never left muted, even when the filter and pitch stay as they are.
+        UnmuteMusic(songs, duration);
+        if (!restoreMusicAfter) return;
 
         songs.TweenPitch(savedPitch, duration);
         if (savedLowPassOn)

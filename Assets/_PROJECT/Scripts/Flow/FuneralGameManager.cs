@@ -509,6 +509,8 @@ public class FuneralGameManager : MonoBehaviour
         onCallEnded?.Invoke(contact, passed);
         phoneLevel = -1;
         debugRound = false;
+        // Without an outcome dialogue nothing brought the music back from its mute: the ending's music needs it.
+        if (Levels) Levels.UnmuteMusic(cardsRevealDuration);
 
         if (GoodEndingEarned)
         {

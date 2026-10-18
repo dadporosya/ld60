@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "One Two Three"
   badTitle: "One Two Three"
-  description: "1 2 3 grants {0} bonus points and +{next} reroll next round"
+  description: "1 2 3 grants {0} bonus points"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
@@ -22,9 +22,9 @@ MonoBehaviour:
   effect:
     type: 6
     operation: 0
-    amount: 50
+    amount: 67
     multiplier: 1
-    nextRoundRerolls: 1
+    nextRoundRerolls: 0
     combination: 8
     otherCombinations: []
     faceValue: 6
