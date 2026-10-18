@@ -143,6 +143,20 @@ public class LevelManager : MonoBehaviour
     [SerializeField, Range(0.1f, 3f)] private float dialoguePitch = 1f;
     [Tooltip("Put the music's low-pass and pitch back as they were while the card pick is revealed.")]
     [SerializeField] private bool restoreMusicAfter = true;
+    [Tooltip("When the track for this many rounds played (SongManager's Bgm By Round) comes in. After Dialogue: " +
+             "once the outcome dialogue is over, as the card pick is revealed. Before Dialogue: on the black, while " +
+             "the music is muffled, so the music fading back in with the dialogue is already the new track.")]
+    [SerializeField] private AfterLevelBgm afterLevelBgm = AfterLevelBgm.AfterDialogue;
+
+    /// <summary>When the track for the rounds played comes in after a round (<see cref="afterLevelBgm"/>).</summary>
+    public enum AfterLevelBgm
+    {
+        AfterDialogue,
+        BeforeDialogue,
+    }
+
+    /// <summary>When the track for the rounds played comes in after a round.</summary>
+    public AfterLevelBgm AfterLevelBgmTiming => afterLevelBgm;
 
     [Header("Debug")]
     [Tooltip("Debug only: the digit keys (top row or numpad) run a level's dice round straight away - " +

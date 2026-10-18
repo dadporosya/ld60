@@ -24,7 +24,8 @@ public class SongManager : MonoBehaviour
     [SerializeField, Min(0f)] private float startFade = 1.5f;
     [Tooltip("Played once a round's final cutscene (win / loss dialogue) is over, by how many rounds have been " +
              "played this game: [0] after the first round, [1] after the second, ... - whichever level it was. " +
-             "An empty entry, or a round past the end of the list: the music carries on as it is.")]
+             "An empty entry, or a round past the end of the list: the music carries on as it is. " +
+             "LevelManager's After Level Bgm can bring it in before the outcome dialogue instead.")]
     [SerializeField] private List<BGMObject> bgmByRound = new List<BGMObject>();
     [Tooltip("Seconds a round's track crossfades in over once its final cutscene is over.")]
     [SerializeField, Min(0f)] private float levelFade = 1.5f;

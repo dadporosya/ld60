@@ -333,6 +333,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private AudioClip landSfx;
     [SerializeField] private AudioClip lockSfx;
     [SerializeField] private AudioClip unlockSfx;
+    [Tooltip("The mouse came onto a die.")]
+    [SerializeField] private AudioClip hoverSfx;
     [Tooltip("A die flipped to another face (a card's right click).")]
     [SerializeField] private AudioClip flipSfx;
     [Tooltip("A die destroyed (a card's right click).")]
@@ -864,6 +866,7 @@ public class DiceManager : MonoBehaviour
             return;
         }
 
+        if (die && !die.IsRemoved) PlaySfx(hoverSfx);
         if (die == infoPending || die == infoShown) return;
         HideDieInfo();
         if (!showDieInfo || !die || die.Kind == DiceKind.Default || die.Info == null) return;

@@ -436,6 +436,11 @@ public class FuneralGameManager : MonoBehaviour
                 return;
             }
 
+            // LevelManager's After Level Bgm: Before Dialogue - the round's track comes in now, under the muffle,
+            // so the music fading back in with the dialogue is already the new one.
+            if (!endingAfter && Levels && Levels.AfterLevelBgmTiming == LevelManager.AfterLevelBgm.BeforeDialogue)
+                PlayRoundTrack();
+
             // Rings until the dialogue's first line starts typing (LevelManager's Call Start Loop).
             float blackHold = Levels ? Levels.StartOutcomeRing() : 0f;
             RoundEndDelay(blackHold, id, () =>
@@ -464,12 +469,23 @@ public class FuneralGameManager : MonoBehaviour
     private int roundEndId;
     // A round end's fades are running: the screen may be black.
     private bool roundEndFading;
+    // The round end whose track (SongManager.PlayAfterRound) already came in; it comes in once per round end.
+    private int roundTrackId = -1;
+
+    /// <summary>The music for this many rounds played comes in - once per round end.</summary>
+    private void PlayRoundTrack()
+    {
+        if (roundTrackId == roundEndId) return;
+        roundTrackId = roundEndId;
+        if (Songs && Levels) Songs.PlayAfterRound(Levels.RoundsPlayed);
+    }
 
     /// <summary>Puts the card pick up behind the black, then fades the black away.</summary>
     private void OfferCardRevealed(ContactData contact, bool passed, CardMood mood, int id)
     {
-        // The round's final cutscene is over: the music for this many rounds played comes in.
-        if (Songs && Levels) Songs.PlayAfterRound(Levels.RoundsPlayed);
+        // The round's final cutscene is over: the music for this many rounds played comes in (unless it already
+        // did, before the outcome dialogue).
+        PlayRoundTrack();
         if (Levels) Levels.RestoreMusic(cardsRevealDuration);
         onCallEnded?.Invoke(contact, passed);
         OfferCard(mood);

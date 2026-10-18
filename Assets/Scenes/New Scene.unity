@@ -499,6 +499,7 @@ MonoBehaviour:
   dialogueLowPassCutoff: 1500
   dialoguePitch: 1
   restoreMusicAfter: 1
+  afterLevelBgm: 1
   debugKeys: 1
   onLevelStarted:
     m_PersistentCalls:
@@ -751,6 +752,7 @@ MonoBehaviour:
   landSfx: {fileID: 8300000, guid: 9de58750eb52127408e569c699007d56, type: 3}
   lockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
   unlockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
+  hoverSfx: {fileID: 0}
   flipSfx: {fileID: 8300000, guid: 0dee433ca9ac0d5459e2ef1577f4253e, type: 3}
   destroySfx: {fileID: 8300000, guid: 7556b6b00941f184185c97ac403f3471, type: 3}
   bustSfx: {fileID: 0}
@@ -4761,9 +4763,9 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
+  - {fileID: 244570388}
   - {fileID: 1901275428}
   - {fileID: 2052019987}
-  - {fileID: 244570388}
   - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
   defaultCornerRadius: 0
