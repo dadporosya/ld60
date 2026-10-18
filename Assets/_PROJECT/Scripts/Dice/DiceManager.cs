@@ -67,6 +67,9 @@ public class DiceOutlineStyle
     [Min(0f)] public float fadeDuration = 0.1f;
     [Tooltip("Only while clicking the die would lock / unlock it (not mid-roll, not before the first roll, not out of rerolls).")]
     public bool onlyWhenLockable = true;
+    [Tooltip("Always shown on a sealed die - one locked before the last roll, which can't be touched any more this " +
+             "round. Shown even with the hover outline off.")]
+    public Color sealedColor = new Color(0.95f, 0.2f, 0.2f, 1f);
 }
 
 /// <summary>
@@ -98,6 +101,8 @@ public class DicePopups
     public string riskyGoalReachedText = "You feel hopeful.";
     [Tooltip("At the end of a round that reached the risky goal: the next cards are upgraded.")]
     public string cardUpgradedText = "Card upgraded!";
+    [Tooltip("A reroll whose rolled dice make no combination: the round's points are lost and it ends. Empty: none.")]
+    public string bustText = "Bust!";
     [Tooltip("A die destroyed for rerolls (a card's right click). {0} = rerolls gained.")]
     public string rerollsGainedFormat = "+{0} reroll";
     [Tooltip("A die destroyed for mult (a card's right click). {0} = mult gained.")]
@@ -277,9 +282,12 @@ public class DiceTurnResult
 ///
 /// <para>A turn (<see cref="StartTurn"/>) is <see cref="roundsPerTurn"/> rounds. A round is one dice game:
 /// the first <see cref="Roll"/> throws every die. After it, clicking a die locks / unlocks it, and each
-/// further Roll (up to <see cref="rerollsPerRound"/> plus card bonuses) rethrows the unlocked ones.
-/// <see cref="Finish"/> - or running out of rerolls - scores the best poker hand the dice make, cards
-/// included, and banks it. After the last round the banked points are checked against the target.</para>
+/// further Roll (as many as the player likes with <see cref="unlimitedRerolls"/>, else up to
+/// <see cref="rerollsPerRound"/> plus card bonuses) rethrows the unlocked ones. A roll seals the dice locked for it:
+/// they stay locked for the rest of the round (red outline). A reroll whose rolled dice make no combination by
+/// themselves busts: the round scores 0 and ends at once - unless they show a 1 (Single One). <see cref="Finish"/> - or running out of rerolls - scores
+/// the best poker hand the dice make, cards included, and banks it. After the last round the banked points are
+/// checked against the target.</para>
 ///
 /// <para>Cards can add dice to the table (<see cref="CardEffectType.ExtraDice"/>) and let the player right click
 /// dice showing certain faces (<see cref="CardEffect.IsDieAction"/>): reroll it alone for free, destroy it for the
@@ -329,6 +337,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private AudioClip flipSfx;
     [Tooltip("A die destroyed (a card's right click).")]
     [SerializeField] private AudioClip destroySfx;
+    [Tooltip("A reroll made no combination: the round's points are lost.")]
+    [SerializeField] private AudioClip bustSfx;
     [SerializeField] private AudioClip passedSfx;
     [SerializeField] private AudioClip failedSfx;
     [Tooltip("Played as a good text alert pops up: points gained, a combination, a goal reached, a card upgraded, " +
@@ -343,7 +353,14 @@ public class DiceManager : MonoBehaviour
     [Min(1)] public int roundsPerTurn = 1;
 
     [Header("Round")]
-    [Tooltip("Rerolls after the first throw (cards can add more).")]
+    [Tooltip("Reroll as often as the player likes, until Finish (or a bust). Off: Rerolls Per Round (plus cards) only.")]
+    [SerializeField] private bool unlimitedRerolls = true;
+    [Tooltip("A reroll whose rolled dice (the locked ones left out) make no combination busts: the round scores 0 " +
+             "and ends at once. Rolling a 1 (Single One, when enabled) saves it.")]
+    [SerializeField] private bool bustWithoutCombination = true;
+    [Tooltip("The round's first throw (every die) can bust too.")]
+    [SerializeField] private bool bustOnFirstThrow = false;
+    [Tooltip("Rerolls after the first throw (cards can add more). Unused with Unlimited Rerolls.")]
     [Min(0)] public int rerollsPerRound = 2;
     [Tooltip("Throw all dice as soon as the round starts, instead of waiting for the Roll button.")]
     [SerializeField] private bool autoFirstRoll = false;
@@ -395,6 +412,7 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private List<CombinationScore> combinations = new List<CombinationScore>
     {
         new CombinationScore(PokerDiceCombination.Nothing, "Nothing", 0),
+        new CombinationScore(PokerDiceCombination.SingleOne, "Single One", 0),
         new CombinationScore(PokerDiceCombination.OnePair, "Pair", 10),
         new CombinationScore(PokerDiceCombination.TwoPair, "Two Pair", 20),
         new CombinationScore(PokerDiceCombination.ThreeOfAKind, "Three of a Kind", 30),
@@ -414,6 +432,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private string firstRollLabel = "Roll";
     [Tooltip("{0} = rerolls left.")]
     [SerializeField] private string rerollLabel = "Reroll ({0})";
+    [Tooltip("The Roll button after the first throw, with Unlimited Rerolls.")]
+    [SerializeField] private string unlimitedRerollLabel = "Reroll";
     [SerializeField] private Button finishButton;
     [Tooltip("What the Finish button always says - written into its own text. It ends the round, and can be " +
              "pressed any time the dice are down (not mid-roll, not before the first throw).")]
@@ -535,6 +555,9 @@ public class DiceManager : MonoBehaviour
 
     private bool finishing;
     private int landingPending;
+    // The dice of the throw in the air, and whether they bust without a combination once down.
+    private readonly List<Dice> thrown = new List<Dice>();
+    private bool thrownCanBust;
     // Dice on the table this turn (the first ones of the list); the rest are hidden.
     private int diceInTurn;
 
@@ -652,7 +675,9 @@ public class DiceManager : MonoBehaviour
         else anim.shakeStrength = target;
     }
 
-    private bool CanLock => TurnActive && HasRolled && !IsRolling && !finishing && RerollsLeft > 0;
+    private bool CanLock => TurnActive && HasRolled && !IsRolling && !finishing && HasRerollsLeft;
+
+    private bool HasRerollsLeft => unlimitedRerolls || RerollsLeft > 0;
 
     /// <summary>True when clicking a die would lock or unlock it right now.</summary>
     public bool CanLockNow => CanLock;
@@ -1141,13 +1166,18 @@ public class DiceManager : MonoBehaviour
 
         if (!firstThrow)
         {
-            if (RerollsLeft <= 0 || toRoll.Count == 0) return;
-            RerollsLeft--;
+            if (!HasRerollsLeft || toRoll.Count == 0) return;
+            if (!unlimitedRerolls) RerollsLeft--;
         }
 
         if (toRoll.Count == 0) return;
+
+        // The dice locked for this roll stay locked for the rest of the round.
+        foreach (Dice die in DiceInPlay)
+            if (die.IsLocked) die.Seal();
+
         HasRolled = true;
-        Throw(toRoll, firstThrow);
+        Throw(toRoll, firstThrow, canBust: bustWithoutCombination && (!firstThrow || bustOnFirstThrow));
         PlaySfx(rollSfx);
         UpdateUI();
     }
@@ -1167,10 +1197,16 @@ public class DiceManager : MonoBehaviour
         }
     }
 
-    /// <summary>Throws <paramref name="toRoll"/>; the others stay put.</summary>
-    private void Throw(List<Dice> toRoll, bool firstThrow = false)
+    /// <summary>
+    /// Throws <paramref name="toRoll"/>; the others stay put. With <paramref name="canBust"/> the round busts once
+    /// they're down if they make no combination by themselves.
+    /// </summary>
+    private void Throw(List<Dice> toRoll, bool firstThrow = false, bool canBust = false)
     {
         landingPending = toRoll.Count;
+        thrown.Clear();
+        thrown.AddRange(toRoll);
+        thrownCanBust = canBust;
         List<int> results = firstThrow ? FirstThrowResults(toRoll) : ResultsFor(toRoll);
 
         // Dice staying put (locked) block their spots; each thrown die then claims where it will land.
@@ -1248,18 +1284,29 @@ public class DiceManager : MonoBehaviour
         return results;
     }
 
-    /// <summary>Whether <paramref name="values"/> make any hand that counts as a combination.</summary>
-    private bool MakesHand(IReadOnlyList<int> values)
+    /// <summary>
+    /// Whether <paramref name="values"/> make any hand that counts as a combination. <see cref="PokerDiceCombination.SingleOne"/>
+    /// only counts with <paramref name="savesFromBust"/> (it keeps a reroll from busting, but isn't a combination
+    /// for the first throw's odds).
+    /// </summary>
+    private bool MakesHand(IReadOnlyList<int> values, bool savesFromBust = false)
     {
         foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values, StraightGapsFor(cards)))
-            if (CountsAsCombination(hand)) return true;
+        {
+            if (hand == PokerDiceCombination.SingleOne)
+            {
+                if (savesFromBust && ScoreFor(hand) != null) return true;
+            }
+            else if (CountsAsCombination(hand)) return true;
+        }
         return false;
     }
 
     /// <summary>Locks or unlocks <paramref name="die"/>, when locking is allowed right now.</summary>
     public void ToggleLock(Dice die)
     {
-        if (!die || !CanLock) return;
+        // Sealed (locked before the last roll): locked for good.
+        if (!die || !CanLock || die.IsSealed) return;
 
         die.SetLocked(!die.IsLocked, lockStyle);
         PlaySfx(die.IsLocked ? lockSfx : unlockSfx);
@@ -1276,7 +1323,7 @@ public class DiceManager : MonoBehaviour
     /// <summary>The owned card a right click on <paramref name="die"/> would use right now, or null.</summary>
     public CardInstance DieActionFor(Dice die)
     {
-        if (!CanAct || !InPlay(die)) return null;
+        if (!CanAct || !InPlay(die) || die.IsSealed) return null;
 
         foreach (CardInstance card in cards)
         {
@@ -1292,7 +1339,8 @@ public class DiceManager : MonoBehaviour
     }
 
     /// <summary>A cyan die not showing 1, while the dice can be acted on: a right click turns it to 1.</summary>
-    private bool CanTurnToOne(Dice die) => CanAct && InPlay(die) && die.Kind == DiceKind.Cyan && die.Value != 1;
+    private bool CanTurnToOne(Dice die) =>
+        CanAct && InPlay(die) && !die.IsSealed && die.Kind == DiceKind.Cyan && die.Value != 1;
 
     /// <summary>True when right clicking <paramref name="die"/> would use a card on it (or turn a cyan die to 1).</summary>
     public bool HasDieAction(Dice die) => DieActionFor(die) != null || CanTurnToOne(die);
@@ -1333,7 +1381,7 @@ public class DiceManager : MonoBehaviour
                 roundMult += multGained;
                 die.Remove();
                 PlaySfx(destroySfx);
-                if (gained > 0)
+                if (gained > 0 && !unlimitedRerolls)
                     Popup(string.Format(popups.rerollsGainedFormat, gained), ScoreAnchor, popups.scoreOffset, popups.gainColor);
                 if (multGained > 0f)
                     Popup(string.Format(popups.multGainedFormat, CardEffect.FormatMult(multGained)), ScoreAnchor,
@@ -1636,13 +1684,54 @@ public class DiceManager : MonoBehaviour
         landingPending = Mathf.Max(0, landingPending - 1);
         if (landingPending > 0) return;
 
+        if (thrownCanBust && !MakesHand(ValuesOf(thrown), savesFromBust: true))
+        {
+            Bust();
+            return;
+        }
+
         DiceScore before = shownScore;
         UpdateUI();
         ShowRollPopups(before, shownScore);
         onRolled?.Invoke();
 
         // A card's right click could still change the dice: the player finishes themselves.
-        if (autoFinishWhenOutOfRerolls && RerollsLeft <= 0 && !AnyDieAction()) Finish();
+        if (autoFinishWhenOutOfRerolls && !HasRerollsLeft && !AnyDieAction()) Finish();
+    }
+
+    /// <summary>
+    /// The rolled dice made no combination: the round's points are lost - it scores 0 - and it ends at once,
+    /// as if finished.
+    /// </summary>
+    private void Bust()
+    {
+        finishing = true;
+
+        int[] values = Values();
+        CombinationScore nothing = ScoreFor(PokerDiceCombination.Nothing);
+        DiceScore lost = new DiceScore
+        {
+            combination = PokerDiceCombination.Nothing,
+            combinationName = nothing != null && !string.IsNullOrEmpty(nothing.displayName) ? nothing.displayName : "Nothing",
+        };
+        roundResults.Add(new DiceRoundResult { score = lost, values = values });
+
+        DiceScore before = shownScore;
+        UpdateUI();
+        ShowRollPopups(before, shownScore);
+        Popup(popups.bustText, CombinationAnchor, popups.combinationOffset, popups.lossColor, bad: true);
+        PlaySfx(bustSfx);
+        onRolled?.Invoke();
+
+        AfterDelay(roundScoreAlertDelay, manager => manager.RoundScored());
+    }
+
+    private static int[] ValuesOf(List<Dice> some)
+    {
+        List<int> values = new List<int>();
+        foreach (Dice die in some)
+            if (InPlay(die)) values.Add(die.Value);
+        return values.ToArray();
     }
 
     private void CompleteTurn()
@@ -1742,9 +1831,13 @@ public class DiceManager : MonoBehaviour
 
             int points = Mathf.RoundToInt((entry.points + (addDiceSum ? diceSum : 0) + addedPoints) * pointsFactor);
             float mult = (1f + extraMult + addedMult) * multFactor;
+            // Single One only saves from a bust: without a combination there are no points to make.
+            if (noPointsWithoutCombination && hand == PokerDiceCombination.SingleOne) points = 0;
             int total = Mathf.RoundToInt(points * mult);
 
-            if (best != null && (total < best.total || (total == best.total && hand < best.combination))) continue;
+            if (best != null && (total < best.total ||
+                                 (total == best.total && PokerDiceEvaluator.Rank(hand) < PokerDiceEvaluator.Rank(best.combination))))
+                continue;
 
             best = new DiceScore
             {
@@ -1842,10 +1935,17 @@ public class DiceManager : MonoBehaviour
 
         bool idle = TurnActive && !finishing && !IsRolling && !introRunning;
 
-        if (rollButton) rollButton.interactable = idle && (!HasRolled || (RerollsLeft > 0 && anyUnlocked));
-        if (rollButtonLabel) rollButtonLabel.text = HasRolled ? string.Format(rerollLabel, RerollsLeft) : firstRollLabel;
+        if (rollButton) rollButton.interactable = idle && (!HasRolled || (HasRerollsLeft && anyUnlocked));
+        if (rollButtonLabel)
+            rollButtonLabel.text = !HasRolled ? firstRollLabel
+                : unlimitedRerolls ? unlimitedRerollLabel : string.Format(rerollLabel, RerollsLeft);
         // Never into the Finish button's own label: that one always says finishLabel.
-        if (rerollsText && rerollsText != finishButtonLabel) rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
+        if (rerollsText && rerollsText != finishButtonLabel)
+        {
+            // Nothing to count with unlimited rerolls.
+            rerollsText.gameObject.SetActive(!unlimitedRerolls);
+            rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
+        }
         if (finishButtonLabel) finishButtonLabel.text = finishLabel;
         if (riskyTargetText) riskyTargetText.text = string.Format(riskyTargetFormat, RiskyTarget, Target);
         if (roundText)

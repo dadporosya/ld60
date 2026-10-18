@@ -175,6 +175,8 @@ public class FuneralGameManager : MonoBehaviour
     private void Awake()
     {
         h.CreateStaticInstance(this, ref Instance, setDontDestroy: false);
+        // Unassigned: the one in the scene - found now, before playing it makes clones of it.
+        Resolve(ref deathCutscene, null);
     }
 
     private void Start()
@@ -619,7 +621,11 @@ public class FuneralGameManager : MonoBehaviour
         onBadEnding?.Invoke();
         // The cutscene cuts off whatever dialogue is playing itself, and ends the game (restart or quit) on its own.
         if (deathCutscene) deathCutscene.Play();
-        else Dialogues.InterruptAndPlay(badEndingDialogue, QuitGame);
+        else
+        {
+            if (!badEndingDialogue) h.Out("FuneralGameManager: no Death Cutscene or Bad Ending Dialogue - the game just closes.");
+            Dialogues.InterruptAndPlay(badEndingDialogue, QuitGame);
+        }
     }
 
     private void QuitGame()

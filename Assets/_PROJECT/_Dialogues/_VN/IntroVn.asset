@@ -49,7 +49,9 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: "The last thing I want to do is listen to this song one more time\n"
+    text: 'The last thing I want to do is listen to this song one more time
+
+'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -124,7 +126,9 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: "I will blow my head off\n"
+    text: 'I will blow my head off
+
+'
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -171,7 +175,7 @@ MonoBehaviour:
         m_Calls: []
   defaultVoiceClips: []
   nodeSettings:
-  - transition: 1
+  - transition: 3
     background: {fileID: 0}
     backgroundMaterial: {fileID: 0}
     clearBackground: 0
@@ -181,7 +185,7 @@ MonoBehaviour:
     clearForeground: 0
     stretchForeground: 1
     textBox: 0
-    transitionDuration: 1
+    transitionDuration: 6.18
     fadeColor: {r: 0, g: 0, b: 0, a: 1}
     holdOnColor: 0
     blurRadius: 1
@@ -394,7 +398,7 @@ MonoBehaviour:
   startColor: {r: 0, g: 0, b: 0, a: 1}
   fadeToColorOnEnd: 1
   endColor: {r: 0, g: 0, b: 0, a: 1}
-  endFadeDuration: 6.06
+  endFadeDuration: 4.53
   musicOnEnd: 0
   endMusicFade: 1.5
   stopAmbienceOnEnd: 1

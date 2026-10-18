@@ -14,6 +14,11 @@ public enum PokerDiceCombination
     FiveOfAKind,
     /// <summary>Two different faces three times each, e.g. 2 2 2 5 5 5 (needs 6 dice). Six of a kind counts too.</summary>
     TwoThreeOfAKind,
+    /// <summary>
+    /// A single 1 among the dice. Worth no points, but a reroll whose rolled dice show a 1 doesn't bust - the
+    /// round's points are safe. Ranks just above <see cref="Nothing"/>.
+    /// </summary>
+    SingleOne,
 }
 
 /// <summary>Which poker dice hands a set of dice values contains.</summary>
@@ -56,8 +61,20 @@ public static class PokerDiceEvaluator
         if (max >= 4) result.Add(PokerDiceCombination.FourOfAKind);
         if (max >= 5) result.Add(PokerDiceCombination.FiveOfAKind);
         if (triples >= 2 || max >= 6) result.Add(PokerDiceCombination.TwoThreeOfAKind);
+        if (counts[1] >= 1) result.Add(PokerDiceCombination.SingleOne);
         return result;
     }
+
+    /// <summary>
+    /// How hands order when they score the same: higher wins. The enum order, but <see cref="PokerDiceCombination.SingleOne"/>
+    /// (appended last) sits just above <see cref="PokerDiceCombination.Nothing"/>.
+    /// </summary>
+    public static int Rank(PokerDiceCombination hand) => hand switch
+    {
+        PokerDiceCombination.Nothing => 0,
+        PokerDiceCombination.SingleOne => 1,
+        _ => (int)hand + 1,
+    };
 
     /// <summary>The most faces shown in a row, skipping at most <paramref name="gaps"/> missing faces inside it.</summary>
     private static int LongestRun(int[] counts, int gaps)

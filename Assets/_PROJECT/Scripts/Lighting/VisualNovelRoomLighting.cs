@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// A room lighting rig (<see cref="RoomAmbientLight"/> + <see cref="RoomLight"/>s) laid over the visual novel stage,
-/// shown only while a VN dialogue plays: it fades in when the dialogue starts and out when it ends.
+/// shown only while a VN dialogue plays: it fades in when the dialogue starts and out once its end fade is over.
 /// It also copies the stage picture's position and scale, so the lights stay on the walls during VN zoom effects.
 ///
 /// <para>Put it on the rig's root, a child of the stage AFTER the picture images and BEFORE the Overlay, so fades to
@@ -37,6 +37,15 @@ public class VisualNovelRoomLighting : MonoBehaviour
         group.alpha = shown ? 1f : 0f;
     }
 
+    private void OnDisable()
+    {
+        // The stage is usually hidden the same frame its end fade finishes, before LateUpdate sees it:
+        // settle here so the next dialogue fades the lights in instead of starting with them on.
+        fade.Stop();
+        shown = ShouldShow();
+        group.alpha = shown ? 1f : 0f;
+    }
+
     private void OnDestroy()
     {
         fade.Stop();
@@ -61,5 +70,6 @@ public class VisualNovelRoomLighting : MonoBehaviour
         }
     }
 
-    private bool ShouldShow() => !onlyWhileDialogue || (talkable && talkable.IsPlaying);
+    // Stays on through the end fade, so the lights go out under the black rather than before it.
+    private bool ShouldShow() => !onlyWhileDialogue || (talkable && (talkable.IsPlaying || talkable.IsEnding));
 }

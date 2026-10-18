@@ -745,6 +745,7 @@ MonoBehaviour:
     width: {x: 4, y: 4}
     fadeDuration: 0.1
     onlyWhenLockable: 1
+    sealedColor: {r: 0.95, g: 0.2, b: 0.2, a: 1}
   sfxPitchRange: {x: 0.98, y: 1.02}
   rollSfx: {fileID: 8300000, guid: 0dee433ca9ac0d5459e2ef1577f4253e, type: 3}
   landSfx: {fileID: 8300000, guid: 9de58750eb52127408e569c699007d56, type: 3}
@@ -752,11 +753,15 @@ MonoBehaviour:
   unlockSfx: {fileID: 8300000, guid: 1ae2d34b2d3e3784bba2a0c9949360b6, type: 3}
   flipSfx: {fileID: 8300000, guid: 0dee433ca9ac0d5459e2ef1577f4253e, type: 3}
   destroySfx: {fileID: 8300000, guid: 7556b6b00941f184185c97ac403f3471, type: 3}
+  bustSfx: {fileID: 0}
   passedSfx: {fileID: 8300000, guid: 4bba0118efba90042a2a71ee1faeaf65, type: 3}
   failedSfx: {fileID: 8300000, guid: 3066e1554385c8245a3e2f1def8ff472, type: 3}
   goodAlertSfx: {fileID: 8300000, guid: 0eb3c9fd738f448478ce2537ca927556, type: 3}
   badAlertSfx: {fileID: 8300000, guid: b7139ac7780ce934eb5baa1244611319, type: 3}
   roundsPerTurn: 3
+  unlimitedRerolls: 1
+  bustWithoutCombination: 1
+  bustOnFirstThrow: 0
   rerollsPerRound: 3
   autoFirstRoll: 1
   firstRollDelay: 1
@@ -780,6 +785,11 @@ MonoBehaviour:
     countsAsCombination: 1
     combination: 0
     displayName: Nothing
+    points: 0
+  - enabled: 1
+    countsAsCombination: 1
+    combination: 10
+    displayName: Single One
     points: 0
   - enabled: 0
     countsAsCombination: 0
@@ -831,6 +841,7 @@ MonoBehaviour:
   rollButtonLabel: {fileID: 357885305}
   firstRollLabel: Roll
   rerollLabel: Reroll ({0})
+  unlimitedRerollLabel: Reroll
   finishButton: {fileID: 2056738854}
   finishLabel: Finish
   rerollsText: {fileID: 802812223}
@@ -873,6 +884,7 @@ MonoBehaviour:
     goalReachedText: Goal reached!
     riskyGoalReachedText: You feel hopeful.
     cardUpgradedText: Card upgraded!
+    bustText: Bust!
     rerollsGainedFormat: +{0} reroll
     multGainedFormat: +{0} mult
     roundScoreFormat: 'Round Score: {0}'
@@ -893,7 +905,7 @@ MonoBehaviour:
     text: {fileID: 1531122480}
     delay: 0.72
     hold: 2.19
-    fadeOut: 2.7
+    fadeOut: 3.01
     lost:
       text: ALONE
       color: {r: 0.9, g: 0.15, b: 0.15, a: 1}
@@ -911,7 +923,7 @@ MonoBehaviour:
       volume: 1
     titleRoot: {fileID: 1531122478}
     titleText: {fileID: 1531122480}
-    titleHold: 1.2
+    titleHold: 1.533
     titleSfx: {fileID: 8300000, guid: 9508b1c4a5a4639419a83ca23102e2a2, type: 3}
     titleVolume: 1
   debugKeys: 1
@@ -1770,6 +1782,7 @@ MonoBehaviour:
   deathCutscene: {fileID: 0}
   songFadeOnGoodEnding: 3
   goodEndingAfterFinalLevel: 1
+  deathAfterFinalLevel: 1
   fadeAroundRoundEnd: 1
   roundEndCoverDuration: 0.6
   tableHideDelay: 0.3
@@ -2163,6 +2176,8 @@ MonoBehaviour:
   hoverScale: 1.06
   hoverDuration: 0.15
   hoverHighlight: {fileID: 0}
+  pulseScale: 1.05
+  pulsePeriod: 1.4
   outlineOnHover: 1
   outlineTarget: {fileID: 0}
   outlineColor: {r: 1, g: 0.95, b: 0.75, a: 1}
@@ -2934,6 +2949,8 @@ MonoBehaviour:
   hoverScale: 1.06
   hoverDuration: 0.15
   hoverHighlight: {fileID: 0}
+  pulseScale: 1.05
+  pulsePeriod: 1.4
   outlineOnHover: 1
   outlineTarget: {fileID: 0}
   outlineColor: {r: 1, g: 0.95, b: 0.75, a: 1}
@@ -3725,6 +3742,8 @@ MonoBehaviour:
   hoverScale: 1.06
   hoverDuration: 0.15
   hoverHighlight: {fileID: 0}
+  pulseScale: 1.05
+  pulsePeriod: 1.4
   outlineOnHover: 1
   outlineTarget: {fileID: 0}
   outlineColor: {r: 1, g: 0.95, b: 0.75, a: 1}
@@ -3747,8 +3766,8 @@ MonoBehaviour:
   loopFrames: 1
   speaker: {fileID: 0}
   usableDuringDice: 1
-  showcaseDialogue: {fileID: 11400000, guid: fa57cedca4e24ba4e89dba8057ad643d, type: 2}
-  beforeDeathDialogue: {fileID: 0}
+  showcaseDialogue: {fileID: 11400000, guid: 2110545e7a304ea6a35d239c135ae285, type: 2}
+  beforeDeathDialogue: {fileID: 11400000, guid: 99c417ff50b92a94c8dd124375d6f165, type: 2}
   yesTitle: Yes
   noTitle: No
   forkLookFrom: {fileID: 0}
@@ -4009,10 +4028,8 @@ MonoBehaviour:
   fork:
   - title: Yes
     dialogue: {fileID: 11400000, guid: 30a2d4594a745ae4ab40ef06b23142de, type: 2}
-    ending: 0
   - title: No
     dialogue: {fileID: 11400000, guid: 04c9c845e159bae4f853c5e9a77bd923, type: 2}
-    ending: 1
   endFadeOut: 1.5
   forkParent: {fileID: 494122839}
   forkSortingOrder: 100
@@ -4460,6 +4477,8 @@ MonoBehaviour:
   hoverScale: 1.06
   hoverDuration: 0.15
   hoverHighlight: {fileID: 0}
+  pulseScale: 1.05
+  pulsePeriod: 1.4
   outlineOnHover: 1
   outlineTarget: {fileID: 0}
   outlineColor: {r: 1, g: 0.95, b: 0.75, a: 1}
@@ -4722,8 +4741,8 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 2052019987}
   - {fileID: 244570388}
+  - {fileID: 2052019987}
   - {fileID: 1901275428}
   - {fileID: 1743218968}
   collectSceneHolesOnEnable: 1
@@ -5834,7 +5853,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f7c40a3748db2f46b589fd0280379bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutSceneManager
-  currentCutScene: {fileID: 689042684}
+  currentCutScene: {fileID: 2072675787}
   currentCutScenePath: 
   defaultLabel: Cutscenes/
   runOnStart: 1
@@ -8823,6 +8842,59 @@ MonoBehaviour:
   onChoiceClosed:
     m_PersistentCalls:
       m_Calls: []
+  offerDice: 1
+  diceChoiceCount: 2
+  diceOffers:
+  - enabled: 1
+    kind: 1
+    title: Blue Die
+    description: Always rolls odd.
+    tint: {r: 0.35, g: 0.55, b: 1, a: 1}
+    iconSprite: odd
+    weight: 1
+  - enabled: 1
+    kind: 2
+    title: Yellow Die
+    description: Always rolls even.
+    tint: {r: 1, g: 0.88, b: 0.3, a: 1}
+    iconSprite: even
+    weight: 1
+  - enabled: 1
+    kind: 3
+    title: Pink Die
+    description: Never rolls 1, 2 or 3.
+    tint: {r: 1, g: 0.55, b: 0.8, a: 1}
+    iconSprite: 6
+    weight: 1
+  - enabled: 1
+    kind: 4
+    title: Green Die
+    description: Rolls the value most of your dice show.
+    tint: {r: 0.4, g: 0.9, b: 0.4, a: 1}
+    iconSprite: x
+    weight: 1
+  - enabled: 1
+    kind: 5
+    title: Cyan Die
+    description: Right click to turn it to 1, any time.
+    tint: {r: 0.35, g: 0.95, b: 0.95, a: 1}
+    iconSprite: 1
+    weight: 1
+  - enabled: 1
+    kind: 6
+    title: Red Die
+    description: Always rolls a value no other die shows.
+    tint: {r: 1, g: 0.35, b: 0.35, a: 1}
+    iconSprite: y
+    weight: 1
+  rejectDiceCard:
+    title: Reject the offer
+    description: Leave the dice as it is
+    icon: 
+  debugChooseDiceKey: 0
+  onDiceChosen:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1997523224
 GameObject:
   m_ObjectHideFlags: 0
@@ -9464,9 +9536,9 @@ MonoBehaviour:
   runOnStart: 0
   customDestroy: 0
   dialogue: {fileID: 11400000, guid: 08252676bbf69b94e90a1dca397e6bea, type: 2}
-  fadeInDuration: 3.78
-  blackHoldDuration: 0.5
-  fadeOutDuration: 3.26
+  fadeInDuration: 0
+  blackHoldDuration: 1.04
+  fadeOutDuration: 1.59
   fadeInEase: 1
   fadeOutEase: 1
 --- !u!1 &2120501552

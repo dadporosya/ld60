@@ -105,6 +105,9 @@ public class VisualNovelTalkable : MonoBehaviour
 
     public bool IsPlaying => CurrentDialogue;
 
+    /// <summary>The dialogue is over but its end fade is still running (the stage is still up under it).</summary>
+    public bool IsEnding { get; private set; }
+
     public VisualNovelBackground Background => background;
 
     public RectTransform ShakeTarget => shakeTarget;
@@ -347,6 +350,7 @@ public class VisualNovelTalkable : MonoBehaviour
             StopEffectsOnEnd(release: false);
         }
         endRoutine = null;
+        IsEnding = false;
 
         if (root) root.SetActive(true);
 
@@ -506,8 +510,12 @@ public class VisualNovelTalkable : MonoBehaviour
         hideStageBeforeCallback = false;
 
         if (isActiveAndEnabled)
+        {
+            // Set before starting: without a fade the routine runs to its end inside StartCoroutine.
+            IsEnding = true;
             endRoutine = StartCoroutine(EndRoutine(fade, fadeDuration, fadeColor, finished, endFade, releaseEffects,
                                                    hideBeforeFinished));
+        }
         else
         {
             HideStage();
@@ -591,6 +599,7 @@ public class VisualNovelTalkable : MonoBehaviour
         if (stopEffects) StopEffectsOnEnd(releaseEffects);
 
         endRoutine = null;
+        IsEnding = false;
         if (finished == null || hideBeforeFinished) HideStage();
         finished?.Invoke();
     }
