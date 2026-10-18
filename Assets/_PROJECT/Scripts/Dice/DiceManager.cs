@@ -100,6 +100,8 @@ public class DicePopups
     public string cardUpgradedText = "Card upgraded!";
     [Tooltip("A die destroyed for rerolls (a card's right click). {0} = rerolls gained.")]
     public string rerollsGainedFormat = "+{0} reroll";
+    [Tooltip("A die destroyed for mult (a card's right click). {0} = mult gained.")]
+    public string multGainedFormat = "+{0} mult";
 
     [Header("Risky Goal Popup")]
     [Tooltip("Size of the risky goal popup, relative to the other popups.")]
@@ -121,6 +123,9 @@ public class CombinationScore
 {
     [Tooltip("Off: the hand doesn't count - dice making it score as the next best hand they make, and the hint paper leaves it out.")]
     public bool enabled = true;
+    [Tooltip("Off: the hand still shows its points while rolling, but a round ending with it as the best hand " +
+             "scores 0 - and it doesn't count as a combination for the first throw's odds.")]
+    public bool countsAsCombination = true;
     public PokerDiceCombination combination;
     public string displayName;
     public int points;
@@ -136,16 +141,22 @@ public class CombinationScore
     }
 }
 
-/// <summary>A scored set of dice: the best hand they make, with every card bonus applied.</summary>
+/// <summary>
+/// A scored set of dice: the best hand they make, with every card bonus applied. The score is
+/// <see cref="points"/> x <see cref="mult"/>, as in Balatro.
+/// </summary>
 public class DiceScore
 {
     public PokerDiceCombination combination;
     public string combinationName;
-    /// <summary>The hand's points (with the dice sum when it counts, and hand multipliers).</summary>
-    public int basePoints;
-    /// <summary>Everything the cards added on top, multipliers included.</summary>
-    public int bonusPoints;
+    /// <summary>The hand's points + the dice sum (when it counts) + card points, card point multipliers applied.</summary>
+    public int points;
+    /// <summary>1 + card mult (and mult gained this round), card mult multipliers applied.</summary>
+    public float mult = 1f;
+    /// <summary><see cref="points"/> x <see cref="mult"/>, rounded.</summary>
     public int total;
+    /// <summary>Rerolls the cards that counted add to the next round, once this one is finished.</summary>
+    public int nextRoundRerolls;
 }
 
 /// <summary>How one round (one dice game) of a turn ended.</summary>
@@ -248,8 +259,8 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Seconds the table waits after opening (and after the tutorial) before the first throw - the Roll " +
              "button stays off meanwhile.")]
     [SerializeField, Min(0f)] private float firstRollDelay = 1f;
-    [Tooltip("How much rarer any combination is on a round's first throw: 0.3 = 30% less likely. Does nothing " +
-             "with 6+ dice, which always make a hand.")]
+    [Tooltip("How much rarer any combination (a hand with Counts As Combination on) is on a round's first throw: " +
+             "0.3 = 30% less likely. Does nothing when every throw makes one - e.g. 6+ dice with Pair counting.")]
     [SerializeField, Range(0f, 1f)] private float firstRollCombinationReduction = 0.3f;
     [Tooltip("Score the dice as soon as the last reroll lands - unless a card's right click could still change them.")]
     [SerializeField] private bool autoFinishWhenOutOfRerolls = true;
@@ -278,7 +289,8 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private bool alwaysPlayTutorial = false;
 
     [Header("Scoring")]
-    [Tooltip("Add the sum of all dice to the hand's points: every die scores its face value, the hand adds its bonus.")]
+    [Tooltip("A round scores points x mult: points start at the hand's points, mult at 1, and cards add to / multiply both. " +
+             "This adds the sum of all dice to the points: every die scores its face value, the hand adds its bonus.")]
     [SerializeField] private bool addDiceSum = true;
     [Tooltip("A round whose dice make no hand (Nothing) scores 0 - no dice sum, no card bonuses.")]
     [SerializeField] private bool noPointsWithoutCombination = false;
@@ -349,6 +361,12 @@ public class DiceManager : MonoBehaviour
     [Tooltip("The hand the dice make. Empty while they make none that counts (Nothing, or only hands turned off " +
              "in the scoring table).")]
     [SerializeField] private TextMeshProUGUI combinationText;
+    [Tooltip("Optional: the running round's score as mult and points. Empty before the first throw lands.")]
+    [SerializeField] private TextMeshProUGUI comboScoreText;
+    [Tooltip("{0} = mult, {1} = points, {2} = the score (points x mult).")]
+    [SerializeField] private string comboScoreFormat = "{0} x {1}";
+    [Tooltip("Scale punch on Combo Score Text when its mult or points change. 0: none.")]
+    [SerializeField, Min(0f)] private float comboScorePunch = 0.15f;
     [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
              "in the scoring table) by driving its Shake Strength. Defaults to the TextAnimation on Combination Text " +
              "(added if missing); Shake is added to its animations when it has none.")]
@@ -430,6 +448,12 @@ public class DiceManager : MonoBehaviour
     // Set once the tutorial has been seen to the end in this run; cleared by ResetTutorial (StartGame).
     private bool tutorialPlayedThisRun;
     private IReadOnlyList<CardInstance> cards = Array.Empty<CardInstance>();
+    // Mult gained this round by destroying dice (Destroy Face cards); added to every hand's mult.
+    private float roundMult;
+    // Rerolls earned by cards in a finished round, for the next one - carried into the next turn too.
+    private int carriedRerolls;
+    private Tween comboPunchTween;
+    private Vector3? comboTextScale;
     private Action<DiceTurnResult> turnCallback;
     // The turn's rounds so far; the last one is added (not yet banked) as it finishes.
     private readonly List<DiceRoundResult> roundResults = new List<DiceRoundResult>();
@@ -791,7 +815,9 @@ public class DiceManager : MonoBehaviour
         HasRolled = false;
         finishing = false;
         landingPending = 0;
-        RerollsLeft = RerollsFor(cards);
+        RerollsLeft = RerollsFor(cards) + carriedRerolls;
+        carriedRerolls = 0;
+        roundMult = 0f;
 
         // A turn's first round starts on random faces, later ones on the last round's - they don't score
         // until the first throw lands. Dice destroyed last round are back.
@@ -834,6 +860,13 @@ public class DiceManager : MonoBehaviour
 
     /// <summary>A new run: the next round plays the tutorial again.</summary>
     public void ResetTutorial() => tutorialPlayedThisRun = false;
+
+    /// <summary>A new run: the tutorial plays again and no rerolls are carried over from the last run.</summary>
+    public void ResetRun()
+    {
+        ResetTutorial();
+        carriedRerolls = 0;
+    }
 
     /// <summary>Plays the tutorial over the table, then <paramref name="then"/> (if this turn is still on).</summary>
     private void PlayTutorial(Action then)
@@ -980,7 +1013,7 @@ public class DiceManager : MonoBehaviour
         List<int> results = RandomResults(count);
         if (!MakesHand(results) || UnityEngine.Random.value >= firstRollCombinationReduction) return results;
 
-        // Fair dice redrawn until they make no hand. 6+ dice always make one, so the tries are capped.
+        // Fair dice redrawn until they make no hand. Some dice counts always make one, so the tries are capped.
         for (int attempt = 0; attempt < 500; attempt++)
         {
             List<int> retry = RandomResults(count);
@@ -989,7 +1022,13 @@ public class DiceManager : MonoBehaviour
         return results;
     }
 
-    private static bool MakesHand(IReadOnlyList<int> values) => PokerDiceEvaluator.Contained(values).Count > 1;
+    /// <summary>Whether <paramref name="values"/> make any hand that counts as a combination.</summary>
+    private bool MakesHand(IReadOnlyList<int> values)
+    {
+        foreach (PokerDiceCombination hand in PokerDiceEvaluator.Contained(values))
+            if (CountsAsCombination(hand)) return true;
+        return false;
+    }
 
     /// <summary>Locks or unlocks <paramref name="die"/>, when locking is allowed right now.</summary>
     public void ToggleLock(Dice die)
@@ -1046,11 +1085,16 @@ public class DiceManager : MonoBehaviour
 
             case CardEffectType.DestroyFace:
                 int gained = Mathf.Max(0, card.Amount);
+                float multGained = Mathf.Max(0f, card.Multiplier);
                 RerollsLeft += gained;
+                roundMult += multGained;
                 die.Remove();
                 PlaySfx(destroySfx);
                 if (gained > 0)
                     Popup(string.Format(popups.rerollsGainedFormat, gained), ScoreAnchor, popups.scoreOffset, popups.gainColor);
+                if (multGained > 0f)
+                    Popup(string.Format(popups.multGainedFormat, CardEffect.FormatMult(multGained)), ScoreAnchor,
+                        popups.scoreOffset, popups.gainColor);
                 break;
 
             case CardEffectType.FlipFace:
@@ -1082,8 +1126,9 @@ public class DiceManager : MonoBehaviour
         finishing = true;
 
         int[] values = Values();
-        DiceRoundResult round = new DiceRoundResult { score = Evaluate(values, cards), values = values };
+        DiceRoundResult round = new DiceRoundResult { score = RoundScore(values), values = values };
         roundResults.Add(round);
+        carriedRerolls += round.score.nextRoundRerolls;
 
         if (!IsLastRound)
         {
@@ -1166,7 +1211,7 @@ public class DiceManager : MonoBehaviour
         if (roundResults.Count < CurrentRound)
         {
             int[] values = Values();
-            roundResults.Add(new DiceRoundResult { score = Evaluate(values, cards), values = values });
+            roundResults.Add(new DiceRoundResult { score = RoundScore(values), values = values });
         }
 
         int scored = 0;
@@ -1282,12 +1327,13 @@ public class DiceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// The best score <paramref name="values"/> can make: every hand they contain is scored with the
-    /// cards' bonuses and the highest total wins. Order: hand bonus x hand / pattern multipliers (+ dice
-    /// sum), + flat / hand / face / pattern / parity bonuses, x score / parity multipliers. With
-    /// <see cref="noPointsWithoutCombination"/>, dice that make no hand score 0.
+    /// The best score <paramref name="values"/> can make: every hand they contain is scored with the cards'
+    /// bonuses and the highest total wins. A score is points x mult. Points start at the hand's points (+ the dice
+    /// sum), mult at 1 + <paramref name="extraMult"/> (gained this round, e.g. by destroying dice). Then, over all
+    /// cards that count: + points, x points, + mult, x mult. With <see cref="noPointsWithoutCombination"/>, dice
+    /// that make no hand score 0.
     /// </summary>
-    public DiceScore Evaluate(IReadOnlyList<int> values, IReadOnlyList<CardInstance> ownedCards)
+    public DiceScore Evaluate(IReadOnlyList<int> values, IReadOnlyList<CardInstance> ownedCards, float extraMult = 0f)
     {
         int diceSum = 0;
         foreach (int v in values) diceSum += v;
@@ -1301,55 +1347,33 @@ public class DiceManager : MonoBehaviour
             CombinationScore entry = ScoreFor(hand);
             if (entry == null) continue;
 
-            // Hand multipliers scale the combination's bonus only: the dice sum is added after them.
-            float handBonus = entry.points;
-            float bonus = 0f;
-            float scoreMultiplier = 1f;
+            float addedPoints = 0f, pointsFactor = 1f, addedMult = 0f, multFactor = 1f;
+            int nextRoundRerolls = 0;
 
             if (ownedCards != null)
                 foreach (CardInstance card in ownedCards)
                 {
                     CardEffect effect = card?.Effect;
-                    if (effect == null) continue;
+                    if (effect == null || !effect.IsScoring) continue;
+
+                    // Face Value / Parity cards count once per matching die.
+                    int times = effect.TimesIn(values, hand);
+                    if (times <= 0) continue;
+                    nextRoundRerolls += effect.nextRoundRerolls;
 
                     // The card's own amount / multiplier: an upgraded card's are higher.
-                    switch (effect.type)
+                    switch (effect.operation)
                     {
-                        case CardEffectType.FlatPoints:
-                            bonus += card.Amount;
-                            break;
-                        case CardEffectType.CombinationBonus:
-                            if (effect.Matches(hand)) bonus += card.Amount;
-                            break;
-                        case CardEffectType.CombinationMultiplier:
-                            if (effect.Matches(hand)) handBonus *= card.Multiplier;
-                            break;
-                        case CardEffectType.FaceValueBonus:
-                            foreach (int v in values)
-                                if (v == effect.faceValue) bonus += card.Amount;
-                            break;
-                        case CardEffectType.ScoreMultiplier:
-                            scoreMultiplier *= card.Multiplier;
-                            break;
-                        case CardEffectType.PatternBonus:
-                            if (effect.PatternIn(values)) bonus += card.Amount;
-                            break;
-                        case CardEffectType.PatternMultiplier:
-                            if (effect.PatternIn(values)) handBonus *= card.Multiplier;
-                            break;
-                        case CardEffectType.ParityBonus:
-                            foreach (int v in values)
-                                if (effect.IsOfParity(v)) bonus += card.Amount;
-                            break;
-                        case CardEffectType.ParityMultiplier:
-                            if (values.Count > 0 && AllOfParity(values, effect)) scoreMultiplier *= card.Multiplier;
-                            break;
+                        case ScoreOperation.AddPoints: addedPoints += card.Amount * times; break;
+                        case ScoreOperation.MultiplyPoints: pointsFactor *= Mathf.Pow(card.Multiplier, times); break;
+                        case ScoreOperation.AddMult: addedMult += card.Multiplier * times; break;
+                        case ScoreOperation.MultiplyMult: multFactor *= Mathf.Pow(card.Multiplier, times); break;
                     }
                 }
 
-            float handPoints = handBonus + (addDiceSum ? diceSum : 0);
-            int basePoints = Mathf.RoundToInt(handPoints);
-            int total = Mathf.RoundToInt((handPoints + bonus) * scoreMultiplier);
+            int points = Mathf.RoundToInt((entry.points + (addDiceSum ? diceSum : 0) + addedPoints) * pointsFactor);
+            float mult = (1f + extraMult + addedMult) * multFactor;
+            int total = Mathf.RoundToInt(points * mult);
 
             if (best != null && (total < best.total || (total == best.total && hand < best.combination))) continue;
 
@@ -1357,9 +1381,10 @@ public class DiceManager : MonoBehaviour
             {
                 combination = hand,
                 combinationName = string.IsNullOrEmpty(entry.displayName) ? CardEffect.Nicify(hand) : entry.displayName,
-                basePoints = basePoints,
-                bonusPoints = total - basePoints,
+                points = points,
+                mult = mult,
                 total = total,
+                nextRoundRerolls = nextRoundRerolls,
             };
         }
 
@@ -1373,11 +1398,28 @@ public class DiceManager : MonoBehaviour
         };
     }
 
-    private static bool AllOfParity(IReadOnlyList<int> values, CardEffect effect)
+    /// <summary>
+    /// What a finished round banks: <see cref="Evaluate"/>, but 0 points when the best hand doesn't count as a
+    /// combination (<see cref="CombinationScore.countsAsCombination"/>).
+    /// </summary>
+    private DiceScore RoundScore(IReadOnlyList<int> values)
     {
-        foreach (int v in values)
-            if (!effect.IsOfParity(v)) return false;
-        return true;
+        DiceScore score = Evaluate(values, cards, roundMult);
+        CombinationScore entry = ScoreFor(score.combination);
+        if (entry == null || entry.countsAsCombination) return score;
+
+        score.points = 0;
+        score.total = 0;
+        score.nextRoundRerolls = 0;
+        return score;
+    }
+
+    /// <summary>Whether <paramref name="hand"/> is a combination that counts: not Nothing, enabled and counted.</summary>
+    private bool CountsAsCombination(PokerDiceCombination hand)
+    {
+        if (hand == PokerDiceCombination.Nothing) return false;
+        CombinationScore entry = ScoreFor(hand);
+        return entry != null && entry.countsAsCombination;
     }
 
     /// <summary>A round's rerolls: <see cref="rerollsPerRound"/> + Extra Rerolls cards - Extra Dice cards' cost.</summary>
@@ -1434,8 +1476,10 @@ public class DiceManager : MonoBehaviour
         // dice are in the air the last one stays up; once they land it counts from that to the new score
         // (10 -> 20, or down). On screen it sits on top of the rounds already banked this turn; the turn's
         // first round starts at 0 and counts up from there.
+        // A scored round shows what it banked: a hand that doesn't count drops to 0 as the round ends.
         if (!TurnActive || !HasRolled) shownScore = null;
-        else if (!IsRolling) shownScore = Evaluate(Values(), cards);
+        else if (finishing && roundResults.Count >= CurrentRound) shownScore = roundResults[roundResults.Count - 1].score;
+        else if (!IsRolling) shownScore = Evaluate(Values(), cards, roundMult);
 
         UpdateTargetText();
 
@@ -1484,10 +1528,32 @@ public class DiceManager : MonoBehaviour
             combinationText.text = proper ? shownScore.combinationName : "";
         }
         SetCombinationShake(shownScore != null ? CombinationStrength(shownScore.combination) : 0f);
+        UpdateComboScoreText();
 
         // Whether a die may be locked just changed (a roll started or landed): hovered dice follow.
         foreach (Dice die in dice)
             if (die) die.RefreshOutline();
+    }
+
+    /// <summary>
+    /// Combo Score Text: the running round's mult and points ("2.5 x 34"), punched when either changes. While dice
+    /// are in the air the last score stays up.
+    /// </summary>
+    private void UpdateComboScoreText()
+    {
+        if (!comboScoreText) return;
+
+        string text = shownScore == null ? ""
+            : string.Format(comboScoreFormat, CardEffect.FormatMult(shownScore.mult), shownScore.points, shownScore.total);
+        if (text == comboScoreText.text) return;
+        comboScoreText.text = text;
+
+        if (comboScorePunch > 0f && !string.IsNullOrEmpty(text) && isActiveAndEnabled)
+        {
+            comboPunchTween.Stop();
+            comboScoreText.transform.localScale = comboTextScale ??= comboScoreText.transform.localScale;
+            comboPunchTween = Tween.PunchScale(comboScoreText.transform, Vector3.one * comboScorePunch, 0.25f);
+        }
     }
 
     /// <summary>The turn's total with <paramref name="roundScore"/> as the running round's: banked rounds + it.</summary>

@@ -14,15 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Street"
   badTitle: "Street"
-  description: "A straight multiplies the combination's points by {0}"
+  description: "A straight grants +{0} multiplier"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0
   effect:
-    type: 2
+    type: 1
+    operation: 1
     amount: 0
     multiplier: 2
+    nextRoundRerolls: 0
     combination: 4
     otherCombinations: 
     - 5

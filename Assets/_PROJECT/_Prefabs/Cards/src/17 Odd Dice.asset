@@ -14,15 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Odd Dice"
   badTitle: "Odd Dice"
-  description: "Each odd die grants {0} bonus points"
+  description: "Each odd die grants +{0} bonus multiplier"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0
   effect:
     type: 8
-    amount: 7
-    multiplier: 1
+    operation: 1
+    amount: 0
+    multiplier: 0.2
+    nextRoundRerolls: 0
     combination: 1
     otherCombinations: []
     faceValue: 6

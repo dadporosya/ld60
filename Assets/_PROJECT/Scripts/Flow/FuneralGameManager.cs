@@ -178,7 +178,7 @@ public class FuneralGameManager : MonoBehaviour
         phoneLevel = -1;
         CancelRoundEnd();
         if (Levels) Levels.ResetLevels();
-        if (Dice) Dice.ResetTutorial();
+        if (Dice) Dice.ResetRun();
         if (Cards) Cards.UpgradeNextChoice = false;
         onContactsChanged?.Invoke();
         SetPhase(Phase.Intro);

@@ -20,9 +20,11 @@ MonoBehaviour:
   count: 1
   kind: 0
   effect:
-    type: 7
+    type: 6
+    operation: 3
     amount: 0
-    multiplier: 1.67
+    multiplier: 2
+    nextRoundRerolls: 0
     combination: 1
     otherCombinations: []
     faceValue: 6

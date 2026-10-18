@@ -14,15 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   goodTitle: "Destroy Sixes"
   badTitle: "Destroy Sixes"
-  description: "You can destroy a 6 (right click) to gain {0} additional reroll"
+  description: "You can destroy a 6 (right click) to gain {0} additional reroll and +{mult} multiplier"
   icon: 
   viewPrefab: {fileID: 0}
   count: 1
   kind: 0
   effect:
     type: 12
+    operation: 0
     amount: 1
-    multiplier: 1
+    multiplier: 0.5
+    nextRoundRerolls: 0
     combination: 1
     otherCombinations: []
     faceValue: 6

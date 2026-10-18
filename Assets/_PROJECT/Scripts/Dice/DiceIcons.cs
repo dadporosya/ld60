@@ -58,26 +58,24 @@ public static class DiceIcons
 
     /// <summary>
     /// The dice a card's bonus is about: its combination, pattern, face or parity. Empty when it isn't about
-    /// particular dice (flat points, score multiplier, rerolls).
+    /// particular dice (Always cards, rerolls).
     /// </summary>
     public static string ForEffect(CardEffect effect)
     {
         if (effect == null) return "";
         switch (effect.type)
         {
-            case CardEffectType.CombinationBonus:
-            case CardEffectType.CombinationMultiplier:
+            case CardEffectType.Combination:
                 // The biggest hand the card counts for: a straight card (small + large) shows 1 2 3 4 5.
                 PokerDiceCombination shown = effect.combination;
                 foreach (PokerDiceCombination other in effect.otherCombinations)
                     if (other > shown) shown = other;
                 return Combination(shown);
 
-            case CardEffectType.PatternBonus:
-            case CardEffectType.PatternMultiplier:
+            case CardEffectType.Pattern:
                 return Pattern(effect.pattern);
 
-            case CardEffectType.FaceValueBonus:
+            case CardEffectType.FaceValue:
             case CardEffectType.RerollFace:
             case CardEffectType.DestroyFace:
                 return Face(effect.faceValue);
@@ -85,8 +83,8 @@ public static class DiceIcons
             case CardEffectType.FlipFace:
                 return Face(effect.faceValue) + " / " + Face(effect.flipFace);
 
-            case CardEffectType.ParityBonus:
-            case CardEffectType.ParityMultiplier:
+            case CardEffectType.Parity:
+            case CardEffectType.AllParity:
                 return Parity(effect.parity);
 
             case CardEffectType.ExtraDice:
@@ -116,7 +114,7 @@ public static class DiceIcons
         bool[] faces = new bool[PokerDiceEvaluator.Faces + 1];
         switch (effect.type)
         {
-            case CardEffectType.FaceValueBonus:
+            case CardEffectType.FaceValue:
             case CardEffectType.RerollFace:
             case CardEffectType.DestroyFace:
                 faces[effect.faceValue] = true;
@@ -124,13 +122,12 @@ public static class DiceIcons
             case CardEffectType.FlipFace:
                 faces[effect.faceValue] = faces[effect.flipFace] = true;
                 break;
-            case CardEffectType.PatternBonus:
-            case CardEffectType.PatternMultiplier:
+            case CardEffectType.Pattern:
                 foreach (char c in effect.pattern ?? "")
                     if (c >= '1' && c - '0' <= PokerDiceEvaluator.Faces) faces[c - '0'] = true;
                 break;
         }
-        bool parity = effect.type is CardEffectType.ParityBonus or CardEffectType.ParityMultiplier;
+        bool parity = effect.type is CardEffectType.Parity or CardEffectType.AllParity;
 
         return DiceWords.Replace(text, match =>
         {
