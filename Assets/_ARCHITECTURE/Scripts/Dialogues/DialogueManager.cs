@@ -432,7 +432,7 @@ public class DialogueManager : MonoBehaviour
             bool interruptsTyping = typingState == TypingState.active;
             DisplayNextParagraph();
             if (interruptsTyping && windowAnimations && !textOverride) windowAnimations.PlayTypingInterrupted();
-        } else if (Input.GetKeyDown(KeyCode.L))
+        } else if (Keyboard.current != null && Keyboard.current.lKey.wasPressedThisFrame)
         {
             EndDialogue();
         }

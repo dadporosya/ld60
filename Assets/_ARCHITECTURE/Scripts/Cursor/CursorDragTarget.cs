@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -55,7 +56,7 @@ public class CursorDragTarget : MonoBehaviour,
     private void Update()
     {
         // Fallback: If mouse button was released outside window bounds or without pointer-up triggering, end drag
-        if (isDragging && !Input.GetMouseButton(0))
+        if (isDragging && (Mouse.current == null || !Mouse.current.leftButton.isPressed))
         {
             SetDragging(false);
         }

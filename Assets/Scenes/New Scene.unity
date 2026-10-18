@@ -2913,7 +2913,7 @@ MonoBehaviour:
   useDefaultRandomPitch: 0
   defaultRandomPitchRange: {x: 0.95, y: 1.05}
   defaultDialogueVoiceList:
-  - {fileID: 8300000, guid: dced3d403077ca0479e17fcc17b0ca5d, type: 3}
+  - {fileID: 8300000, guid: 2758419553b2b3d41893f0710f8e1355, type: 3}
 --- !u!1 &493053513
 GameObject:
   m_ObjectHideFlags: 0
@@ -3358,7 +3358,7 @@ MonoBehaviour:
   useCustomTextColor: 0
   textColor: {r: 1, g: 0.7028302, b: 0.9855354, a: 1}
   voiceClips:
-  - {fileID: 8300000, guid: dced3d403077ca0479e17fcc17b0ca5d, type: 3}
+  - {fileID: 8300000, guid: 0c97bc262fec732419d4722dd9223c02, type: 3}
   dialogueManager: {fileID: 0}
   simpleMonologues: []
   rawDialogues: []
@@ -4270,7 +4270,7 @@ MonoBehaviour:
   useCustomTextColor: 0
   textColor: {r: 0.97402066, g: 1, b: 0.740566, a: 1}
   voiceClips:
-  - {fileID: 8300000, guid: dced3d403077ca0479e17fcc17b0ca5d, type: 3}
+  - {fileID: 8300000, guid: ca675fb2edd582d438372811fff5b040, type: 3}
   dialogueManager: {fileID: 0}
   simpleMonologues: []
   rawDialogues: []
@@ -4339,8 +4339,8 @@ MonoBehaviour:
   faderImage: {fileID: 788155895}
   holeShader: {fileID: 4800000, guid: fcbf209b21b7ec34cbe2845da093faf1, type: 3}
   holes:
-  - {fileID: 1901275428}
   - {fileID: 244570388}
+  - {fileID: 1901275428}
   - {fileID: 1743218968}
   - {fileID: 2052019987}
   collectSceneHolesOnEnable: 1
@@ -4958,7 +4958,7 @@ MonoBehaviour:
   useCustomTextColor: 0
   textColor: {r: 0.759434, g: 1, b: 0.7732798, a: 1}
   voiceClips:
-  - {fileID: 8300000, guid: dced3d403077ca0479e17fcc17b0ca5d, type: 3}
+  - {fileID: 8300000, guid: ad377b28be75a9f4c9a04b83fe6a2a06, type: 3}
   dialogueManager: {fileID: 0}
   simpleMonologues: []
   rawDialogues: []
@@ -6072,7 +6072,7 @@ MonoBehaviour:
   useCustomTextColor: 0
   textColor: {r: 0.7688679, g: 0.78129053, b: 1, a: 1}
   voiceClips:
-  - {fileID: 8300000, guid: dced3d403077ca0479e17fcc17b0ca5d, type: 3}
+  - {fileID: 8300000, guid: 1d44c77ca969e0c4fb99255422c6ac67, type: 3}
   dialogueManager: {fileID: 0}
   simpleMonologues: []
   rawDialogues: []
@@ -6855,7 +6855,7 @@ MonoBehaviour:
   voicePlaybackMode: 1
   voiceEveryNCharacters: 2
   voiceSkipWhitespace: 1
-  voiceVolume: 0.59
+  voiceVolume: 1
   voiceRandomPitchRange: {x: 0.98, y: 1.02}
   debug: 1
   skipIcon: {fileID: 1453928638}
@@ -8913,7 +8913,7 @@ MonoBehaviour:
   useCustomTextColor: 0
   textColor: {r: 1, g: 1, b: 1, a: 1}
   voiceClips:
-  - {fileID: 8300000, guid: dced3d403077ca0479e17fcc17b0ca5d, type: 3}
+  - {fileID: 8300000, guid: 2758419553b2b3d41893f0710f8e1355, type: 3}
   dialogueManager: {fileID: 0}
   simpleMonologues: []
   rawDialogues: []

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -239,11 +240,16 @@ public class CursorIconManager : MonoBehaviour
     private bool buttonClickShown = false;
     private int externalButtonHoverCount = 0;
     private int externalDragCount = 0;
+    // Auto-detected Selectable under the pointer, so moving straight onto a neighbouring button replays the hover sound.
+    private Selectable hoveredSelectable;
     private PointerEventData pointerData;
     private static readonly List<RaycastResult> raycastResults = new List<RaycastResult>();
 
     /// <summary>True while something is telling the cursor it is over a button.</summary>
     public bool IsOverButton { get; private set; }
+
+    // The project uses the Input System only; the legacy Input class throws.
+    private static Vector2 MousePosition => Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
 
     private void Awake()
     {
@@ -381,12 +387,18 @@ public class CursorIconManager : MonoBehaviour
             if (dragReleaseSound) SFXManager.Instance.PlayClip(dragReleaseSound, volumeIn:sfxVolume, playIndependently:true);
         }
 
-        bool pressed = Input.GetMouseButton(0);
-        bool overButton = externalButtonHoverCount > 0 || (autoDetectButtons && IsPointerOverButton());
+        bool pressed = Mouse.current != null && Mouse.current.leftButton.isPressed;
+        Selectable hovered = null;
+        bool overSelectable = autoDetectButtons && IsPointerOverButton(out hovered);
+        bool overButton = overSelectable || externalButtonHoverCount > 0;
         IsOverButton = overButton;
+
+        bool switchedButton = State == CursorState.Button && hovered && hovered != hoveredSelectable;
+        hoveredSelectable = hovered;
 
         if (overButton)
         {
+            if (switchedButton) PlayButtonHoverSound();
             if (State != CursorState.Button || buttonClickShown != pressed) SetButtonIcon(pressed);
             return;
         }
@@ -404,13 +416,14 @@ public class CursorIconManager : MonoBehaviour
     /// Raycasts the UI at the pointer and reports whether an interactable <see cref="Selectable"/>
     /// (Button, Toggle, Slider, ...) is under it.
     /// </summary>
-    private bool IsPointerOverButton()
+    private bool IsPointerOverButton(out Selectable hovered)
     {
+        hovered = null;
         EventSystem es = EventSystem.current;
         if (es == null) return false;
 
         if (pointerData == null) pointerData = new PointerEventData(es);
-        pointerData.position = Input.mousePosition;
+        pointerData.position = MousePosition;
 
         raycastResults.Clear();
         es.RaycastAll(pointerData, raycastResults);
@@ -421,7 +434,11 @@ public class CursorIconManager : MonoBehaviour
             if (go == null) continue;
 
             Selectable selectable = go.GetComponentInParent<Selectable>();
-            if (selectable && selectable.isActiveAndEnabled && selectable.interactable) return true;
+            if (selectable && selectable.isActiveAndEnabled && selectable.interactable)
+            {
+                hovered = selectable;
+                return true;
+            }
         }
 
         return false;
@@ -481,11 +498,7 @@ public class CursorIconManager : MonoBehaviour
 
         if (entering)
         {
-            if (buttonHoverSound)
-                SFXManager.Instance.PlayClip(
-                    buttonHoverSound,
-                    randomPitchRange: new Vector2(0.95f, 1.05f),
-                    volumeIn: sfxVolume, playIndependently: true);
+            PlayButtonHoverSound();
 
             if (shakeOnButtonHover)
                 StartShake(buttonShakeDuration, buttonShakeStrength, buttonShakeFrequency, tiedToButton: true);
@@ -511,6 +524,15 @@ public class CursorIconManager : MonoBehaviour
             icon = clicked && clickIcon.IsValid ? clickIcon : defaultIcon;
 
         ApplyIcon(icon);
+    }
+
+    private void PlayButtonHoverSound()
+    {
+        if (buttonHoverSound && SFXManager.Instance)
+            SFXManager.Instance.PlayClip(
+                buttonHoverSound,
+                randomPitchRange: new Vector2(0.95f, 1.05f),
+                volumeIn: sfxVolume, playIndependently: true);
     }
 
     /// <summary>Switches the cursor to the click icon.</summary>
@@ -766,7 +788,7 @@ public class CursorIconManager : MonoBehaviour
         if (sceneCursorRenderer.transform.parent != cam.transform)
             sceneCursorRenderer.transform.SetParent(cam.transform, false);
 
-        Vector3 mouse = Input.mousePosition;
+        Vector3 mouse = MousePosition;
 
         // Hide while the pointer is outside the game view instead of smearing it against the edge.
         bool onScreen =
