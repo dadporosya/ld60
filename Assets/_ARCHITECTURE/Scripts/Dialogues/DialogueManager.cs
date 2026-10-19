@@ -255,7 +255,7 @@ public class DialogueManager : MonoBehaviour
 
     [Tooltip("Make the dialogue window's box transparent wherever a screen hole is open, so it never covers what " +
              "the hole points at. The text stays on top. Adds a ScreenHoleCutout to the window when it has none.")]
-    [SerializeField] private bool cutScreenHolesFromWindow = true;
+    [SerializeField] private bool cutScreenHolesFromWindow = false;
 
     /// <summary>Whether the dialogue window is cut away inside open screen holes.</summary>
     public bool CutScreenHolesFromWindow

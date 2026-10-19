@@ -14,20 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: GameAnalyticsSDK::GameAnalyticsSDK.Setup.Settings
   gameKey:
   - d2720c74839ad8cfbb67a585cd057be1
+  - 17553a7513ab9d3f9bccc90424caec9f
   secretKey:
   - 5d7937aaf8c38c9fe7d76a135f39422832a2506b
+  - 177c7a7934b20475930dfaf629b9650cf6b0eb47
   Build:
+  - 0.1
   - 0.1
   SelectedPlatformOrganization:
   - II-P
+  - II-P
   SelectedPlatformStudio:
   - II-P
+  - II-P
   SelectedPlatformGame:
-  - funeral song
-  SelectedPlatformGameID: 5b720500
-  SelectedOrganization: 01000000
-  SelectedStudio: 01000000
-  SelectedGame: 01000000
+  - funeral song web
+  - funeral song win
+  SelectedPlatformGameID: 5b72050067720500
+  SelectedOrganization: 0100000001000000
+  SelectedStudio: 0100000001000000
+  SelectedGame: 0200000001000000
   NewVersion: 
   Changes: 
   StudioName: 
@@ -43,9 +49,9 @@ MonoBehaviour:
   ResourceItemTypes: []
   ResourceCurrencies: []
   LastCreatedGamePlatform: -1
-  Platforms: 11000000
+  Platforms: 1100000002000000
   UsePlayerSettingsBuildNumber: 0
-  BuildNumberAutoDetect: 00
+  BuildNumberAutoDetect: 0000
   SubmitErrors: 1
   NativeErrorReporting: 0
   MaxErrorCount: 10
