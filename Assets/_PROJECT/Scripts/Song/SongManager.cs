@@ -74,6 +74,15 @@ public class SongManager : MonoBehaviour
         // Every frame: the BGMManager puts a pooled source back to pitch 1 whenever it reuses it.
         foreach (AudioSource source in bgm.MusicSources) source.pitch = pitch;
 
+        // The Web runs no filter components: the effects go on through the browser's audio instead, every frame,
+        // since Unity makes a channel for each sound it starts.
+        if (WebMusicFilter.Enabled)
+        {
+            foreach (AudioSource source in bgm.MusicSources) WebMusicFilter.Mark(source);
+            WebMusicFilter.Apply(lowPass, highPass, volume);
+            return;
+        }
+
         int count = bgm.MusicSourceCount;
         if (!effectsDirty && count == filteredSources) return;
         effectsDirty = false;

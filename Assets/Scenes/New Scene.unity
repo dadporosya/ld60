@@ -3607,7 +3607,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 182.7
+  m_fontSize: 182.95
   m_fontSizeBase: 116.3
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -5832,7 +5832,7 @@ MonoBehaviour:
   buttonHoverSound: {fileID: 8300000, guid: 256e3c89b222b3042a2e3b4bc5bc97fc, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 9ac8c6d872d71cb47bc10ad7ed576459, type: 3}
   buttonClickPitchRange: {x: 0.9, y: 1.1}
-  shakeOnButtonHover: 1
+  shakeOnButtonHover: 0
   buttonShakeStrength: 1.06
   buttonShakeDuration: 0
   buttonShakeFrequency: 30
@@ -7420,7 +7420,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 241.55
+  m_fontSize: 241.7
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -7746,7 +7746,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 361.75
+  m_fontSize: 362.25
   m_fontSizeBase: 116.3
   m_fontWeight: 400
   m_enableAutoSizing: 1

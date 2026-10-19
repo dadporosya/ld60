@@ -449,8 +449,7 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: Next time, before making new ones, ask me for help first! Together we'll
-      definitely come up with something award-winning, or... I dunno
+    text: 'Next time, before making new ones, ask me for help first! '
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -475,7 +474,8 @@ MonoBehaviour:
     initialized: 0
     speakerIsThis: 0
     overWriteValues: 0
-    text: If there are any competitions for riddles and puzzles, of course...
+    text: Together we'll definitely come up with something award-winning, or... I
+      dunno
     initFromScriptableObject: 0
     speaker: {fileID: 0}
     speakerGameObject: {fileID: 0}
@@ -496,6 +496,31 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - nodeId: 19
+    speakerId: 2
+    initialized: 0
+    speakerIsThis: 0
+    overWriteValues: 0
+    text: If there are any competitions for riddles and puzzles, of course...
+    initFromScriptableObject: 0
+    speaker: {fileID: 0}
+    speakerGameObject: {fileID: 0}
+    speakerName: 
+    speakerPortrait: {fileID: 0}
+    useSpriteAtlas: 0
+    spriteAtlas: []
+    spriteId: 0
+    material: {fileID: 0}
+    useCustomTextColor: 0
+    textColor: {r: 1, g: 1, b: 1, a: 1}
+    autoSkip: 0
+    autoSkipDelay: 2
+    onNodeStart:
+      m_PersistentCalls:
+        m_Calls: []
+    onNodeEnd:
+      m_PersistentCalls:
+        m_Calls: []
+  - nodeId: 20
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -520,7 +545,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 20
+  - nodeId: 21
     speakerId: 2
     initialized: 0
     speakerIsThis: 0
@@ -545,7 +570,7 @@ MonoBehaviour:
     onNodeEnd:
       m_PersistentCalls:
         m_Calls: []
-  - nodeId: 21
+  - nodeId: 22
     speakerId: 1
     initialized: 0
     speakerIsThis: 0
@@ -1194,6 +1219,42 @@ MonoBehaviour:
     clearForeground: 0
     stretchForeground: 1
     textBox: 0
+    transitionDuration: 1
+    fadeColor: {r: 0, g: 0, b: 0, a: 1}
+    holdOnColor: 0
+    blurRadius: 1
+    waitForTransition: 1
+    textBoxDelay: 0
+    music: 0
+    bgm: {fileID: 0}
+    bgmClip: {fileID: 0}
+    musicVolume: 1
+    musicFade: 1.5
+    musicFadeIn: -1
+    ambience: 0
+    ambienceClip: {fileID: 0}
+    ambienceVolume: 1
+    ambienceFade: 1.5
+    voice: 0
+    voiceClips: []
+    voiceVolume: 1
+    overrideVoicePitch: 0
+    voicePitchRange: {x: 0.98, y: 1.02}
+    cuesAfterTransition: 1
+    sfx: []
+    startEffects: []
+    keepPreviousSustainedEffects: 0
+    sustainedEffects: []
+  - transition: 0
+    background: {fileID: 0}
+    backgroundMaterial: {fileID: 0}
+    clearBackground: 0
+    stretchBackground: 0
+    foreground: {fileID: 0}
+    foregroundMaterial: {fileID: 0}
+    clearForeground: 0
+    stretchForeground: 0
+    textBox: 2
     transitionDuration: 1
     fadeColor: {r: 0, g: 0, b: 0, a: 1}
     holdOnColor: 0
