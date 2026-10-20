@@ -1336,7 +1336,7 @@ public class DialogueManager : MonoBehaviour
         }
 
         if ((portraitScalingTitle || portraitTitle) && !textOverride)
-            SetText(portraitScalingTitle, portraitTitle, paragraph.speakerName);
+            SetText(portraitScalingTitle, portraitTitle, Loc.T(paragraph.speakerName));
 
         // Must happen before typing starts: changing TMP's color regenerates the mesh, which
         // would otherwise wipe the per-character alpha overrides the typewriter relies on.
@@ -1349,7 +1349,7 @@ public class DialogueManager : MonoBehaviour
 
         typeCoroutine = StartCoroutine(
             TypingDialogue(
-                paragraph.text,
+                Loc.T(paragraph.text),
                 ActiveScalingText,
                 ActiveText,
                 audioClips:voiceClipsOverride
@@ -1384,7 +1384,7 @@ public class DialogueManager : MonoBehaviour
         if (typeCoroutine != null) StopCoroutine(typeCoroutine);
         typeCoroutine = null;
         if (paragraph != null) SetText(ActiveScalingText, ActiveText,
-            HTML.RemoveTags(HTML.RemoveUniqueTags(paragraph.text), targetTag: HTML.ANIMATION_TAG));
+            HTML.RemoveTags(HTML.RemoveUniqueTags(Loc.T(paragraph.text)), targetTag: HTML.ANIMATION_TAG));
         typingState = TypingState.finished;
         paragraph?.onNodeEnd?.Invoke();
         onEndNode?.Invoke();

@@ -317,7 +317,7 @@ public class TextAnimation : MonoBehaviour
         _baseColors.Clear();
 
         TMP_TextInfo info = _tmp.textInfo;
-        for (int m = 0; m < info.meshInfo.Length; m++)
+        for (int m = 0; m < UsedMeshCount(info); m++)
         {
             // Deep copy — TMP reuses the same arrays, so we must clone.
             _baseVertices[m] = (Vector3[])info.meshInfo[m].vertices.Clone();
@@ -336,7 +336,8 @@ public class TextAnimation : MonoBehaviour
         float        t    = Time.time;
 
         // Step 1: Reset working arrays to base values for this frame.
-        for (int m = 0; m < info.meshInfo.Length; m++)
+        int meshCount = UsedMeshCount(info);
+        for (int m = 0; m < meshCount; m++)
         {
             if (!_baseVertices.ContainsKey(m)) continue;
             _baseVertices[m].CopyTo(info.meshInfo[m].vertices, 0);
@@ -413,8 +414,10 @@ public class TextAnimation : MonoBehaviour
             cols[vi].a = cols[vi + 1].a = cols[vi + 2].a = cols[vi + 3].a = alpha;
         }
 
-        // Step 3: Push modified data back to the mesh.
-        for (int m = 0; m < info.meshInfo.Length; m++)
+        // Step 3: Push modified data back to the mesh. Only the meshes this text uses: the ones past
+        // materialCount belong to an earlier text (TMP hides them but keeps their geometry), and pushing them
+        // would bring that text back on top of this one.
+        for (int m = 0; m < meshCount; m++)
         {
             info.meshInfo[m].mesh.vertices = info.meshInfo[m].vertices;
             _tmp.UpdateGeometry(info.meshInfo[m].mesh, m);
@@ -423,6 +426,12 @@ public class TextAnimation : MonoBehaviour
         // Colors need their own update call.
         _tmp.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
     }
+
+    /// <summary>
+    /// The meshes the current text draws with: the main one and a sub mesh per extra font / sprite asset (e.g. a
+    /// fallback font for Cyrillic). meshInfo itself never shrinks, so it can hold more.
+    /// </summary>
+    private static int UsedMeshCount(TMP_TextInfo info) => Mathf.Min(info.materialCount, info.meshInfo.Length);
 
     // ─────────────────────────────────────────────────────────────
     //  Animation implementations

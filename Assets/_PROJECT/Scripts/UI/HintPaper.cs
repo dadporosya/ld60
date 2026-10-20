@@ -55,7 +55,7 @@ public class HintPaper : MonoBehaviour
              "with the Rules Text in it.")]
     [SerializeField] private GameObject backSide;
     [Tooltip("Written into the back side made from the Combinations Text (no Back Side set).")]
-    [SerializeField, TextArea(4, 12)] private string rulesText =
+    [SerializeField, TextArea(4, 12), Localized] private string rulesText =
         "Click on a die to lock it. Locked dice will not be rerolled. Each locked die grants 0.1 multiplier.\n\n" +
         "You have an unlimited number of rerolls, until you are busted.\n\n" +
         "If you reroll dice and the rerolled dice don't make any combination (or show a 1 or 3), you are busted " +
@@ -99,11 +99,11 @@ public class HintPaper : MonoBehaviour
     [Tooltip("Empty: the first TMP text under the toggle button.")]
     [SerializeField] private TMP_Text toggleLabel;
     [Tooltip("Shown while closed. {0} is the toggle key.")]
-    [SerializeField] private string showLabel = "({0}) show hint";
+    [SerializeField, Localized] private string showLabel = "({0}) show hint";
     [Tooltip("Shown while open (two sides: while the back is up). {0} is the toggle key.")]
-    [SerializeField] private string closeLabel = "({0}) close hint";
+    [SerializeField, Localized] private string closeLabel = "({0}) close hint";
     [Tooltip("Two sides: shown while the front is up. {0} is the toggle key.")]
-    [SerializeField] private string flipLabel = "({0}) rules";
+    [SerializeField, Localized] private string flipLabel = "({0}) rules";
 
     [Header("Button pulse")]
     [Tooltip("Scale the button grows to and back when clicked or the key is pressed. 1: no pulse.")]
@@ -123,18 +123,18 @@ public class HintPaper : MonoBehaviour
     [Tooltip("Filled with the DiceManager's scoring table: one line per combination, its dice as sprite icons, then its points.")]
     [SerializeField] private TMP_Text combinationsText;
     [Tooltip("One line. {0}: the combination's dice icons, {1}: its points, {2}: its name.")]
-    [SerializeField] private string combinationLine = "{0} - {1}";
+    [SerializeField, Localized] private string combinationLine = "{0} - {1}";
     [Tooltip("Put between a combination's dice icons. Empty: the icons touch (spacing then comes from the sprite asset's glyph advance).")]
     [SerializeField] private string iconGap = "";
     [Tooltip("Leave out combinations worth no points (Nothing). One or Three is always listed - it saves a reroll from busting.")]
     [SerializeField] private bool skipZeroPoints = true;
     [Tooltip("One or Three's line: it is worth no points, it only saves a reroll from busting. Same placeholders as " +
              "Combination Line. Empty: Combination Line.")]
-    [SerializeField] private string safeFaceLine = "{0} - no bust";
+    [SerializeField, Localized] private string safeFaceLine = "{0} - no bust";
     [Tooltip("Show each combination with example faces (5 5 5 3 3 for a full house). Off: x / y icons.")]
     [SerializeField] private bool exampleFaces = true;
     [Tooltip("Written under the combinations, after an empty line. {0}: the faces that save a reroll (\"1 or 3\"). Empty: none.")]
-    [SerializeField, TextArea] private string bustLine =
+    [SerializeField, TextArea, Localized] private string bustLine =
         "Bust - if the dice you rolled make no combination (and show no {0}), you lose all your points (locked dice don't count).";
     [Tooltip("The Bust Line's font size, as a fraction of the combinations' (0.5: half as big).")]
     [SerializeField, Range(0.1f, 2f)] private float bustLineScale = 0.5f;
@@ -184,6 +184,17 @@ public class HintPaper : MonoBehaviour
             if (!toggleLabel) toggleLabel = toggleButton.GetComponentInChildren<TMP_Text>(true);
         }
         if (toggleIcon) iconRestAngle = toggleIcon.localEulerAngles.z;
+        Loc.Changed += OnLanguageChanged;
+    }
+
+    private void OnDestroy() => Loc.Changed -= OnLanguageChanged;
+
+    /// <summary>The game's language changed (the intro's choice): the sheet's texts are written again in it.</summary>
+    private void OnLanguageChanged()
+    {
+        RefreshCombinations();
+        if (initialized) UpdateLabel(IsOpen);
+        if (madeBackSide && madeBackSide.TryGetComponent(out TMP_Text rules)) rules.text = Loc.T(rulesText);
     }
 
     private void OnEnable()
@@ -247,14 +258,14 @@ public class HintPaper : MonoBehaviour
 
             string line = safeFace && !string.IsNullOrEmpty(safeFaceLine) ? safeFaceLine : combinationLine;
             if (text.Length > 0) text.Append('\n');
-            text.AppendFormat(line, icons, entry.points, entry.displayName);
+            text.Append(Loc.F(line, icons, entry.points, Loc.T(entry.displayName)));
         }
 
         if (!string.IsNullOrEmpty(bustLine))
         {
             if (text.Length > 0) text.Append("\n\n");
             text.Append($"<size={Mathf.RoundToInt(bustLineScale * 100f)}%>");
-            text.AppendFormat(bustLine, string.Join(" or ", PokerDiceEvaluator.SafeFaces));
+            text.Append(Loc.F(bustLine, string.Join(Loc.T(" or "), PokerDiceEvaluator.SafeFaces)));
             text.Append("</size>");
         }
         combinationsText.text = text.ToString();
@@ -416,7 +427,7 @@ public class HintPaper : MonoBehaviour
     {
         if (!toggleLabel) return;
         string label = !open ? showLabel : TwoSided && !ShowingBack ? flipLabel : closeLabel;
-        toggleLabel.text = string.Format(label, KeyName());
+        toggleLabel.text = Loc.F(label, KeyName());
     }
 
     // ---------------------------------------------------------------------
@@ -447,7 +458,7 @@ public class HintPaper : MonoBehaviour
         TMP_Text rules = Instantiate(combinationsText, combinationsText.transform.parent);
         rules.name = "Rules";
         rules.transform.SetSiblingIndex(combinationsText.transform.GetSiblingIndex() + 1);
-        rules.text = rulesText;
+        rules.text = Loc.T(rulesText);
         rules.gameObject.SetActive(false);
         return rules.gameObject;
     }

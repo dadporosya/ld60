@@ -38,14 +38,14 @@ public class LevelPhoneInteractable : ShowcaseInteractable
 
     [Header("Line text")]
     [Tooltip("{0} = level name.")]
-    [SerializeField] private string levelFormat = "{0}";
+    [SerializeField, Localized] private string levelFormat = "{0}";
     [Tooltip("{0} = level name.")]
-    [SerializeField] private string completedFormat = "<s>{0}</s>";
+    [SerializeField, Localized] private string completedFormat = "<s>{0}</s>";
     [Tooltip("{0} = level name. A completed level with a cross sprite for its outcome (set in the LevelManager), " +
              "used instead of Completed Format so the text isn't struck through under the cross.")]
-    [SerializeField] private string crossedFormat = "{0}";
+    [SerializeField, Localized] private string crossedFormat = "{0}";
     [Tooltip("{0} = level name. The final level while it's still locked.")]
-    [SerializeField] private string lockedFinalFormat = "{0}";
+    [SerializeField, Localized] private string lockedFinalFormat = "{0}";
 
     // Levels are started from the hub only.
     protected override bool UsableDuringDice => false;
@@ -88,7 +88,7 @@ public class LevelPhoneInteractable : ShowcaseInteractable
             DialogueContainer lockedDialogue = level.lockedDialogue ? level.lockedDialogue : finalLockedDialogue;
             lines.Add(new ShowcaseDialogueManager.ListLine
             {
-                text = string.Format(format, level.name),
+                text = Loc.F(format, Loc.T(level.name)),
                 // A locked final level is still clickable (and lights up): it says why it won't start, and never does.
                 interactable = !completed,
                 // Completed levels are only struck through (completedFormat), not faded.

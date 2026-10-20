@@ -90,6 +90,17 @@ Dynamic runtime control over URP post-processing volumes without modifying on-di
   - `VisualNovelTalkable` & `VisualNovelDialogueContainer` — Full visual novel presentation controlling foreground/background sprites, transitions, audio volumes, camera framing, and post-process blur.
   - `VisualNovelEffect` — ScriptableObject effect presets for dialogue events (`Play`, `Sustain`, `Release`).
 
+### Localization (`Localization/`)
+
+All text is written in English and translated where it is shown; translations live in one CSV table.
+- **`Loc`** (`Loc.cs`) — Static language state: `Loc.T(text)` / `Loc.F(format, args)` translate (fallback: English), `Loc.Set(code)` switches language, `Loc.Changed` event. Swaps any scene TMP label whose text is a table line on scene load and language change. Outside Play mode `T` returns English (nothing gets baked into scenes).
+- **`LocalizationSettings`** — Asset at `Assets/_PROJECT/Localization/Resources/LocalizationSettings.asset`: languages (code + native name, first = source), **Default Language** (used when the intro's language choice doesn't run), Remember Choice, table reference.
+- **`LocTable`** — CSV table `Assets/_PROJECT/Localization/Translations.csv` (`en,ru,es,context`; comma/semicolon/tab tolerant).
+- **`[Localized]`** — Marks serialized string fields shown to the player so the scan finds them; **`LocalizedText`** — component for runtime-spawned labels.
+- **Editor**: **Tools > Localization > Translations** (scan project, edit all languages side by side, default language, live language in Play mode); Tools > Localization > Settings / Scan Project Into Table.
+- `IntroCutscene` shows the language choice before the warning. Cyrillic falls back to `LiberationSans SDF - Fallback` (TMP Settings fallback list); the main font has no Cyrillic.
+- New player-facing text: wrap it in `Loc.T`/`Loc.F` (literals) or mark the field `[Localized]`, then Scan and translate.
+
 ### Cutscenes (`CutScenesScripts/`)
 
 - **`CutSceneBase`** — Base class for procedural and scripted cutscene controllers (clones at runtime and cleans up upon completion).

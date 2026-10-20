@@ -41,7 +41,7 @@ public class DeathCutscene : CutSceneBase
     [Serializable]
     public class ForkOption
     {
-        public string title = "Yes";
+        [Localized] public string title = "Yes";
         [Tooltip("Played (text box) once the line is clicked. Optional.")]
         public DialogueContainer dialogue;
     }

@@ -19,7 +19,7 @@ public class CreditsFrame
 {
     [Tooltip("Off: the game closes straight away.")]
     public bool show = true;
-    [TextArea] public string text = "Game by II-P";
+    [TextArea, Localized] public string text = "Game by II-P";
     [Tooltip("Seconds to wait before the frame comes up; the screen stays as the cutscene left it. Not part of Duration.")]
     [Min(0f)] public float delay = 1.5f;
     [Tooltip("Seconds from the frame coming up to the game closing.")]
@@ -98,7 +98,7 @@ public class CreditsFrame
         label.color = color;
         label.alignment = TextAlignmentOptions.Center;
         label.raycastTarget = false;
-        label.text = text;
+        label.text = Loc.T(text);
 
         TextAnimation animation = textObject.AddComponent<TextAnimation>();
         animation.animationTarget = TextAnimation.AnimationTarget.WholeText;

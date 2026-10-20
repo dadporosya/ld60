@@ -14,9 +14,9 @@ using PrimeTween;
 public class Level
 {
     [Tooltip("Shown on the phone's level list, and in the logs.")]
-    public string name = "Level";
+    [Localized] public string name = "Level";
     [Tooltip("The dice table's spotlight title frame after the round (e.g. MOTHER, CHILDHOOD FRIEND). Empty: the Name.")]
-    public string spotlightTitle;
+    [Localized] public string spotlightTitle;
     [Tooltip("Can only be started from the phone once every other level is completed.")]
     public bool isFinal;
     [Tooltip("Final levels: played over the phone's list when the level is picked before every other level is " +
@@ -39,12 +39,12 @@ public class Level
     [Header("Card titles")]
     [Tooltip("Bad: the titles the cards offered after a lost round show, one per card, drawn at random. " +
              "Empty = the cards' own titles.")]
-    public List<string> badCardTitles = new List<string>();
+    [Localized] public List<string> badCardTitles = new List<string>();
     [Tooltip("Neutral: the card titles after a round that reached the points it needs, but not the risky goal. " +
              "Empty = the cards' own titles.")]
-    public List<string> neutralCardTitles = new List<string>();
+    [Localized] public List<string> neutralCardTitles = new List<string>();
     [Tooltip("Hopeful: the card titles after a round that reached the risky goal. Empty = the Neutral Card Titles.")]
-    public List<string> hopefulCardTitles = new List<string>();
+    [Localized] public List<string> hopefulCardTitles = new List<string>();
 
     public VisualNovelDialogueContainer DialogueFor(bool passed, bool risky)
     {

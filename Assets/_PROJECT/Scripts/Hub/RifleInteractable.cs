@@ -18,9 +18,9 @@ public class RifleInteractable : ShowcaseInteractableBase
     [Tooltip("Played over the showcase before the fork. Empty: the fork comes up as soon as the picture is in.")]
     [SerializeField] private DialogueContainer beforeDeathDialogue;
     [Tooltip("The fork's line that plays the death cutscene.")]
-    [SerializeField] private string yesTitle = "Yes";
+    [SerializeField, Localized] private string yesTitle = "Yes";
     [Tooltip("The fork's line that closes the showcase.")]
-    [SerializeField] private string noTitle = "No";
+    [SerializeField, Localized] private string noTitle = "No";
     [Tooltip("The fork looks like this death cutscene's (its Fork look). Empty: the FuneralGameManager's Death Cutscene.")]
     [SerializeField] private DeathCutscene forkLookFrom;
 

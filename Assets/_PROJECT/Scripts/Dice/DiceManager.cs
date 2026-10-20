@@ -98,27 +98,27 @@ public class DicePopups
 
     [Header("Text")]
     [Tooltip("{0} = points gained.")]
-    public string gainFormat = "+{0}";
+    [Localized] public string gainFormat = "+{0}";
     [Tooltip("{0} = points lost (a positive number).")]
-    public string lossFormat = "-{0}";
-    public string goalReachedText = "Goal reached!";
-    public string riskyGoalReachedText = "You feel hopeful.";
+    [Localized] public string lossFormat = "-{0}";
+    [Localized] public string goalReachedText = "Goal reached!";
+    [Localized] public string riskyGoalReachedText = "You feel hopeful.";
     [Tooltip("At the end of a round that reached the risky goal: the next cards are upgraded.")]
-    public string cardUpgradedText = "Card upgraded!";
+    [Localized] public string cardUpgradedText = "Card upgraded!";
     [Tooltip("A reroll whose rolled dice make no combination: the round's points are lost and it ends. Empty: none.")]
-    public string bustText = "Bust!";
+    [Localized] public string bustText = "Bust!";
     [Tooltip("A die destroyed for rerolls (a card's right click). {0} = rerolls gained.")]
-    public string rerollsGainedFormat = "+{0} reroll";
+    [Localized] public string rerollsGainedFormat = "+{0} reroll";
     [Tooltip("A die destroyed for mult (a card's right click). {0} = mult gained.")]
-    public string multGainedFormat = "+{0} mult";
+    [Localized] public string multGainedFormat = "+{0} mult";
     [Tooltip("A die sealed (locked before a roll, so locked for the rest of the round), shown near it. " +
              "{0} = mult gained. Empty: none.")]
-    public string sealedMultFormat = "+{0} mult";
+    [Localized] public string sealedMultFormat = "+{0} mult";
     [Tooltip("A round scored (last reroll landed or Finish pressed), shown before the next round starts. " +
              "{0} = the round's score, {1} = mult, {2} = points. Empty: none.")]
-    public string roundScoreFormat = "Round Score: {0}";
+    [Localized] public string roundScoreFormat = "Round Score: {0}";
     [Tooltip("The turn's next round starting. {0} = the round, {1} = rounds per turn. Empty: none.")]
-    public string roundStartFormat = "Round {0}";
+    [Localized] public string roundStartFormat = "Round {0}";
 
     [Header("Round Popups")]
     [Tooltip("Size of the Round Score popup, relative to the other popups.")]
@@ -164,7 +164,7 @@ public enum DiceOutcome
 [Serializable]
 public class DiceOutcomeLook
 {
-    public string text;
+    [Localized] public string text;
     public Color color = Color.white;
     [Tooltip("Played as the text appears. Empty: silent.")]
     public AudioClip sfx;
@@ -240,7 +240,7 @@ public class CombinationScore
              "scores 0 - and it doesn't count as a combination for the first throw's odds.")]
     public bool countsAsCombination = true;
     public PokerDiceCombination combination;
-    public string displayName;
+    [Localized] public string displayName;
     public int points;
 
     // Unity builds list entries through this one: without it the field initializers (enabled = true) are skipped.
@@ -453,34 +453,34 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private GameObject tableRoot;
     [SerializeField] private Button rollButton;
     [SerializeField] private TextMeshProUGUI rollButtonLabel;
-    [SerializeField] private string firstRollLabel = "Roll";
+    [SerializeField, Localized] private string firstRollLabel = "Roll";
     [Tooltip("{0} = rerolls left.")]
-    [SerializeField] private string rerollLabel = "Reroll ({0})";
+    [SerializeField, Localized] private string rerollLabel = "Reroll ({0})";
     [Tooltip("The Roll button after the first throw, with Unlimited Rerolls.")]
-    [SerializeField] private string unlimitedRerollLabel = "Reroll";
+    [SerializeField, Localized] private string unlimitedRerollLabel = "Reroll";
     [SerializeField] private Button finishButton;
     [Tooltip("What the Finish button always says - written into its own text. It ends the round, and can be " +
              "pressed any time the dice are down (not mid-roll, not before the first throw).")]
-    [SerializeField] private string finishLabel = "Finish";
+    [SerializeField, Localized] private string finishLabel = "Finish";
     [Tooltip("{0} = rerolls left.")]
     [SerializeField] private TextMeshProUGUI rerollsText;
-    [SerializeField] private string rerollsFormat = "Rerolls: {0}";
+    [SerializeField, Localized] private string rerollsFormat = "Rerolls: {0}";
     [SerializeField] private TextMeshProUGUI targetText;
     [Tooltip("{0} = target score, {1} = risky goal.")]
-    [SerializeField] private string targetFormat = "Need {0}";
+    [SerializeField, Localized] private string targetFormat = "Need {0}";
     [Tooltip("Target Text once the score reaches the target: now it shows the risky goal. {0} = risky goal, " +
              "{1} = target score. Back to Target Format if a reroll drops the score under the target.")]
-    [SerializeField] private string reachedTargetFormat = "Risky {0}";
+    [SerializeField, Localized] private string reachedTargetFormat = "Risky {0}";
     [Tooltip("Scale punch on Target Text when it switches to the risky goal. 0: none.")]
     [SerializeField, Min(0f)] private float targetSwitchPunch = 0.2f;
     [Tooltip("Optional: shows the risky goal.")]
     [SerializeField] private TextMeshProUGUI riskyTargetText;
     [Tooltip("{0} = risky goal, {1} = target score.")]
-    [SerializeField] private string riskyTargetFormat = "Risky {0}";
+    [SerializeField, Localized] private string riskyTargetFormat = "Risky {0}";
     [Tooltip("Optional: which round of the turn is on. Hidden while a turn has a single round.")]
     [SerializeField] private TextMeshProUGUI roundText;
     [Tooltip("{0} = current round, {1} = rounds per turn.")]
-    [SerializeField] private string roundFormat = "Round {0}/{1}";
+    [SerializeField, Localized] private string roundFormat = "Round {0}/{1}";
     [Tooltip("Position shake on Round Text when its numbers change. 0: none.")]
     [SerializeField, Min(0f)] private float roundTextShake = 8f;
     [Tooltip("Seconds the Round Text shake lasts.")]
@@ -491,14 +491,14 @@ public class DiceManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreText;
     [Tooltip("{0} = the score. Copied into the CountingText added to Score Text when it has none; a CountingText " +
              "already there keeps its own format.")]
-    [SerializeField] private string scoreFormat = "{0}";
+    [SerializeField, Localized] private string scoreFormat = "{0}";
     [Tooltip("Counts the score up / down and shakes when it changes. Defaults to the CountingText on Score Text (added if missing).")]
     [SerializeField] private CountingText scoreCounter;
     [Tooltip("Optional: the running round's points (what the dice on the table make). Only shown while a turn " +
              "has more than one round. Counts like Score Text (a CountingText is added if missing).")]
     [SerializeField] private TextMeshProUGUI roundScoreText;
     [Tooltip("{0} = the running round's points. Copied into the CountingText added to Round Score Text when it has none.")]
-    [SerializeField] private string roundScoreFormat = "{0}";
+    [SerializeField, Localized] private string roundScoreFormat = "{0}";
     [Tooltip("Score Text's colour, with more than one round per turn, while the points banked over the rounds " +
              "are under the target. Round Score Text keeps its own colour.")]
     [SerializeField, FormerlySerializedAs("roundBelowTargetColor")]
@@ -509,7 +509,7 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Optional: the running round's score as mult and points. Empty before the first throw lands.")]
     [SerializeField] private TextMeshProUGUI comboScoreText;
     [Tooltip("{0} = mult, {1} = points, {2} = the score (points x mult).")]
-    [SerializeField] private string comboScoreFormat = "{0} x {1}";
+    [SerializeField, Localized] private string comboScoreFormat = "{0} x {1}";
     [Tooltip("Scale punch on Combo Score Text when its mult or points change. 0: none.")]
     [SerializeField, Min(0f)] private float comboScorePunch = 0.15f;
     [Tooltip("Shakes the combination text's letters harder the stronger the hand (its points against the best hand " +
@@ -521,8 +521,8 @@ public class DiceManager : MonoBehaviour
     [Tooltip("Seconds the shake takes to reach a new hand's strength.")]
     [SerializeField, Min(0f)] private float combinationShakeBlend = 0.15f;
     [SerializeField] private TextMeshProUGUI resultText;
-    [SerializeField] private string passedText = "They still care.";
-    [SerializeField] private string failedText = "...";
+    [SerializeField, Localized] private string passedText = "They still care.";
+    [SerializeField, Localized] private string failedText = "...";
 
     [Header("Popups")]
     public DicePopups popups = new DicePopups();
@@ -1391,7 +1391,7 @@ public class DiceManager : MonoBehaviour
             if (!die.IsLocked || die.IsSealed) continue;
             die.Seal();
             if (sealedDieMult > 0f)
-                Popup(string.Format(popups.sealedMultFormat, CardEffect.FormatMult(sealedDieMult)), die.transform,
+                Popup(Loc.F(popups.sealedMultFormat, CardEffect.FormatMult(sealedDieMult)), die.transform,
                     popups.sealedOffset, hoverOutline.sealedColor);
         }
 
@@ -1618,9 +1618,9 @@ public class DiceManager : MonoBehaviour
                 die.Remove();
                 PlaySfx(destroySfx);
                 if (gained > 0 && !unlimitedRerolls)
-                    Popup(string.Format(popups.rerollsGainedFormat, gained), ScoreAnchor, popups.scoreOffset, popups.gainColor);
+                    Popup(Loc.F(popups.rerollsGainedFormat, gained), ScoreAnchor, popups.scoreOffset, popups.gainColor);
                 if (multGained > 0f)
-                    Popup(string.Format(popups.multGainedFormat, CardEffect.FormatMult(multGained)), ScoreAnchor,
+                    Popup(Loc.F(popups.multGainedFormat, CardEffect.FormatMult(multGained)), ScoreAnchor,
                         popups.scoreOffset, popups.gainColor);
                 break;
 
@@ -1673,7 +1673,7 @@ public class DiceManager : MonoBehaviour
         if (!TurnActive) return;
 
         DiceScore score = roundResults[roundResults.Count - 1].score;
-        Popup(string.Format(popups.roundScoreFormat, score.total, CardEffect.FormatMult(score.mult), score.points),
+        Popup(Loc.F(popups.roundScoreFormat, score.total, CardEffect.FormatMult(score.mult), score.points),
             CombinationAnchor, popups.combinationOffset, popups.roundScoreColor, popups.roundScoreScale,
             popups.roundScoreExtraHold);
 
@@ -1711,13 +1711,13 @@ public class DiceManager : MonoBehaviour
 
         if (resultText)
         {
-            resultText.text = pendingResult.passed ? passedText : failedText;
+            resultText.text = Loc.T(pendingResult.passed ? passedText : failedText);
             resultText.gameObject.SetActive(true);
         }
 
         PlaySfx(pendingResult.passed ? passedSfx : failedSfx);
         UpdateUI();
-        if (pendingResult.riskyPassed) Popup(popups.cardUpgradedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
+        if (pendingResult.riskyPassed) Popup(Loc.T(popups.cardUpgradedText), GoalAnchor, popups.goalOffset, popups.riskyGoalColor);
 
         float spotlightDelay = spotlight.delay + (pendingResult.passed ? spotlight.passedExtraDelay : 0f);
         if (spotlight.text) AfterDelay(spotlightDelay, manager => manager.SpotlightOutcome());
@@ -1744,7 +1744,7 @@ public class DiceManager : MonoBehaviour
             return;
         }
 
-        spotlight.titleText.text = turnSpotlightTitle;
+        spotlight.titleText.text = Loc.T(turnSpotlightTitle);
         ShowFrame(spotlight.TitleRoot, spotlight.titleText, spotlight.Root);
         if (spotlight.titleSfx && SFXManager.Instance) SFXManager.Instance.PlayClip(spotlight.titleSfx, spotlight.titleVolume);
         AfterDelay(spotlight.titleHold, manager => manager.CompleteTurn());
@@ -1759,7 +1759,7 @@ public class DiceManager : MonoBehaviour
         if (!text) return;
 
         DiceOutcomeLook look = spotlight.For(outcome);
-        text.text = look.text;
+        text.text = Loc.T(look.text);
         text.color = look.color;
         ShowFrame(spotlight.Root, text, spotlight.TitleRoot);
 
@@ -1833,7 +1833,7 @@ public class DiceManager : MonoBehaviour
 
         // The intro keeps the Roll / Finish buttons off until the dice are thrown.
         PrepareRound();
-        Popup(string.Format(popups.roundStartFormat, CurrentRound, RoundsInTurn), CombinationAnchor,
+        Popup(Loc.F(popups.roundStartFormat, CurrentRound, RoundsInTurn), CombinationAnchor,
             popups.combinationOffset, popups.roundStartColor, popups.roundStartScale, popups.roundStartExtraHold);
         AfterDelay(nextRoundRollDelay, manager => manager.ThrowNextRound());
     }
@@ -1975,7 +1975,7 @@ public class DiceManager : MonoBehaviour
         DiceScore before = shownScore;
         UpdateUI();
         ShowRollPopups(before, shownScore);
-        Popup(popups.bustText, CombinationAnchor, popups.combinationOffset, popups.lossColor, popups.bustScale,
+        Popup(Loc.T(popups.bustText), CombinationAnchor, popups.combinationOffset, popups.lossColor, popups.bustScale,
             popups.bustExtraHold, bad: true);
         PlaySfx(bustSfx);
         onRolled?.Invoke();
@@ -2210,21 +2210,21 @@ public class DiceManager : MonoBehaviour
 
         if (rollButton) rollButton.interactable = idle && (!HasRolled || (HasRerollsLeft && anyUnlocked));
         if (rollButtonLabel)
-            rollButtonLabel.text = !HasRolled ? firstRollLabel
-                : unlimitedRerolls ? unlimitedRerollLabel : string.Format(rerollLabel, RerollsLeft);
+            rollButtonLabel.text = !HasRolled ? Loc.T(firstRollLabel)
+                : unlimitedRerolls ? Loc.T(unlimitedRerollLabel) : Loc.F(rerollLabel, RerollsLeft);
         // Never into the Finish button's own label: that one always says finishLabel.
         if (rerollsText && rerollsText != finishButtonLabel)
         {
             // Nothing to count with unlimited rerolls.
             rerollsText.gameObject.SetActive(!unlimitedRerolls);
-            rerollsText.text = string.Format(rerollsFormat, RerollsLeft);
+            rerollsText.text = Loc.F(rerollsFormat, RerollsLeft);
         }
-        if (finishButtonLabel) finishButtonLabel.text = finishLabel;
-        if (riskyTargetText) riskyTargetText.text = string.Format(riskyTargetFormat, RiskyTarget, Target);
+        if (finishButtonLabel) finishButtonLabel.text = Loc.T(finishLabel);
+        if (riskyTargetText) riskyTargetText.text = Loc.F(riskyTargetFormat, RiskyTarget, Target);
         if (roundText)
         {
             roundText.gameObject.SetActive(RoundsInTurn > 1);
-            UpdateRoundText(string.Format(roundFormat, Mathf.Max(1, CurrentRound), RoundsInTurn));
+            UpdateRoundText(Loc.F(roundFormat, Mathf.Max(1, CurrentRound), RoundsInTurn));
         }
 
         // The round's score is what the dice on the table make right now - never added up over rolls. While
@@ -2280,7 +2280,7 @@ public class DiceManager : MonoBehaviour
         {
             // No hand that counts (a disabled hand falls back to Nothing): the text stays empty.
             bool proper = shownScore != null && shownScore.combination != PokerDiceCombination.Nothing;
-            combinationText.text = proper ? shownScore.combinationName : "";
+            combinationText.text = proper ? Loc.T(shownScore.combinationName) : "";
         }
         SetCombinationShake(shownScore != null ? CombinationStrength(shownScore.combination) : 0f);
         UpdateComboScoreText();
@@ -2299,7 +2299,7 @@ public class DiceManager : MonoBehaviour
         if (!comboScoreText) return;
 
         string text = shownScore == null ? ""
-            : string.Format(comboScoreFormat, CardEffect.FormatMult(shownScore.mult), shownScore.points, shownScore.total);
+            : Loc.F(comboScoreFormat, CardEffect.FormatMult(shownScore.mult), shownScore.points, shownScore.total);
         if (text == comboScoreText.text) return;
         comboScoreText.text = text;
 
@@ -2351,7 +2351,7 @@ public class DiceManager : MonoBehaviour
         targetShowsRisky = reached;
 
         if (!targetText) return;
-        targetText.text = string.Format(reached ? reachedTargetFormat : targetFormat,
+        targetText.text = Loc.F(reached ? reachedTargetFormat : targetFormat,
             reached ? RiskyTarget : Target, reached ? Target : RiskyTarget);
 
         if (switched && targetSwitchPunch > 0f)
@@ -2381,11 +2381,11 @@ public class DiceManager : MonoBehaviour
 
         int change = TurnTotal(after) - TurnTotal(before);
         if (change != 0)
-            Popup(string.Format(change > 0 ? popups.gainFormat : popups.lossFormat, Mathf.Abs(change)), ScoreAnchor,
+            Popup(Loc.F(change > 0 ? popups.gainFormat : popups.lossFormat, Mathf.Abs(change)), ScoreAnchor,
                 popups.scoreOffset, change > 0 ? popups.gainColor : popups.lossColor, bad: change < 0);
 
         if (after.combination != PokerDiceCombination.Nothing)
-            Popup(after.combinationName, CombinationAnchor, popups.combinationOffset, popups.combinationColor);
+            Popup(Loc.T(after.combinationName), CombinationAnchor, popups.combinationOffset, popups.combinationColor);
     }
 
     /// <summary>
@@ -2395,9 +2395,9 @@ public class DiceManager : MonoBehaviour
     private void ShowGoalPopups(int oldTotal, int newTotal)
     {
         if (Target > 0 && oldTotal < Target && newTotal >= Target)
-            Popup(popups.goalReachedText, GoalAnchor, popups.goalOffset, popups.goalColor);
+            Popup(Loc.T(popups.goalReachedText), GoalAnchor, popups.goalOffset, popups.goalColor);
         if (RiskyTarget > 0 && oldTotal < RiskyTarget && newTotal >= RiskyTarget)
-            Popup(popups.riskyGoalReachedText, GoalAnchor, popups.goalOffset, popups.riskyGoalColor,
+            Popup(Loc.T(popups.riskyGoalReachedText), GoalAnchor, popups.goalOffset, popups.riskyGoalColor,
                 popups.riskyGoalScale, popups.riskyGoalExtraHold);
     }
 

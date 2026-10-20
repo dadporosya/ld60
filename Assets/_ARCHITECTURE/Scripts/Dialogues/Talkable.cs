@@ -8,7 +8,7 @@ using UnityEngine.Events;
 public class Talkable : MonoBehaviour
 {
     
-    public string speakerName;
+    [Localized] public string speakerName;
 
     public string Name
     {

@@ -8,8 +8,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Contact", menuName = "Funeral Song/Contact")]
 public class ContactData : ScriptableObject
 {
-    public string displayName = "Mom";
-    [TextArea] public string note;
+    [Localized] public string displayName = "Mom";
+    [TextArea, Localized] public string note;
     [Tooltip("Optional portrait for the dial panel.")]
     public Sprite portrait;
 

@@ -50,7 +50,7 @@ public class PhoneDialPanel : MonoBehaviour
             button.gameObject.SetActive(true);
 
             TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (label) label.text = contact.DisplayName;
+            if (label) label.text = Loc.T(contact.DisplayName);
 
             Transform portrait = button.transform.Find("Portrait");
             Image portraitImage = portrait ? portrait.GetComponent<Image>() : null;

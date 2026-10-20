@@ -58,7 +58,7 @@ public class CountingText : MonoBehaviour
         set
         {
             format = string.IsNullOrEmpty(value) ? "{0}" : value;
-            if (text && !string.IsNullOrEmpty(text.text)) text.text = string.Format(format, Displayed);
+            if (text && !string.IsNullOrEmpty(text.text)) text.text = Loc.F(format, Displayed);
         }
     }
 
@@ -204,7 +204,7 @@ public class CountingText : MonoBehaviour
     {
         bool changed = value != Displayed || (text && string.IsNullOrEmpty(text.text));
         Displayed = value;
-        if (text) text.text = string.Format(format, value);
+        if (text) text.text = Loc.F(format, value);
         if (!changed) return;
 
         if (tickSfx && SFXManager.Instance && IsCounting) SFXManager.Instance.PlayClip(tickSfx, tickVolume);

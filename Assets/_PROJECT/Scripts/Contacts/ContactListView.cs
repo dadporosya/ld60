@@ -10,11 +10,11 @@ public class ContactListView : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI text;
     [Tooltip("{0} = name.")]
-    [SerializeField] private string uncalledFormat = "{0}";
+    [SerializeField, Localized] private string uncalledFormat = "{0}";
     [Tooltip("{0} = name.")]
-    [SerializeField] private string calledFormat = "<s>{0}</s>";
+    [SerializeField, Localized] private string calledFormat = "<s>{0}</s>";
     [Tooltip("{0} = name. Used for calls where the dice reached the target, when not empty.")]
-    [SerializeField] private string calledGoodFormat = "";
+    [SerializeField, Localized] private string calledGoodFormat = "";
 
     private void Reset() => text = GetComponent<TextMeshProUGUI>();
 
@@ -57,7 +57,7 @@ public class ContactListView : MonoBehaviour
                 format = good ? calledGoodFormat : calledFormat;
             }
 
-            sb.AppendLine(string.Format(format, contact.DisplayName));
+            sb.AppendLine(Loc.F(format, Loc.T(contact.DisplayName)));
         }
 
         text.text = sb.ToString();

@@ -11,8 +11,8 @@ using UnityEngine.UI;
 [Serializable]
 public class CardFace
 {
-    public string title;
-    [TextArea] public string description;
+    [Localized] public string title;
+    [TextArea, Localized] public string description;
     [Tooltip("TMP rich text for the icon in the middle (<sprite name=\"1\"> etc.). Empty: no icon.")]
     [TextArea] public string icon;
 
@@ -115,7 +115,7 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         FindMissingReferences();
 
         bool good = card == null || card.mood == CardMood.Hope;
-        if (titleText) titleText.text = card?.Title ?? "";
+        if (titleText) titleText.text = Loc.T(card?.Title) ?? "";
 
         if (descriptionText) descriptionText.text = card?.DescriptionWith(upgradedPointsColor) ?? "";
         SetIcon(card?.Icon);
@@ -135,8 +135,8 @@ public class CardView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         onClick = clicked;
         FindMissingReferences();
 
-        if (titleText) titleText.text = face?.title ?? "";
-        if (descriptionText) descriptionText.text = face?.description ?? "";
+        if (titleText) titleText.text = Loc.T(face?.title) ?? "";
+        if (descriptionText) descriptionText.text = Loc.T(face?.description) ?? "";
         SetIcon(face?.icon);
         if (frame) frame.color = goodColor;
         if (crop) Crop();

@@ -226,7 +226,8 @@ public class CardEffect
     {
         string text = IsScoring ? DescribeScoring(Operation(value)) : DescribeOther(value);
         if (IsScoring && nextRoundRerolls > 0)
-            text += $", +{nextRoundRerolls} {(nextRoundRerolls == 1 ? "reroll" : "rerolls")} next round";
+            text += nextRoundRerolls == 1 ? Loc.F(", +{0} reroll next round", nextRoundRerolls)
+                : Loc.F(", +{0} rerolls next round", nextRoundRerolls);
         return text;
     }
 
@@ -236,11 +237,18 @@ public class CardEffect
         {
             case CardEffectType.Always: return operationText;
             case CardEffectType.Combination: return $"{Combinations}: {operationText}";
-            case CardEffectType.FaceValue: return $"{operationText} for each {faceValue}";
-            case CardEffectType.Pattern: return eachPattern ? $"{operationText} for each {pattern}" : $"{pattern}: {operationText}";
-            case CardEffectType.Parity: return $"{operationText} for each {Parity} die";
-            case CardEffectType.AllParity: return $"{operationText} if every die is {Parity}";
-            case CardEffectType.MostParity: return $"{operationText} if more dice are {Parity} than {OtherParity}";
+            case CardEffectType.FaceValue: return Loc.F("{0} for each {1}", operationText, faceValue);
+            case CardEffectType.Pattern:
+                return eachPattern ? Loc.F("{0} for each {1}", operationText, pattern) : $"{pattern}: {operationText}";
+            case CardEffectType.Parity:
+                return parity == DiceParity.Odd ? Loc.F("{0} for each odd die", operationText)
+                    : Loc.F("{0} for each even die", operationText);
+            case CardEffectType.AllParity:
+                return parity == DiceParity.Odd ? Loc.F("{0} if every die is odd", operationText)
+                    : Loc.F("{0} if every die is even", operationText);
+            case CardEffectType.MostParity:
+                return parity == DiceParity.Odd ? Loc.F("{0} if more dice are odd than even", operationText)
+                    : Loc.F("{0} if more dice are even than odd", operationText);
             default: return "";
         }
     }
@@ -249,15 +257,19 @@ public class CardEffect
     {
         switch (type)
         {
-            case CardEffectType.ExtraRerolls: return amount == 1 ? $"+{value} reroll" : $"+{value} rerolls";
+            case CardEffectType.ExtraRerolls: return amount == 1 ? Loc.F("+{0} reroll", value) : Loc.F("+{0} rerolls", value);
             case CardEffectType.ExtraDice:
-                return $"+{value} {(amount == 1 ? "die" : "dice")}, -{rerollCost} {(rerollCost == 1 ? "reroll" : "rerolls")}";
-            case CardEffectType.RerollFace: return $"Right click a {faceValue} to reroll it, any number of times";
+                return (amount == 1 ? Loc.F("+{0} die", value) : Loc.F("+{0} dice", value)) + ", " +
+                       (rerollCost == 1 ? Loc.F("-{0} reroll", rerollCost) : Loc.F("-{0} rerolls", rerollCost));
+            case CardEffectType.RerollFace: return Loc.F("Right click a {0} to reroll it, any number of times", faceValue);
             case CardEffectType.DestroyFace:
-                string text = $"Right click a {faceValue} to destroy it: +{value} {(amount == 1 ? "reroll" : "rerolls")}";
-                return multiplier > 0f ? text + $", +{MultValue()} mult" : text;
-            case CardEffectType.FlipFace: return $"Right click a {faceValue} to flip it to {flipFace} and back, any number of times";
-            case CardEffectType.GapStraight: return $"Straights may have {value} {(amount == 1 ? "gap" : "gaps")}";
+                string text = amount == 1 ? Loc.F("Right click a {0} to destroy it: +{1} reroll", faceValue, value)
+                    : Loc.F("Right click a {0} to destroy it: +{1} rerolls", faceValue, value);
+                return multiplier > 0f ? text + ", " + Loc.F("+{0} mult", MultValue()) : text;
+            case CardEffectType.FlipFace:
+                return Loc.F("Right click a {0} to flip it to {1} and back, any number of times", faceValue, flipFace);
+            case CardEffectType.GapStraight:
+                return amount == 1 ? Loc.F("Straights may have {0} gap", value) : Loc.F("Straights may have {0} gaps", value);
             default: return "";
         }
     }
@@ -266,10 +278,10 @@ public class CardEffect
     {
         switch (operation)
         {
-            case ScoreOperation.AddPoints: return $"+{value} points";
-            case ScoreOperation.AddMult: return $"+{value} mult";
-            case ScoreOperation.MultiplyMult: return $"x{value} mult";
-            case ScoreOperation.MultiplyPoints: return $"x{value} points";
+            case ScoreOperation.AddPoints: return Loc.F("+{0} points", value);
+            case ScoreOperation.AddMult: return Loc.F("+{0} mult", value);
+            case ScoreOperation.MultiplyMult: return Loc.F("x{0} mult", value);
+            case ScoreOperation.MultiplyPoints: return Loc.F("x{0} points", value);
             default: return "";
         }
     }
@@ -278,15 +290,12 @@ public class CardEffect
     {
         get
         {
-            string text = Nicify(combination);
+            string text = Loc.T(Nicify(combination));
             foreach (PokerDiceCombination other in otherCombinations)
-                if (other != combination) text += " / " + Nicify(other);
+                if (other != combination) text += " / " + Loc.T(Nicify(other));
             return text;
         }
     }
-
-    private string Parity => parity == DiceParity.Odd ? "odd" : "even";
-    private string OtherParity => parity == DiceParity.Odd ? "even" : "odd";
 
     public static string Nicify(PokerDiceCombination combination) =>
         Regex.Replace(combination.ToString(), "(\\B[A-Z])", " $1");
@@ -308,7 +317,7 @@ public class ImmediateEffect
     {
         switch (type)
         {
-            case ImmediateEffectType.RewindSong: return $"Play the song back {value} seconds";
+            case ImmediateEffectType.RewindSong: return Loc.F("Play the song back {0} seconds", value);
             default: return "";
         }
     }
@@ -326,9 +335,9 @@ public class ImmediateEffect
 public class CardData : ScriptableObject
 {
     [Header("Look")]
-    public string goodTitle = "Hope";
-    public string badTitle = "Hate";
-    [TextArea] public string description;
+    [Localized] public string goodTitle = "Hope";
+    [Localized] public string badTitle = "Hate";
+    [TextArea, Localized] public string description;
     [Tooltip("Optional: what the icon in the middle of the card shows (TMP rich text, <sprite name=\"1\"> etc. allowed). " +
              "Empty: the dice the bonus is about - its combination, pattern, face or parity.")]
     [TextArea] public string icon;
@@ -368,7 +377,8 @@ public class CardData : ScriptableObject
         if (highlight.HasValue) value = $"<color=#{ColorUtility.ToHtmlStringRGBA(highlight.Value)}>{value}</color>";
 
         string bonus = IsPermanent ? effect.Describe("{0}") : immediate.Describe("{0}");
-        string text = string.IsNullOrWhiteSpace(description) ? bonus : description.Replace("{bonus}", bonus);
+        // Translated before the dice icons and numbers go in: the table holds the description as written.
+        string text = string.IsNullOrWhiteSpace(description) ? bonus : Loc.T(description).Replace("{bonus}", bonus);
         if (!IsPermanent) return text.Replace("{0}", value);
 
         text = DiceIcons.InText(text, effect);

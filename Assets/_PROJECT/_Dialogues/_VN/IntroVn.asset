@@ -180,7 +180,7 @@ MonoBehaviour:
     backgroundMaterial: {fileID: 0}
     clearBackground: 0
     stretchBackground: 0
-    foreground: {fileID: -7888773999302021689, guid: 09a01708784119648b1917d28f30486d, type: 3}
+    foreground: {fileID: -3792012115360765371, guid: eec04f5d5ff528b4692c20f637268dc5, type: 3}
     foregroundMaterial: {fileID: 0}
     clearForeground: 0
     stretchForeground: 1

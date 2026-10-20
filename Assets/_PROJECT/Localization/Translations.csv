@@ -1,0 +1,361 @@
+﻿en,ru,es,context
+Understood,Понятно,Entendido,_Dialogues/_VN/Death/Death0RejectHint nodes.0.text
+"You like riddles too, don't you?",Ты ведь тоже любишь загадки?,"A ti también te gustan los acertijos, ¿verdad?",_Dialogues/_VN/Death/Death0RejectHint nodes.1.text
+You can always try again,Ты всегда можешь попробовать снова,Siempre puedes volver a intentarlo,_Dialogues/_VN/Death/Death0RejectHint nodes.2.text; _Dialogues/_VN/Death/Death1AcceptHint nodes.4.text
+Fine,Хорошо,Bien,_Dialogues/_VN/Death/Death1AcceptHint nodes.0.text
+Fill her heart with hope,Наполни её сердце надеждой,Llena su corazón de esperanza,_Dialogues/_VN/Death/Death1AcceptHint nodes.1.text
+Aim for the <color=green>best goals<color=white> in each of the calls,Стремись к <color=green>лучшим целям<color=white> в каждом звонке,Apunta a los <color=green>mejores objetivos<color=white> en cada llamada,_Dialogues/_VN/Death/Death1AcceptHint nodes.2.text
+She still hopes that she is loved,"Она всё ещё надеется, что её любят",Todavía espera que la quieran,_Dialogues/_VN/Death/Death1AcceptHint nodes.3.text
+Hey,Эй,Oye,_Dialogues/_VN/Death/DeathAfterDeath nodes.0.text
+There is still <color=green>hope,Ещё есть <color=green>надежда,Todavía hay <color=green>esperanza,_Dialogues/_VN/Death/DeathAfterDeath nodes.1.text
+You can still save her,Ты ещё можешь её спасти,Todavía puedes salvarla,_Dialogues/_VN/Death/DeathAfterDeath nodes.2.text
+Do you want to know how?,Хочешь узнать как?,¿Quieres saber cómo?,_Dialogues/_VN/Death/DeathAfterDeath nodes.3.text
+The song is over,Песня закончилась,La canción ha terminado,_Dialogues/_VN/Death/DeathVN nodes.0.text; _Dialogues/_VN/Death/GoodEndingVN nodes.0.text
+My funeral song...,Моя похоронная песня...,Mi canción de funeral...,_Dialogues/_VN/Death/DeathVN nodes.1.text; _Dialogues/_VN/Death/GoodEndingVN nodes.1.text
+"Even if there is somebody who cares about me, they'd better not","Даже если кому-то я ещё дорога, лучше бы это было не так","Aunque a alguien todavía le importe, más le valdría que no",_Dialogues/_VN/Death/DeathVN nodes.2.text; _Dialogues/_VN/Death/GoodEndingVN nodes.2.text
+"In the end, we'll all come out winners","В конце концов, все останутся в выигрыше","Al final, todos saldremos ganando",_Dialogues/_VN/Death/DeathVN nodes.3.text; _Dialogues/_VN/Death/GoodEndingVN nodes.3.text
+The rifle is a lot heavier than I thought,"Ружьё гораздо тяжелее, чем я думала",El rifle pesa mucho más de lo que pensaba,_Dialogues/_VN/Death/DeathVN nodes.5.text; _Dialogues/_VN/Death/GoodEndingVN nodes.5.text
+"I'm shaking, I'm trying to hold it still","Меня трясёт, я пытаюсь держать его ровно","Estoy temblando, intento sostenerlo quieto",_Dialogues/_VN/Death/DeathVN nodes.6.text; _Dialogues/_VN/Death/GoodEndingVN nodes.6.text
+Tastes like iron...,На вкус как железо...,Sabe a hierro...,_Dialogues/_VN/Death/DeathVN nodes.7.text; _Dialogues/_VN/Death/GoodEndingVN nodes.7.text
+I don't want to die...,Я не хочу умирать...,No quiero morir...,_Dialogues/_VN/Death/DeathVN nodes.8.text; _Dialogues/_VN/Death/GoodEndingVN nodes.8.text
+Hello?,Алло?,¿Hola?,_Dialogues/_VN/Death/GoodEndingCall nodes.0.text; _Dialogues/Calls/Father/Father Bad nodes.0.text; _Dialogues/Calls/Father/Father Hopeful nodes.0.text (+2 more)
+"Hi, dad...","Привет, пап...","Hola, papá...",_Dialogues/_VN/Death/GoodEndingCall nodes.1.text
+You again,Опять ты,Otra vez tú,_Dialogues/_VN/Death/GoodEndingCall nodes.2.text
+"Dad, I...","Пап, я...","Papá, yo...",_Dialogues/_VN/Death/GoodEndingCall nodes.3.text
+I...,Я...,Yo...,_Dialogues/_VN/Death/GoodEndingCall nodes.4.text; _Dialogues/Calls/Friend/Friend Neutral nodes.10.text
+"I love you, Dad","Я люблю тебя, пап","Te quiero, papá",_Dialogues/_VN/Death/GoodEndingCall nodes.5.text
+"I suddenly thought again, what would others do if i died","Я вдруг снова подумала: что сделали бы другие, если бы я умерла",De repente volví a pensar qué harían los demás si yo muriera,_Dialogues/_VN/Death/GoodEndingVN nodes.11.text
+Maybe,Может быть,Quizás,_Dialogues/_VN/Death/GoodEndingVN nodes.12.text
+Maybe I am doing wrong,"Может, я поступаю неправильно",Quizás me estoy equivocando,_Dialogues/_VN/Death/GoodEndingVN nodes.13.text
+Maybe I made myself believe I am hated,"Может, я сама убедила себя, что меня ненавидят",Quizás me convencí de que me odian,_Dialogues/_VN/Death/GoodEndingVN nodes.14.text
+Maybe that one belief made everyone hate me,"Может, именно из-за этой мысли все меня и возненавидели",Quizás esa creencia hizo que todos me odiaran,_Dialogues/_VN/Death/GoodEndingVN nodes.15.text
+Maybe I am just to selfish to look in the eyes of truth,"Может, я просто слишком эгоистична, чтобы посмотреть правде в глаза",Quizás soy demasiado egoísta para mirar la verdad a los ojos,_Dialogues/_VN/Death/GoodEndingVN nodes.16.text
+Maybe...,Может быть...,Quizás...,_Dialogues/_VN/Death/GoodEndingVN nodes.17.text
+Maybe I really don't want to die...,"Может, на самом деле я не хочу умирать...",Quizás en realidad no quiero morir...,_Dialogues/_VN/Death/GoodEndingVN nodes.18.text
+[Placeholder] The phone is ringing...,[Заглушка] Звонит телефон...,[Provisional] Suena el teléfono...,_Dialogues/_VN/DefaultLevelEndDialogue nodes.0.text
+[Placeholder] Level end dialogue goes here,[Заглушка] Здесь будет диалог конца уровня,[Provisional] Aquí va el diálogo de fin de nivel,_Dialogues/_VN/DefaultLevelEndDialogue nodes.1.text
+[Placeholder] ...,[Заглушка] ...,[Provisional] ...,_Dialogues/_VN/DefaultLevelEndDialogue nodes.2.text
+I decided,Я решила,Lo he decidido,_Dialogues/_VN/IntroVn nodes.0.text
+The last thing I want to do is listen to this song one more time,"Последнее, что я хочу сделать, это послушать эту песню ещё раз",Lo último que quiero hacer es escuchar esta canción una vez más,_Dialogues/_VN/IntroVn nodes.1.text
+My funeral song,Моя похоронная песня,Mi canción de funeral,_Dialogues/_VN/IntroVn nodes.2.text
+After it ends...,Когда она закончится...,Cuando termine...,_Dialogues/_VN/IntroVn nodes.3.text
+I will blow my head off,Я вышибу себе мозги,Me volaré la cabeza,_Dialogues/_VN/IntroVn nodes.4.text
+"Hi, Dad...","Привет, пап...","Hola, papá...",_Dialogues/Calls/Father/Father Bad nodes.1.text; _Dialogues/Calls/Father/Father Hopeful nodes.1.text; _Dialogues/Calls/Father/Father Neutral nodes.1.text
+I thought you were dead...,"Я думал, ты умерла...",Pensaba que estabas muerta...,_Dialogues/Calls/Father/Father Bad nodes.2.text; _Dialogues/Calls/Father/Father Hopeful nodes.2.text; _Dialogues/Calls/Father/Father Neutral nodes.2.text
+"As you can see, I'm not","Как видишь, нет",Pues ya ves que no,_Dialogues/Calls/Father/Father Bad nodes.3.text; _Dialogues/Calls/Father/Father Hopeful nodes.3.text; _Dialogues/Calls/Father/Father Neutral nodes.3.text
+Why are you calling?,Зачем ты звонишь?,¿Por qué llamas?,_Dialogues/Calls/Father/Father Bad nodes.5.text; _Dialogues/Calls/Father/Father Hopeful nodes.5.text; _Dialogues/Calls/Father/Father Neutral nodes.5.text (+3 more)
+"Dad, can I ask you something?","Пап, можно тебя кое о чём спросить?","Papá, ¿puedo preguntarte algo?",_Dialogues/Calls/Father/Father Bad nodes.6.text; _Dialogues/Calls/Father/Father Hopeful nodes.6.text; _Dialogues/Calls/Father/Father Neutral nodes.6.text
+Let's talk about where my vinyl player is first,"Давай сначала поговорим о том, где мой проигрыватель",Primero hablemos de dónde está mi tocadiscos,_Dialogues/Calls/Father/Father Bad nodes.7.text; _Dialogues/Calls/Father/Father Hopeful nodes.7.text; _Dialogues/Calls/Father/Father Neutral nodes.7.text
+"Oh... It's right in front of me, don't worry...","А... Он прямо передо мной, не волнуйся...","Ah... Está justo delante de mí, no te preocupes...",_Dialogues/Calls/Father/Father Bad nodes.8.text; _Dialogues/Calls/Father/Father Hopeful nodes.8.text; _Dialogues/Calls/Father/Father Neutral nodes.8.text
+Why did you take it...,Зачем ты его забрала...,Por qué te lo llevaste...,_Dialogues/Calls/Father/Father Bad nodes.9.text; _Dialogues/Calls/Father/Father Hopeful nodes.9.text; _Dialogues/Calls/Father/Father Neutral nodes.9.text
+"When you left, you took nothing but my grandfather's vinyl player and rifle...","Когда ты ушла, ты не взяла ничего, кроме проигрывателя и ружья моего деда...","Cuando te fuiste, no te llevaste nada más que el tocadiscos y el rifle de mi abuelo...",_Dialogues/Calls/Father/Father Bad nodes.10.text; _Dialogues/Calls/Father/Father Hopeful nodes.10.text; _Dialogues/Calls/Father/Father Neutral nodes.10.text
+Do you remember what I told you about it?,"Помнишь, что я тебе о нём говорила?",¿Recuerdas lo que te dije sobre él?,_Dialogues/Calls/Father/Father Bad nodes.11.text; _Dialogues/Calls/Father/Father Hopeful nodes.11.text; _Dialogues/Calls/Father/Father Neutral nodes.11.text
+You told me a lot of stupid things,Ты мне рассказывала много глупостей,Me dijiste muchas tonterías,_Dialogues/Calls/Father/Father Bad nodes.12.text; _Dialogues/Calls/Father/Father Hopeful nodes.12.text; _Dialogues/Calls/Father/Father Neutral nodes.12.text
+"That if I had a funeral, I wanted this player to play that very song","Что если у меня будут похороны, я хотела бы, чтобы этот проигрыватель сыграл ту самую песню","Que si tuviera un funeral, quería que este tocadiscos sonara con esa misma canción",_Dialogues/Calls/Father/Father Bad nodes.13.text; _Dialogues/Calls/Father/Father Hopeful nodes.13.text; _Dialogues/Calls/Father/Father Neutral nodes.13.text
+"So you are planning to blow your head off, right?","Значит, ты собралась растрелиться, да?","Así que piensas volarte la cabeza, ¿no?",_Dialogues/Calls/Father/Father Bad nodes.14.text; _Dialogues/Calls/Father/Father Hopeful nodes.14.text; _Dialogues/Calls/Father/Father Neutral nodes.14.text
+Can I still ask you something?,Можно я всё-таки кое-что спрошу?,¿Aun así puedo preguntarte algo?,_Dialogues/Calls/Father/Father Bad nodes.17.text; _Dialogues/Calls/Father/Father Hopeful nodes.17.text; _Dialogues/Calls/Father/Father Neutral nodes.17.text (+2 more)
+Go for it,Ладно,Adelante,_Dialogues/Calls/Father/Father Bad nodes.18.text; _Dialogues/Calls/Father/Father Hopeful nodes.18.text; _Dialogues/Calls/Father/Father Neutral nodes.18.text
+"What would you do, if I died?","Что бы ты сделал, если бы я умерла?",¿Qué harías si yo muriera?,_Dialogues/Calls/Father/Father Bad nodes.19.text; _Dialogues/Calls/Father/Father Hopeful nodes.19.text; _Dialogues/Calls/Father/Father Neutral nodes.19.text
+Send me your location. I will take my things back,"Скинь мне, где ты. Я заберу свои вещи",Mándame tu ubicación. Iré a recuperar mis cosas,_Dialogues/Calls/Father/Father Bad nodes.21.text
+I don't know why you hate me,"Не знаю, за что ты меня ненавидишь",No sé por qué me odias,_Dialogues/Calls/Father/Father Hopeful nodes.21.text
+Maybe I was too rough on you or something,"Может, я был с тобой слишком строг или что-то ещё",Quizás fui demasiado duro contigo o algo así,_Dialogues/Calls/Father/Father Hopeful nodes.22.text
+"But, just so you know",Но просто знай,"Pero, para que lo sepas",_Dialogues/Calls/Father/Father Hopeful nodes.23.text
+"Everything I did, I thought it would be better for you","Всё, что я делал, я делал, думая, что так тебе будет лучше","Todo lo que hice, lo hice pensando que sería lo mejor para ti",_Dialogues/Calls/Father/Father Hopeful nodes.24.text
+And I am sorry for all the pain I caused...,"И прости меня за всю боль, что я тебе причинил...",Y siento todo el dolor que te causé...,_Dialogues/Calls/Father/Father Hopeful nodes.25.text
+Can I ask you something too?,Можно и мне кое-что спросить?,¿Puedo preguntarte algo yo también?,_Dialogues/Calls/Father/Father Hopeful nodes.26.text
+Okay...,Ладно...,Vale...,_Dialogues/Calls/Father/Father Hopeful nodes.27.text
+Do you still love us?,Ты всё ещё любишь нас?,¿Todavía nos quieres?,_Dialogues/Calls/Father/Father Hopeful nodes.28.text
+"If you do, please come back home","Если да, пожалуйста, возвращайся домой","Si es así, por favor, vuelve a casa",_Dialogues/Calls/Father/Father Hopeful nodes.30.text
+"No matter what you think of us, we really hope you will come back home","Что бы ты о нас ни думала, мы очень надеемся, что ты вернёшься домой","Pienses lo que pienses de nosotros, de verdad esperamos que vuelvas a casa",_Dialogues/Calls/Father/Father Neutral nodes.21.text
+It'd better be a lie,Лучше бы это была ложь,Más vale que sea mentira,_Dialogues/Calls/Father/Father Neutral nodes.22.text
+Father...,Отец...,Padre...,_Dialogues/Calls/Father/Father Reject Level nodes.0.text
+"No, I am not ready yet","Нет, я ещё не готова","No, todavía no estoy lista",_Dialogues/Calls/Father/Father Reject Level nodes.1.text
+Hi...,Привет...,Hola...,_Dialogues/Calls/Friend/Friend Bad nodes.0.text; _Dialogues/Calls/Friend/Friend Hopeful nodes.0.text; _Dialogues/Calls/Friend/Friend Neutral nodes.0.text
+"Yo, long time no see","Здаров, давно не виделись","Ey, ¡cuánto tiempo!",_Dialogues/Calls/Friend/Friend Bad nodes.1.text; _Dialogues/Calls/Friend/Friend Hopeful nodes.1.text; _Dialogues/Calls/Friend/Friend Neutral nodes.1.text
+I even thought you had died or something,"Я уж думал, ты умерла или типа того",Hasta pensé que te habías muerto o algo así,_Dialogues/Calls/Friend/Friend Bad nodes.2.text; _Dialogues/Calls/Friend/Friend Hopeful nodes.2.text; _Dialogues/Calls/Friend/Friend Neutral nodes.2.text
+"Yeah, I was just about to ask...","Ага, я как раз собиралась спросить...","Sí, justo iba a preguntar...",_Dialogues/Calls/Friend/Friend Bad nodes.3.text; _Dialogues/Calls/Friend/Friend Hopeful nodes.3.text; _Dialogues/Calls/Friend/Friend Neutral nodes.3.text
+"We all thought you were dead, lol","Мы все думали, что ты умерла, лол","Todos pensábamos que estabas muerta, jaja",_Dialogues/Calls/Friend/Friend Bad nodes.4.text; _Dialogues/Calls/Friend/Friend Hopeful nodes.4.text; _Dialogues/Calls/Friend/Friend Neutral nodes.4.text
+"Your mom even came to my door in tears, asking about you","Твоя мама даже приходила ко мне вся в слезах, спрашивала о тебе","Tu madre hasta vino a mi puerta llorando, preguntando por ti",_Dialogues/Calls/Friend/Friend Bad nodes.5.text; _Dialogues/Calls/Friend/Friend Hopeful nodes.5.text; _Dialogues/Calls/Friend/Friend Neutral nodes.5.text
+Yeah... Let's not talk about this...,Да... Давай не будем об этом...,Ya... Mejor no hablemos de eso...,_Dialogues/Calls/Friend/Friend Bad nodes.6.text; _Dialogues/Calls/Friend/Friend Hopeful nodes.6.text; _Dialogues/Calls/Friend/Friend Neutral nodes.6.text
+Can I ask you something?,Можно тебя кое о чём спросить?,¿Puedo preguntarte algo?,_Dialogues/Calls/Friend/Friend Bad nodes.7.text; _Dialogues/Calls/Friend/Friend Neutral nodes.7.text
+"You only call me when you are in trouble, right?","Ты звонишь мне, только когда у тебя проблемы, да?","Solo me llamas cuando tienes problemas, ¿verdad?",_Dialogues/Calls/Friend/Friend Bad nodes.8.text
+"Ah, no...","А, нет...","Ah, no...",_Dialogues/Calls/Friend/Friend Bad nodes.9.text
+What would you do if I died?,"Что ты будешь делать, если я умру?",¿Qué harías si me muriera?,_Dialogues/Calls/Friend/Friend Bad nodes.10.text; _Dialogues/Calls/Friend/Friend Neutral nodes.8.text; _Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.19.text (+3 more)
+What?,Что?,¿Qué?,_Dialogues/Calls/Friend/Friend Bad nodes.12.text
+Seriously,Серьёзно,En serio,_Dialogues/Calls/Friend/Friend Bad nodes.13.text; _Dialogues/Calls/Friend/Friend Neutral nodes.11.text
+I dunno. Maybe play billiards in a pub as usual. Why are you asking?,"Не знаю. Наверное, как обычно, играл бы в бильярд в пабе. А зачем ты спрашиваешь?","No sé. Supongo que jugaría al billar en el bar, como siempre. ¿Por qué preguntas?",_Dialogues/Calls/Friend/Friend Bad nodes.14.text
+Never mind...,Забей...,Olvídalo...,_Dialogues/Calls/Friend/Friend Bad nodes.15.text
+"Gosh, what should we talk about then?","Блин, о чём тогда поговорим?","Vaya, ¿y de qué hablamos entonces?",_Dialogues/Calls/Friend/Friend Hopeful nodes.7.text
+I am so excited to hear your voice once again!,Я так рад снова слышать твой голос!,¡Qué alegría volver a oír tu voz!,_Dialogues/Calls/Friend/Friend Hopeful nodes.8.text
+I want to ask you...,Я хочу спросить тебя...,Quiero preguntarte...,_Dialogues/Calls/Friend/Friend Hopeful nodes.9.text
+The riddles you left before you disappeared,"Про загадки, которые ты оставила перед тем, как исчезнуть",Sobre los acertijos que dejaste antes de desaparecer,_Dialogues/Calls/Friend/Friend Hopeful nodes.10.text
+Huh? The riddles?,А? Загадки?,¿Eh? ¿Los acertijos?,_Dialogues/Calls/Friend/Friend Hopeful nodes.11.text
+"Yeah, I tried really hard to solve them","Ага, я очень старался их разгадать","Sí, me esforcé mucho por resolverlos",_Dialogues/Calls/Friend/Friend Hopeful nodes.12.text
+"Oh, really?","О, правда?","Ah, ¿en serio?",_Dialogues/Calls/Friend/Friend Hopeful nodes.13.text
+"Yeah... But, gosh, did you even test them?","Ага... Но, блин, ты их вообще тестировала?","Sí... Pero, vaya, ¿los probaste siquiera?",_Dialogues/Calls/Friend/Friend Hopeful nodes.14.text
+They look impossible!,Они нерешаемые!,¡Parecen imposibles!,_Dialogues/Calls/Friend/Friend Hopeful nodes.15.text
+"Oh, really...",Вот как...,Vaya...,_Dialogues/Calls/Friend/Friend Hopeful nodes.16.text
+"Next time, before making new ones, ask me for help first!","В следующий раз, прежде чем придумывать новые, сначала позови меня на помощь!","¡La próxima vez, antes de inventar otros nuevos, pídeme ayuda!",_Dialogues/Calls/Friend/Friend Hopeful nodes.17.text
+"Together we'll definitely come up with something award-winning, or... I dunno","Вместе мы точно придумаем что-нибудь достойное награды, или... не знаю","Juntos seguro que se nos ocurre algo digno de un premio, o... no sé",_Dialogues/Calls/Friend/Friend Hopeful nodes.18.text
+"If there are any competitions for riddles and puzzles, of course...","Если, конечно, бывают конкурсы загадок и головоломок...","Si es que hay concursos de acertijos y puzles, claro...",_Dialogues/Calls/Friend/Friend Hopeful nodes.19.text
+"Yeah, sure...","Ага, конечно...","Sí, claro...",_Dialogues/Calls/Friend/Friend Hopeful nodes.20.text
+"And by the way, when will you come back?","И кстати, когда ты вернёшься?","Y, por cierto, ¿cuándo vas a volver?",_Dialogues/Calls/Friend/Friend Hopeful nodes.21.text
+What am I supposed to answer?,И что я должен на это ответить?,¿Y qué se supone que tengo que responder?,_Dialogues/Calls/Friend/Friend Neutral nodes.12.text
+I don't know. The first thing that comes to mind,"Не знаю. Первое, что придёт в голову",No sé. Lo primero que se te ocurra,_Dialogues/Calls/Friend/Friend Neutral nodes.13.text
+I dunno...,Не знаю...,No sé...,_Dialogues/Calls/Friend/Friend Neutral nodes.14.text
+But I would be really sad...,Но мне было бы очень грустно...,Pero me pondría muy triste...,_Dialogues/Calls/Friend/Friend Neutral nodes.15.text
+Is everything okay with you?,У тебя всё в порядке?,¿Estás bien?,_Dialogues/Calls/Friend/Friend Neutral nodes.16.text
+"By the way, have you solved the riddles?","Кстати, ты разгадал загадки?","Por cierto, ¿resolviste los acertijos?",_Dialogues/Calls/Friend/Friend Neutral nodes.18.text
+Riddles? The ones you left before you disappeared?,"Загадки? Те, что ты оставила перед тем, как исчезнуть?",¿Acertijos? ¿Los que dejaste antes de desaparecer?,_Dialogues/Calls/Friend/Friend Neutral nodes.19.text
+"Gosh, actually, no, they're too hard, to be honest...","Блин, вообще-то нет, честно говоря, они слишком сложные...","Vaya, pues no, la verdad es que son demasiado difíciles...",_Dialogues/Calls/Friend/Friend Neutral nodes.20.text
+<i>(You didn't even try)</i>,<i>(Ты даже не пытался)</i>,<i>(Ni siquiera lo intentaste)</i>,_Dialogues/Calls/Friend/Friend Neutral nodes.21.text
+"Hi, honey","Привет, милая","Hola, cariño",_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.0.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.0.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.0.text
+"Honey, don't be mad, I just want to ask you something...","Милая, не злись, я просто хочу кое-что у тебя спросить...","Cariño, no te enfades, solo quiero preguntarte algo...",_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.3.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.3.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.3.text
+Don't be mad?,Не злись?,¿Que no me enfade?,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.4.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.4.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.4.text
+"Nobody has seen you for a whole month, and now you call me out of nowhere to ""ask me something""?","Тебя никто не видел целый месяц, а теперь ты звонишь мне ни с того ни с сего, чтобы «кое-что спросить»?","Nadie te ha visto en todo un mes, ¿y ahora me llamas de la nada para «preguntarme algo»?",_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.5.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.5.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.5.text
+Yeah...,Да...,Ya...,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.7.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.7.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.7.text
+"You disappeared like you had never existed at all,","Ты исчезла, будто тебя никогда и не существовало,","Desapareciste como si nunca hubieras existido,",_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.8.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.8.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.8.text
+And the only thing you left behind was a bunch of stupid riddles...,"И всё, что ты после себя оставила, это кучку дурацких загадок...",Y lo único que dejaste fue un montón de acertijos estúpidos...,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.9.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.9.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.9.text
+How am I supposed to act? Huh?,И как мне по твоему себя вести? А?,¿Cómo se supone que tengo que reaccionar? ¿Eh?,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.10.text
+The riddles... they would have led you to where I was...,"Загадки... они привели бы тебя туда, где я была...",Los acertijos... te habrían llevado a donde yo estaba...,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.12.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.11.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.11.text
+Don't you find this very selfish?,"Тебе не кажется, что это очень эгоистично?",¿No te parece muy egoísta?,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.13.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.12.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.12.text
+I do...,Да...,Sí...,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.14.text; _Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.13.text; _Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.13.text
+What have you become...,Во что ты превратилась...,En qué te has convertido...,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.15.text
+"Honey, can I still ask you something?","Милая, можно я всё-таки кое-что спрошу?","Cariño, ¿aun así puedo preguntarte algo?",_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.16.text
+Go for it...,Давай...,Adelante...,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.18.text
+You'd better die already,Лучше бы ты уже умерла,Ojalá te murieras ya,_Dialogues/Calls/Girlfriend/Girlfriend Bad nodes.23.text
+Babe,Малыш,Cielo,_Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.15.text
+Just know that I still love you,"Просто знай, что я всё ещё тебя люблю",Solo quiero que sepas que todavía te quiero,_Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.16.text
+No matter what,Несмотря ни на что,Pase lo que pase,_Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.17.text
+Please come back,"Пожалуйста, вернись","Por favor, vuelve",_Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.18.text
+Everyone is so worried about you,Все так за тебя волнуются,Todos están muy preocupados por ti,_Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.19.text
+Hope you are doing okay,"Надеюсь, ты в порядке",Espero que estés bien,_Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.20.text
+"<i>(I love you too, honey)</i>","<i>(Я тоже тебя люблю, милая)</i>","<i>(Yo también te quiero, cariño)</i>",_Dialogues/Calls/Girlfriend/Girlfriend Hopeful nodes.21.text
+"Fine, go for it","Ладно, давай","Vale, adelante",_Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.17.text
+We can discuss it when you finally come back,"Обсудим это, когда ты наконец вернёшься",Podemos hablarlo cuando por fin vuelvas,_Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.20.text
+I still love you,Я всё ещё тебя люблю,Todavía te quiero,_Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.21.text
+<i>(It'd better be a lie)</i>,<i>(Лучше бы это была ложь)</i>,<i>(Más vale que sea mentira)</i>,_Dialogues/Calls/Girlfriend/Girlfriend Neutral nodes.22.text
+"Hi, Mom...","Привет, мам...","Hola, mamá...",_Dialogues/Calls/Mom/Mom Bad nodes.0.text; _Dialogues/Calls/Mom/Mom Hopeful nodes.0.text; _Dialogues/Calls/Mom/Mom Neutral nodes.0.text
+"Oh God, darling, where have you been for so long?","Боже, солнышко, где ты так долго пропадала?","Dios mío, cariño, ¿dónde has estado todo este tiempo?",_Dialogues/Calls/Mom/Mom Bad nodes.1.text; _Dialogues/Calls/Mom/Mom Hopeful nodes.1.text; _Dialogues/Calls/Mom/Mom Neutral nodes.1.text
+"Eh... Mom, I want to ask you something","Э-э... Мам, я хочу кое-что у тебя спросить","Eh... Mamá, quiero preguntarte algo",_Dialogues/Calls/Mom/Mom Bad nodes.2.text; _Dialogues/Calls/Mom/Mom Neutral nodes.2.text
+"Oh God, darling, you are scaring me!","Боже, солнышко, ты меня пугаешь!","¡Dios mío, cariño, me estás asustando!",_Dialogues/Calls/Mom/Mom Bad nodes.5.text; _Dialogues/Calls/Mom/Mom Neutral nodes.5.text
+"You disappeared for a whole month, and now you are asking such a weird question!","Ты пропала на целый месяц, а теперь задаёшь такие странные вопросы!",¡Desapareces un mes entero y ahora me haces una pregunta tan rara!,_Dialogues/Calls/Mom/Mom Bad nodes.6.text; _Dialogues/Calls/Mom/Mom Neutral nodes.6.text
+"Mom, really, what would you do?","Мам, ну правда, что бы ты сделала?","Mamá, en serio, ¿qué harías?",_Dialogues/Calls/Mom/Mom Bad nodes.7.text; _Dialogues/Calls/Mom/Mom Neutral nodes.7.text
+"Darling, please, stop all these ""games""","Солнышко, пожалуйста, прекрати эти «игры»","Cariño, por favor, deja ya estos «juegos»",_Dialogues/Calls/Mom/Mom Bad nodes.8.text
+Please come back home. Dad and I are really worried about you!,"Пожалуйста, возвращайся домой. Мы с папой очень за тебя волнуемся!","Por favor, vuelve a casa. ¡Papá y yo estamos muy preocupados por ti!",_Dialogues/Calls/Mom/Mom Bad nodes.9.text
+Do not even mention him...,Даже не упоминай о нём...,Ni lo menciones...,_Dialogues/Calls/Mom/Mom Bad nodes.10.text
+"Darling, please, come ba...","Солнышко, пожалуйста, возвращайся до...","Cariño, por favor, vuel...",_Dialogues/Calls/Mom/Mom Bad nodes.12.text
+Now she hates me too...,Теперь и она меня ненавидит...,Ahora ella también me odia...,_Dialogues/Calls/Mom/Mom Bad nodes.14.text
+"Eh... Mom, I want to ask you...","Э-э... Мам, я хочу спросить тебя...","Eh... Mamá, quiero preguntarte...",_Dialogues/Calls/Mom/Mom Hopeful nodes.2.text
+"Don't ask me, answer my question first! I am so worried...","Не спрашивай меня, сначала ответь на мой вопрос! Я так волнуюсь...","¡No me preguntes, responde primero a mi pregunta! Estoy tan preocupada...",_Dialogues/Calls/Mom/Mom Hopeful nodes.3.text
+"Mom, I am fine, just trust me...","Мам, я в порядке, просто поверь мне...","Mamá, estoy bien, confía en mí...",_Dialogues/Calls/Mom/Mom Hopeful nodes.4.text
+Where are you? Please...,Где ты? Пожалуйста...,¿Dónde estás? Por favor...,_Dialogues/Calls/Mom/Mom Hopeful nodes.5.text
+I am at the metro station...,Я в метро...,Estoy en la estación de metro...,_Dialogues/Calls/Mom/Mom Hopeful nodes.7.text
+"Oh God, are you finally coming home?","Боже, ты наконец едешь домой?","Dios mío, ¿por fin vuelves a casa?",_Dialogues/Calls/Mom/Mom Hopeful nodes.8.text
+How long has it been since we last saw each other?,Сколько же мы не виделись?,¿Cuánto tiempo hace que no nos vemos?,_Dialogues/Calls/Mom/Mom Hopeful nodes.9.text
+"Mom, I want to ask you something...","Мам, я хочу кое-что у тебя спросить...","Mamá, quiero preguntarte algo...",_Dialogues/Calls/Mom/Mom Hopeful nodes.10.text
+"You can ask me at home, darling","Спросишь меня дома, солнышко","Ya me lo preguntarás en casa, cariño",_Dialogues/Calls/Mom/Mom Hopeful nodes.11.text
+"Oh God, it's like a second Christmas","Боже, это же как второй Новый год","Dios mío, es como una segunda Navidad",_Dialogues/Calls/Mom/Mom Hopeful nodes.12.text
+I should cook something very special for you!,Я приготовлю тебе что-нибудь особенное!,¡Tengo que cocinarte algo muy especial!,_Dialogues/Calls/Mom/Mom Hopeful nodes.13.text
+What would you like? Ribs? Steak? Your favorite soup? Anything!,Чего тебе хочется? Рёбрышек? Стейк? Твой любимый суп? Что угодно!,¿Qué te apetece? ¿Costillas? ¿Un filete? ¿Tu sopa favorita? ¡Lo que quieras!,_Dialogues/Calls/Mom/Mom Hopeful nodes.14.text
+Ribs would be fine...,Можно рёбрышки...,Unas costillas estarían bien...,_Dialogues/Calls/Mom/Mom Hopeful nodes.16.text
+I am so happy to hear your voice again!,Я так рада снова слышать твой голос!,¡Estoy tan feliz de volver a oír tu voz!,_Dialogues/Calls/Mom/Mom Hopeful nodes.17.text
+"See you soon, darling! Bye!","До скорого, солнышко! Пока!","¡Hasta pronto, cariño! ¡Adiós!",_Dialogues/Calls/Mom/Mom Hopeful nodes.18.text
+"Bye, Mom...","Пока, мам...","Adiós, mamá...",_Dialogues/Calls/Mom/Mom Hopeful nodes.19.text
+"Oh God, darling, you are the most precious thing in my life!","Боже, солнышко, ты самое дорогое, что у меня есть!","¡Dios mío, cariño, eres lo más valioso de mi vida!",_Dialogues/Calls/Mom/Mom Neutral nodes.8.text
+How am I supposed to imagine my life without you?,Как я вообще могу представить свою жизнь без тебя?,¿Cómo voy a imaginar mi vida sin ti?,_Dialogues/Calls/Mom/Mom Neutral nodes.9.text
+<i>(But you have been living without me for a whole month just fine)</i>,<i>(Но ты же целый месяц прекрасно жила без меня)</i>,<i>(Pero llevas un mes entero viviendo sin mí perfectamente)</i>,_Dialogues/Calls/Mom/Mom Neutral nodes.10.text
+"Yeah, I am just thinking...","Да, я просто задумалась...","Sí, solo estaba pensando...",_Dialogues/Calls/Mom/Mom Neutral nodes.12.text
+"Please come back home, darling. I will cook your favorite dishes every day! Please, just come back!","Пожалуйста, возвращайся домой, солнышко. Я буду каждый день готовить твои любимые блюда! Пожалуйста, просто вернись!","Por favor, vuelve a casa, cariño. ¡Te cocinaré tus platos favoritos todos los días! ¡Por favor, vuelve!",_Dialogues/Calls/Mom/Mom Neutral nodes.13.text
+"I will, Mom...","Вернусь, мам...","Volveré, mamá...",_Dialogues/Calls/Mom/Mom Neutral nodes.14.text
+What if he didn't care about me at all this whole time?,"А что, если ему всё это время было на меня плевать?",¿Y si en todo este tiempo no le importé nada?,_Dialogues/Character/CharacterAfterFriend nodes.0.text
+He is the person who knew me better than anyone else,"Он знал меня лучше, чем кто-либо другой",Él es quien mejor me conocía,_Dialogues/Character/CharacterAfterFriend nodes.1.text
+"If even he didn't care about me, there's nobody who does","Если даже ему было на меня плевать, то больше никому до меня нет дела","Si ni siquiera le importaba a él, no le importo a nadie",_Dialogues/Character/CharacterAfterFriend nodes.2.text
+Then I can pass away peacefully,"Значит, я могу сдохнуть спокойно",Entonces puedo irme en paz,_Dialogues/Character/CharacterAfterFriend nodes.3.text
+We were perfect,Мы были идеальны,Éramos perfectas,_Dialogues/Character/CharacterAfterGirlfriend nodes.0.text
+"It sounds silly, but I think we really were","Звучит глупо, но, по-моему, так и было","Suena tonto, pero creo que de verdad lo éramos",_Dialogues/Character/CharacterAfterGirlfriend nodes.1.text
+Everybody thought we were...,Все так думали...,Todos pensaban que lo éramos...,_Dialogues/Character/CharacterAfterGirlfriend nodes.2.text
+I am just a selfish bitch,Я просто эгоистичная сука,Solo soy una zorra egoísta,_Dialogues/Character/CharacterAfterGirlfriend nodes.3.text
+I love my mother more than anything else in this world,Я люблю маму больше всего на свете,Quiero a mi madre más que a nada en este mundo,_Dialogues/Character/CharacterAfterMother nodes.0.text
+What have I become...,Во что я превратилась...,En qué me he convertido...,_Dialogues/Character/CharacterAfterMother nodes.1.text
+If she has lost hope...,Если она потеряла надежду...,Si ella ha perdido la esperanza...,_Dialogues/Character/CharacterAfterMother nodes.2.text
+If even she...,Если даже она...,Si incluso ella...,_Dialogues/Character/CharacterAfterMother nodes.3.text
+How could I...,Как я могла...,Cómo pude...,_Dialogues/Character/CharacterAfterMother nodes.4.text
+"If she has, I surely don't deserve to live anymore","Если так, я точно больше не заслуживаю жить","Si es así, está claro que ya no merezco vivir",_Dialogues/Character/CharacterAfterMother nodes.5.text
+Maybe I am doing the wrong thing,"Может, я поступаю неправильно",Quizás estoy haciendo lo incorrecto,_Dialogues/Character/CharacterFirst nodes.0.text
+I've already made up my mind in any case,"Как бы то ни было, я уже всё решила","De todos modos, ya lo he decidido",_Dialogues/Character/CharacterFirst nodes.1.text
+What do people usually do in such moments?,Что люди обычно делают в такие моменты?,¿Qué suele hacer la gente en momentos así?,_Dialogues/Character/CharacterFirst nodes.2.text
+I think I need to call and say goodbye to some people,"Думаю, мне нужно кое-кому позвонить и попрощаться",Creo que tengo que llamar a algunas personas para despedirme,_Dialogues/Character/CharacterFirst nodes.3.text
+Maybe I am doing the wrong thing...,"Может, я поступаю неправильно...",Quizás estoy haciendo lo incorrecto...,_Dialogues/Character/PlayerTest nodes.0.text
+Who should I call?,Кому бы позвонить?,¿A quién debería llamar?,_Dialogues/Phone/PhoneStartDialogue nodes.0.text
+Maybe I really don't deserve to live...,"Может, я и правда не заслуживаю жить...",Quizás de verdad no merezco vivir...,_Dialogues/Rifle/RifleBeforeDeath nodes.0.text
+Should I end it right now?,"Может, покончить со всем прямо сейчас?",¿Debería acabar con todo ahora mismo?,_Dialogues/Rifle/RifleBeforeDeath nodes.1.text
+The time hasn't come yet,Ещё не время,Todavía no ha llegado el momento,_Dialogues/Rifle/RifleDefault nodes.0.text
+Click on a die to lock it,"Нажми на кубик, чтобы закрепить его",Haz clic en un dado para bloquearlo,_Dialogues/Tutorial/0. GameplayTutorialDialogue nodes.0.text
+Locked dices won't be rerolled any more,Закреплённые кубики больше не перебрасываются,Los dados bloqueados ya no se vuelven a tirar,_Dialogues/Tutorial/0. GameplayTutorialDialogue nodes.1.text
+You can roll dices any number of times,Бросать кубики можно сколько угодно раз,Puedes tirar los dados tantas veces como quieras,_Dialogues/Tutorial/0. GameplayTutorialDialogue nodes.2.text
+But if your rerolled dices doesn’t give you any combination,"Но если переброшенные кубики не дадут ни одной комбинации,","Pero si los dados que vuelves a tirar no forman ninguna combinación,",_Dialogues/Tutorial/0. GameplayTutorialDialogue nodes.3.text
+"You will be busted, and loose all your points",это провал: ты потеряешь все очки,caerás en quiebra y perderás todos tus puntos,_Dialogues/Tutorial/0. GameplayTutorialDialogue nodes.4.text
+You will get points for the your final combination,Очки начисляются за итоговую комбинацию,Recibirás puntos por tu combinación final,_Dialogues/Tutorial/0. GameplayTutorialDialogue nodes.5.text
+Press S to read full rules once again,"Нажми S, чтобы ещё раз прочитать правила",Pulsa S para volver a leer las reglas,_Dialogues/Tutorial/0. GameplayTutorialDialogue nodes.6.text
+"Every time I listen to this song, I feel like I am rotting alive","Каждый раз, когда я слушаю эту песню, мне кажется, что я гнию заживо","Cada vez que escucho esta canción, siento que me pudro en vida",_Dialogues/vynil/Vynil0Start nodes.0.text
+But this pain is so beautiful and pleasant,Но эта боль такая красивая и приятная,Pero este dolor es tan bonito y agradable,_Dialogues/vynil/Vynil0Start nodes.1.text
+Perfect song for my funeral,Идеальная песня для моих похорон,La canción perfecta para mi funeral,_Dialogues/vynil/Vynil0Start nodes.2.text
+Listening to this part feels like stabing yourself,Слушать эту часть - будто вонзать в себя нож,Escuchar esta parte es como clavarte un cuchillo,_Dialogues/vynil/Vynil1Quarter nodes.0.text
+Over and over,Снова и снова,Una y otra vez,_Dialogues/vynil/Vynil1Quarter nodes.1.text
+I don't know why,Не знаю почему,No sé por qué,_Dialogues/vynil/Vynil1Quarter nodes.2.text
+It is my favorite part,Это моя любимая часть,Es mi parte favorita,_Dialogues/vynil/Vynil2Half nodes.0.text
+The moment of silence before the storm,Миг тишины перед бурей,El momento de silencio antes de la tormenta,_Dialogues/vynil/Vynil2Half nodes.1.text
+It sounds very sad,Звучит очень грустно,Suena muy triste,_Dialogues/vynil/Vynil2Half nodes.2.text
+It's hopeful at the same time,И в то же время в ней есть надежда,Y a la vez tiene esperanza,_Dialogues/vynil/Vynil2Half nodes.3.text
+I used to call this feeling melancholy,Раньше я называла это чувство меланхолией,Antes llamaba a este sentimiento melancolía,_Dialogues/vynil/Vynil2Half nodes.4.text
+Until I found out it has a different meaning,"Пока не узнала, что это слово значит совсем другое",Hasta que descubrí que significa otra cosa,_Dialogues/vynil/Vynil2Half nodes.5.text
+It's the end,Это конец,Es el final,_Dialogues/vynil/Vynil3End nodes.0.text
+It's my vinyl player,Это мой проигрыватель,Es mi tocadiscos,_Dialogues/vynil/VynilTest nodes.0.text
+I don't have much time,У меня мало времени,No me queda mucho tiempo,_Dialogues/vynil/VynilTest nodes.1.text
+Fours,Четвёрки,Cuatros,_Prefabs/Cards/src/01 Ones goodTitle; _Prefabs/Cards/src/01 Ones badTitle
+Each 4 grants {0} bonus points,Каждая 4: +{0} к очкам,Cada 4 otorga {0} puntos extra,_Prefabs/Cards/src/01 Ones description
+Reroll Fours,Переброс четвёрок,Relanzar cuatros,_Prefabs/Cards/src/02 Reroll Fours goodTitle; _Prefabs/Cards/src/02 Reroll Fours badTitle
+You may reroll a 4 any number of times (right click),4 можно перебрасывать сколько угодно раз (правый клик),Puedes relanzar un 4 tantas veces como quieras (clic derecho),_Prefabs/Cards/src/02 Reroll Fours description
+Two Ones,Пара единиц,Dos unos,_Prefabs/Cards/src/03 Two Ones goodTitle; _Prefabs/Cards/src/03 Two Ones badTitle
+1 1 grants {0} bonus points,1 1: +{0} к очкам,1 1 otorga {0} puntos extra,_Prefabs/Cards/src/03 Two Ones description
+Destroy Sixes,Уничтожение шестёрок,Destruir seises,_Prefabs/Cards/src/04 Destroy Sixes goodTitle; _Prefabs/Cards/src/04 Destroy Sixes badTitle
+You can destroy a 6 (right click) to gain {0} additional reroll and +{mult} multiplier,Можно уничтожить 6 (правый клик): перебросы +{0} и множитель +{mult},Puedes destruir un 6 (clic derecho) para ganar {0} relanzamiento extra y +{mult} de multiplicador,_Prefabs/Cards/src/04 Destroy Sixes description
+Flip Two Five,Переворот 2 и 5,Voltear 2 y 5,_Prefabs/Cards/src/05 Flip Two Five goodTitle; _Prefabs/Cards/src/05 Flip Two Five badTitle
+"You can flip a 2 to a 5 and vice versa (right click), any number of times",2 можно превращать в 5 и обратно (правый клик) сколько угодно раз,"Puedes convertir un 2 en 5 y viceversa (clic derecho), tantas veces como quieras",_Prefabs/Cards/src/05 Flip Two Five description
+Three Ones,Три единицы,Tres unos,_Prefabs/Cards/src/06 Three Ones goodTitle; _Prefabs/Cards/src/06 Three Ones badTitle
+1 1 1 grants +{0} multiplier,1 1 1: +{0} к множителю,1 1 1 otorga +{0} de multiplicador,_Prefabs/Cards/src/06 Three Ones description
+Two Twos,Пара двоек,Dos doses,_Prefabs/Cards/src/08 Two Twos goodTitle; _Prefabs/Cards/src/08 Two Twos badTitle
+Each 2 2 grants +{0} bonus multiplier,Каждая пара 2 2: +{0} к множителю,Cada 2 2 otorga +{0} de multiplicador extra,_Prefabs/Cards/src/08 Two Twos description
+Two Threes,Пара троек,Dos treses,_Prefabs/Cards/src/09 Two Threes goodTitle; _Prefabs/Cards/src/09 Two Threes badTitle
+Each 3 3 grants {0} bonus points,Каждая пара 3 3: +{0} к очкам,Cada 3 3 otorga {0} puntos extra,_Prefabs/Cards/src/09 Two Threes description
+Straight,Стрит,Escalera,_Prefabs/Cards/src/10 Street goodTitle; _Prefabs/Cards/src/10 Street badTitle; _Prefabs/Cards/src/23 Straight goodTitle (+1 more)
+A straight grants +{0} multiplier,Стрит: +{0} к множителю,Una escalera otorga +{0} de multiplicador,_Prefabs/Cards/src/10 Street description
+Three Sixes,Три шестёрки,Tres seises,_Prefabs/Cards/src/11 Three Sixes goodTitle; _Prefabs/Cards/src/11 Three Sixes badTitle
+6 6 6 grants {0} bonus points,6 6 6: +{0} к очкам,6 6 6 otorga {0} puntos extra,_Prefabs/Cards/src/11 Three Sixes description
+Three Fives,Три пятёрки,Tres cincos,_Prefabs/Cards/src/12 Three Fives goodTitle; _Prefabs/Cards/src/12 Three Fives badTitle
+5 5 5 grants {0} bonus points,5 5 5: +{0} к очкам,5 5 5 otorga {0} puntos extra,_Prefabs/Cards/src/12 Three Fives description
+Three Fours,Три четвёрки,Tres cuatros,_Prefabs/Cards/src/13 Three Fours goodTitle; _Prefabs/Cards/src/13 Three Fours badTitle
+4 4 4 grants {0} bonus points,4 4 4: +{0} к очкам,4 4 4 otorga {0} puntos extra,_Prefabs/Cards/src/13 Three Fours description
+One and Six,Единица и шестёрка,Uno y seis,_Prefabs/Cards/src/14 One and Six goodTitle; _Prefabs/Cards/src/14 One and Six badTitle
+1 6 grants +{0} multiplier,1 6: +{0} к множителю,1 6 otorga +{0} de multiplicador,_Prefabs/Cards/src/14 One and Six description
+Two and Five,Двойка и пятёрка,Dos y cinco,_Prefabs/Cards/src/15 Two and Five goodTitle; _Prefabs/Cards/src/15 Two and Five badTitle
+Each 2 5 grants {0} bonus points,Каждая пара 2 5: +{0} к очкам,Cada 2 5 otorga {0} puntos extra,_Prefabs/Cards/src/15 Two and Five description
+Three and Four,Тройка и четвёрка,Tres y cuatro,_Prefabs/Cards/src/16 Three and Four goodTitle; _Prefabs/Cards/src/16 Three and Four badTitle
+Each 3 4 grants +{0} bonus multiplier,Каждая пара 3 4: +{0} к множителю,Cada 3 4 otorga +{0} de multiplicador extra,_Prefabs/Cards/src/16 Three and Four description
+Even Dice,Чётные кубики,Dados pares,_Prefabs/Cards/src/17 Even Dice goodTitle; _Prefabs/Cards/src/17 Even Dice badTitle
+Each even die grants +{0} bonus multiplier,"Каждый <sprite name=""even""> кубик: +{0} к множителю","Cada dado <sprite name=""even""> otorga +{0} de multiplicador extra",_Prefabs/Cards/src/17 Even Dice description
+Mostly Even,Больше чётных,Mayoría par,_Prefabs/Cards/src/18 All Even goodTitle; _Prefabs/Cards/src/18 All Even badTitle
+Grants +{0} multiplier if there are more even dice than odd,"+{0} к множителю, если <sprite name=""even""> кубиков больше, чем <sprite name=""odd"">","Otorga +{0} de multiplicador si hay más dados <sprite name=""even""> que <sprite name=""odd"">",_Prefabs/Cards/src/18 All Even description
+Full House,Фул-хаус,Full,_Prefabs/Cards/src/19 Full House goodTitle; _Prefabs/Cards/src/19 Full House badTitle; New Scene: DiceManagewr (DiceManager) combinations.7.displayName
+Full House grants {0} bonus points,Фул-хаус: +{0} к очкам,Un full otorga {0} puntos extra,_Prefabs/Cards/src/19 Full House description
+Four Ones,Четыре единицы,Cuatro unos,_Prefabs/Cards/src/20 Four Ones goodTitle; _Prefabs/Cards/src/20 Four Ones badTitle
+1 1 1 1 grants {0} additional points,1 1 1 1: +{0} к очкам,1 1 1 1 otorga {0} puntos adicionales,_Prefabs/Cards/src/20 Four Ones description
+Five of a Kind,Покер,Repóker,_Prefabs/Cards/src/21 Five of a Kind goodTitle; _Prefabs/Cards/src/21 Five of a Kind badTitle; New Scene: DiceManagewr (DiceManager) combinations.10.displayName
+Five of a Kind grants {0} bonus points,Покер: +{0} к очкам,Un repóker otorga {0} puntos extra,_Prefabs/Cards/src/21 Five of a Kind description
+One Two Three,"Один, два, три","Uno, dos, tres",_Prefabs/Cards/src/22 One Two Three goodTitle; _Prefabs/Cards/src/22 One Two Three badTitle
+1 2 3 grants {0} bonus points,1 2 3: +{0} к очкам,1 2 3 otorga {0} puntos extra,_Prefabs/Cards/src/22 One Two Three description
+A straight grants {0} additional points,Стрит: +{0} к очкам,Una escalera otorga {0} puntos adicionales,_Prefabs/Cards/src/23 Straight description
+Big Straight,Большой стрит,Escalera mayor,_Prefabs/Cards/src/24 Big Straight goodTitle; _Prefabs/Cards/src/24 Big Straight badTitle
+A big straight grants {0} additional points,Большой стрит: +{0} к очкам,Una escalera mayor otorga {0} puntos adicionales,_Prefabs/Cards/src/24 Big Straight description
+Two Four Six,"Два, четыре, шесть","Dos, cuatro, seis",_Prefabs/Cards/src/25 Two Four Six goodTitle; _Prefabs/Cards/src/25 Two Four Six badTitle
+2 4 6 grants +{0} multiplier,2 4 6: +{0} к множителю,2 4 6 otorga +{0} de multiplicador,_Prefabs/Cards/src/25 Two Four Six description
+Childhood friend,Друг детства,Amigo de la infancia,New Scene: LevelManager (LevelManager) levels.0.name
+Girlfriend,Девушка,Novia,New Scene: LevelManager (LevelManager) levels.1.name
+Mother,Мать,Madre,New Scene: LevelManager (LevelManager) levels.2.name
+Father,Отец,Padre,New Scene: LevelManager (LevelManager) levels.3.name
+Nothing,Ничего,Nada,New Scene: DiceManagewr (DiceManager) combinations.0.displayName
+One or Three,Единица или тройка,Uno o tres,New Scene: DiceManagewr (DiceManager) combinations.1.displayName
+Pair,Пара,Pareja,New Scene: DiceManagewr (DiceManager) combinations.2.displayName
+Two Pair,Две пары,Doble pareja,New Scene: DiceManagewr (DiceManager) combinations.3.displayName
+Three of a Kind,Тройка,Trío,New Scene: DiceManagewr (DiceManager) combinations.4.displayName
+Small Straight,Малый стрит,Escalera menor,New Scene: DiceManagewr (DiceManager) combinations.5.displayName
+Large Straight,Большой стрит,Escalera mayor,New Scene: DiceManagewr (DiceManager) combinations.6.displayName
+Four of a Kind,Каре,Póker,New Scene: DiceManagewr (DiceManager) combinations.8.displayName
+Two Three of a Kind,Две тройки,Doble trío,New Scene: DiceManagewr (DiceManager) combinations.9.displayName
+Roll,Бросок,Tirar,New Scene: DiceManagewr (DiceManager) firstRollLabel
+Reroll ({0}),Переброс ({0}),Relanzar ({0}),New Scene: DiceManagewr (DiceManager) rerollLabel
+Reroll,Переброс,Relanzar,New Scene: DiceManagewr (DiceManager) unlimitedRerollLabel
+Finish,Готово,Terminar,New Scene: DiceManagewr (DiceManager) finishLabel
+Rerolls: {0},Перебросы: {0},Relanzamientos: {0},New Scene: DiceManagewr (DiceManager) rerollsFormat
+Risky {0},Риск {0},Riesgo {0},New Scene: DiceManagewr (DiceManager) riskyTargetFormat
+{0} x {1},{0} x {1},{0} x {1},New Scene: DiceManagewr (DiceManager) comboScoreFormat
+They still care.,Им всё ещё не всё равно.,Todavía les importas.,New Scene: DiceManagewr (DiceManager) passedText
+Goal reached!,Цель достигнута!,¡Objetivo alcanzado!,New Scene: DiceManagewr (DiceManager) popups.goalReachedText
+You feel hopeful.,Появляется надежда.,Sientes esperanza.,New Scene: DiceManagewr (DiceManager) popups.riskyGoalReachedText
+Card upgraded!,Карта улучшена!,¡Carta mejorada!,New Scene: DiceManagewr (DiceManager) popups.cardUpgradedText
+Bust!,Провал!,¡Quiebra!,New Scene: DiceManagewr (DiceManager) popups.bustText
++{0} reroll,Перебросы +{0},Relanzamientos +{0},New Scene: DiceManagewr (DiceManager) popups.rerollsGainedFormat; Scripts/Cards/CardData.cs:260
++{0} mult,Множитель +{0},Multiplicador +{0},New Scene: DiceManagewr (DiceManager) popups.multGainedFormat; New Scene: DiceManagewr (DiceManager) popups.sealedMultFormat; Scripts/Cards/CardData.cs:268 (+1 more)
+Round Score: {0},Очки за раунд: {0},Puntos de la ronda: {0},New Scene: DiceManagewr (DiceManager) popups.roundScoreFormat
+Round {0},Раунд {0},Ronda {0},New Scene: DiceManagewr (DiceManager) popups.roundStartFormat
+ALONE,ОДНА,SOLA,New Scene: DiceManagewr (DiceManager) spotlight.lost.text
+PASSED,ПРОЙДЕНО,SUPERADO,New Scene: DiceManagewr (DiceManager) spotlight.passed.text
+HOPE,НАДЕЖДА,ESPERANZA,New Scene: DiceManagewr (DiceManager) spotlight.hope.text
+Yes,Да,Sí,New Scene: Rifle (RifleInteractable) yesTitle; New Scene: DeathCutscene (DeathCutscene) fork.0.title
+No,Нет,No,New Scene: Rifle (RifleInteractable) noTitle; New Scene: DeathCutscene (DeathCutscene) fork.1.title
+Game by II-P,Игра от II-P,Un juego de II-P,New Scene: DeathCutscene (DeathCutscene) credits.text; New Scene: GoodEndingCutscene (GoodEndingCutscene) credits.text
+"Click on a die to <color=red>lock<color=black> it. Locked dice will never be rerolled. Each locked die grants 0.1 multiplier.
+
+You have an unlimited number of rerolls, until you are  <color=red>busted<color=black>.
+
+If you reroll dice and the rerolled dice don't make any combination (or show a 1 or 3), you are  <color=red>busted<color=black> and lose all your points.","Нажми на кубик, чтобы <color=red>закрепить<color=black> его. Закреплённые кубики никогда не перебрасываются. Каждый закреплённый кубик даёт +0,1 к множителю.
+
+Перебрасывать можно сколько угодно раз, пока не случится <color=red>провал<color=black>.
+
+Если после переброса кубики не дают ни одной комбинации (и на них нет ни 1, ни 3), это <color=red>провал<color=black>: ты теряешь все очки.","Haz clic en un dado para <color=red>bloquearlo<color=black>. Los dados bloqueados nunca se vuelven a tirar. Cada dado bloqueado otorga 0,1 de multiplicador.
+
+Puedes volver a tirar tantas veces como quieras, hasta que caigas en <color=red>quiebra<color=black>.
+
+Si vuelves a tirar y los dados no forman ninguna combinación (ni muestran un 1 o un 3), caes en <color=red>quiebra<color=black> y pierdes todos tus puntos.",New Scene: Hint (HintPaper) rulesText
+({0}) show hint,({0}) показать подсказку,({0}) ver pista,New Scene: Hint (HintPaper) showLabel
+({0}) close hint,({0}) закрыть подсказку,({0}) cerrar pista,New Scene: Hint (HintPaper) closeLabel
+({0}) rules,({0}) правила,({0}) reglas,New Scene: Hint (HintPaper) flipLabel
+{0} - no bust,{0} - нет провала,{0} - sin quiebra,New Scene: Hint (HintPaper) safeFaceLine
+"Bust - if the dice you rolled make no combination (and show no {0}), you lose all your points.","Провал - если брошенные кубики не дают ни одной комбинации (и на них нет {0}), ты теряешь все очки.","Quiebra: si los dados que tiraste no forman ninguna combinación (y no muestran ningún {0}), pierdes todos tus puntos.",New Scene: Hint (HintPaper) bustLine
+Blue Die,Синий кубик,Dado azul,New Scene: CardManager (CardManager) diceOffers.0.title
+"Always rolls odd (1, 3, 5).","Всегда выпадает нечётное (1, 3, 5).","Siempre sale impar (1, 3, 5).",New Scene: CardManager (CardManager) diceOffers.0.description
+Yellow Die,Жёлтый кубик,Dado amarillo,New Scene: CardManager (CardManager) diceOffers.1.title
+"Always rolls even (2, 4, 6).","Всегда выпадает чётное (2, 4, 6).","Siempre sale par (2, 4, 6).",New Scene: CardManager (CardManager) diceOffers.1.description
+Pink Die,Розовый кубик,Dado rosa,New Scene: CardManager (CardManager) diceOffers.2.title
+"Never rolls 1, 2 or 3.","Никогда не выпадает 1, 2 или 3.","Nunca sale 1, 2 ni 3.",New Scene: CardManager (CardManager) diceOffers.2.description
+Green Die,Зелёный кубик,Dado verde,New Scene: CardManager (CardManager) diceOffers.3.title
+Rolls the value most of your dice show.,"Выпадает значение, которое показывает большинство твоих кубиков.",Sale el valor que muestra la mayoría de tus dados.,New Scene: CardManager (CardManager) diceOffers.3.description
+Cyan Die,Голубой кубик,Dado cian,New Scene: CardManager (CardManager) diceOffers.4.title
+"Right click to turn it to 1, once per round.","Правый клик - превратить его в 1, раз за раунд.","Clic derecho para convertirlo en 1, una vez por ronda.",New Scene: CardManager (CardManager) diceOffers.4.description
+Red Die,Красный кубик,Dado rojo,New Scene: CardManager (CardManager) diceOffers.5.title
+Always rolls a value no other die shows.,"Всегда выпадает значение, которого нет на других кубиках.",Siempre sale un valor que no muestra ningún otro dado.,New Scene: CardManager (CardManager) diceOffers.5.description
+Reject the offer,Отказаться,Rechazar la oferta,New Scene: CardManager (CardManager) rejectDiceCard.title
+Leave the dice as it is,Оставить кубики как есть,Dejar los dados como están,New Scene: CardManager (CardManager) rejectDiceCard.description
+This game raise heavy topics. Take care,Эта игра затрагивает тяжёлые темы. Береги себя.,Este juego trata temas difíciles. Cuídate.,New Scene: IntroCutscene (IntroCutscene) warningText
+", +{0} reroll next round",", перебросы +{0} в следующем раунде",", relanzamientos +{0} en la próxima ronda",Scripts/Cards/CardData.cs:229
+", +{0} rerolls next round",", перебросы +{0} в следующем раунде",", relanzamientos +{0} en la próxima ronda",Scripts/Cards/CardData.cs:230
+{0} for each {1},{0} за каждое выпадение {1},{0} por cada {1},Scripts/Cards/CardData.cs:240; Scripts/Cards/CardData.cs:242
+{0} for each odd die,"{0} за каждый <sprite name=""odd""> кубик","{0} por cada dado <sprite name=""odd"">",Scripts/Cards/CardData.cs:244
+{0} for each even die,"{0} за каждый <sprite name=""even""> кубик","{0} por cada dado <sprite name=""even"">",Scripts/Cards/CardData.cs:245
+{0} if every die is odd,"{0}, если все кубики <sprite name=""odd"">","{0} si todos los dados son <sprite name=""odd"">",Scripts/Cards/CardData.cs:247
+{0} if every die is even,"{0}, если все кубики <sprite name=""even"">","{0} si todos los dados son <sprite name=""even"">",Scripts/Cards/CardData.cs:248
+{0} if more dice are odd than even,"{0}, если <sprite name=""odd""> кубиков больше, чем <sprite name=""even"">","{0} si hay más dados <sprite name=""odd""> que <sprite name=""even"">",Scripts/Cards/CardData.cs:250
+{0} if more dice are even than odd,"{0}, если <sprite name=""even""> кубиков больше, чем <sprite name=""odd"">","{0} si hay más dados <sprite name=""even""> que <sprite name=""odd"">",Scripts/Cards/CardData.cs:251
++{0} rerolls,Перебросы +{0},Relanzamientos +{0},Scripts/Cards/CardData.cs:260
++{0} die,Кубики +{0},Dados +{0},Scripts/Cards/CardData.cs:262
++{0} dice,Кубики +{0},Dados +{0},Scripts/Cards/CardData.cs:262
+-{0} reroll,Перебросы -{0},Relanzamientos -{0},Scripts/Cards/CardData.cs:263
+-{0} rerolls,Перебросы -{0},Relanzamientos -{0},Scripts/Cards/CardData.cs:263
+"Right click a {0} to reroll it, any number of times","Правый клик по {0} - перебросить его, сколько угодно раз","Clic derecho en un {0} para relanzarlo, tantas veces como quieras",Scripts/Cards/CardData.cs:264
+Right click a {0} to destroy it: +{1} reroll,Правый клик по {0} - уничтожить его: перебросы +{1},Clic derecho en un {0} para destruirlo: relanzamientos +{1},Scripts/Cards/CardData.cs:266
+Right click a {0} to destroy it: +{1} rerolls,Правый клик по {0} - уничтожить его: перебросы +{1},Clic derecho en un {0} para destruirlo: relanzamientos +{1},Scripts/Cards/CardData.cs:267
+"Right click a {0} to flip it to {1} and back, any number of times","Правый клик по {0} - превратить его в {1} и обратно, сколько угодно раз","Clic derecho en un {0} para convertirlo en {1} y al revés, tantas veces como quieras",Scripts/Cards/CardData.cs:270
+Straights may have {0} gap,В стрите может быть пропусков: {0},Las escaleras pueden tener {0} hueco,Scripts/Cards/CardData.cs:272
+Straights may have {0} gaps,В стрите может быть пропусков: {0},Las escaleras pueden tener {0} huecos,Scripts/Cards/CardData.cs:272
++{0} points,Очки +{0},Puntos +{0},Scripts/Cards/CardData.cs:281
+x{0} mult,Множитель x{0},Multiplicador x{0},Scripts/Cards/CardData.cs:283
+x{0} points,Очки x{0},Puntos x{0},Scripts/Cards/CardData.cs:284
+Play the song back {0} seconds,Отмотать песню назад на {0} сек.,Retrocede la canción {0} segundos,Scripts/Cards/CardData.cs:320
+or,или,o,Scripts/UI/HintPaper.cs:257
+Language,Язык,Idioma,New Scene: IntroCutscene (IntroCutscene) languageTitle
+Combination score:,Очки комбинации:,Puntos de la combinación:,label
+(S) Close / Open,(S) Закрыть / Открыть,(S) Cerrar / Abrir,label
+Skip all,Пропустить всё,Saltar todo,label
+One Pair,Пара,Pareja,manual - combination name in generated card text
+Safe Face,Единица или тройка,Uno o tres,manual - combination name in generated card text

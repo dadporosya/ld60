@@ -84,8 +84,8 @@ public class DiceKindOffer
     [Tooltip("Off: never offered.")]
     public bool enabled = true;
     public DiceKind kind;
-    public string title;
-    [TextArea] public string description;
+    [Localized] public string title;
+    [TextArea, Localized] public string description;
     [Tooltip("The die's color: on the table (multiplied with the die's own) and on its card's icon.")]
     public Color tint = Color.white;
     [Tooltip("The card's icon: this sprite of the dice sprite asset (\"1\"..\"6\", \"x\", \"y\", \"odd\", \"even\"), tinted.")]

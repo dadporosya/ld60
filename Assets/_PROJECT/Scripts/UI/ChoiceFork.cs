@@ -80,7 +80,7 @@ public class ChoiceFork : MonoBehaviour
         for (int i = 0; i < titles.Count; i++)
         {
             TextMeshProUGUI line = MakeLine(row);
-            line.text = titles[i] ?? "";
+            line.text = Loc.T(titles[i]) ?? "";
             line.color = look.lineColor;
             // Hover and click are read in Update; the lines block nothing.
             line.raycastTarget = false;

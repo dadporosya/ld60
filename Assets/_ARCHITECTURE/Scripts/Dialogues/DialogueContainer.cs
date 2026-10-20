@@ -6,7 +6,7 @@ using UnityEngine.Events;
 [CreateAssetMenu(fileName = "DialogueSpeaker", menuName = "Dialogues/DialogueSpeaker")]
 public class DialogueSpeaker : ScriptableObject
 {
-    public string speakerName;
+    [Localized] public string speakerName;
     public Sprite portrait;
     [Tooltip("Typing voice for this speaker. Empty = the SFXManager's default dialogue voice.")]
     // Not initialised from SFXManager.Instance: it doesn't exist in edit mode, so creating the
@@ -23,13 +23,13 @@ public class DialogueNode
     [HideInInspector] public bool initialized = false;
     public bool speakerIsThis=true; //
     public bool overWriteValues = false;
-    [TextArea(3, 7)]
+    [TextArea(3, 7), Localized]
     public string text;
     
     [SerializeField] bool initFromScriptableObject=true;
     public DialogueSpeaker speaker;
     public GameObject speakerGameObject;
-    public string speakerName;
+    [Localized] public string speakerName;
     public Sprite speakerPortrait;
     public bool useSpriteAtlas = true;
     public Sprite[] spriteAtlas;
